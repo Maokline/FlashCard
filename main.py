@@ -6439,12 +6439,22 @@ class FlashcardApp:
 
         ctk.CTkButton(
             button_frame,
-            text="Neue Lernsession",
-            command=self.show_leitner_learning_options,
+            text="Leitner-Methode",
+            command=self.show_leitner_options,
             font=ctk.CTkFont(size=14),
             height=35,
             fg_color="#4a90e2",
             hover_color="#357abd"
+        ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Neue Lernsession",
+            command=self.show_leitner_options,
+            font=ctk.CTkFont(size=14),
+            height=35,
+            fg_color="#2ecc71",
+            hover_color="#27ae60"
         ).pack(side='left', padx=5)
 
         ctk.CTkButton(
@@ -7150,13 +7160,28 @@ class FlashcardApp:
 
         # Aktuelle Karte laden (NICHT pop, da das in handle_leitner_correct/incorrect gemacht wird)
         self.current_card = self.cards_to_learn[0]
-        
+
+        # Session beenden Button (fixiert unten links)
+        fixed_bottom_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        fixed_bottom_frame.pack(side='bottom', fill='x', padx=20, pady=10)
+
+        ctk.CTkButton(
+            fixed_bottom_frame,
+            text="Session beenden",
+            command=self.end_leitner_session,
+            width=150,
+            height=30,
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d",
+            font=ctk.CTkFont(size=12)
+        ).pack(side='left')
+
         # Hauptcontainer mit Scrollbar
         scroll_container = ctk.CTkScrollableFrame(
             self.content_frame,
             fg_color=self.appearance_settings.text_bg_color  # FIXED: bg_color → text_bg_color
         )
-        scroll_container.pack(fill='both', expand=True, padx=20, pady=20)
+        scroll_container.pack(fill='both', expand=True, padx=20, pady=(20, 10))
         
         # Session-Statistik oben
         stats_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
@@ -7307,21 +7332,6 @@ class FlashcardApp:
             hover_color="#c0392b",
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left', padx=10)
-
-        # Session beenden Button (unten rechts)
-        end_session_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
-        end_session_frame.pack(fill='x', pady=20)
-
-        ctk.CTkButton(
-            end_session_frame,
-            text="Session beenden",
-            command=self.end_leitner_session,
-            width=200,
-            height=40,
-            fg_color="#95a5a6",
-            hover_color="#7f8c8d",
-            font=ctk.CTkFont(size=14)
-        ).pack(side='right', padx=20)
 
 
     def _display_image(self, parent_frame, image_path, max_size=(500, 300), label_text=None):
