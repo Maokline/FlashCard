@@ -6938,17 +6938,47 @@ class FlashcardApp:
         )
         scroll_container.pack(fill='both', expand=True, padx=20, pady=20)
         
-        # Progress-Anzeige
+        # Session-Statistik oben
+        stats_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        stats_frame.pack(fill='x', pady=(0, 20))
+
+        # Berechne Statistiken
         total = self.total_cards_in_session
-        remaining = len(self.cards_to_learn) + 1
-        progress_text = f"Karte {total - remaining + 1} / {total}"
-        
+        current_card_num = total - len(self.cards_to_learn)
+        retry_count = len(self.cards_in_retry) if hasattr(self, 'cards_in_retry') else 0
+
+        # Erfolgsquote berechnen
+        if hasattr(self, 'total_answers') and self.total_answers > 0:
+            success_rate = (self.correct_answers / self.total_answers) * 100
+            success_text = f"Erfolgsquote: {success_rate:.0f}%"
+        else:
+            success_text = "Erfolgsquote: -"
+
+        # Links: Karten-Fortschritt
         progress_label = ctk.CTkLabel(
-            scroll_container,
-            text=progress_text,
-            font=ctk.CTkFont(size=14, weight="bold")
+            stats_frame,
+            text=f"Karte {current_card_num} von {total}",
+            font=ctk.CTkFont(size=13, weight="bold")
         )
-        progress_label.pack(pady=(0, 20))
+        progress_label.pack(side='left', padx=10)
+
+        # Mitte: Wiederholungen
+        retry_label = ctk.CTkLabel(
+            stats_frame,
+            text=f"Wdh: {retry_count}",
+            font=ctk.CTkFont(size=13),
+            text_color="orange"
+        )
+        retry_label.pack(side='left', padx=10)
+
+        # Rechts: Erfolgsquote
+        success_label = ctk.CTkLabel(
+            stats_frame,
+            text=success_text,
+            font=ctk.CTkFont(size=13),
+            text_color="#2ecc71"
+        )
+        success_label.pack(side='right', padx=10)
         
         # === FRAGE CONTAINER ===
         question_container = ctk.CTkFrame(scroll_container)
@@ -7116,7 +7146,7 @@ class FlashcardApp:
             # Hinweis unter dem Bild
             ctk.CTkLabel(
                 parent_frame,
-                text="(Klick für Vollbild)",
+                text="(Klick zum Vergrößern)",
                 font=ctk.CTkFont(size=10),
                 text_color="gray"
             ).pack()
@@ -7131,46 +7161,69 @@ class FlashcardApp:
 
 
     def _show_fullscreen_image(self, image_path):
-        """Zeigt ein Bild in einem separaten Vollbild-Fenster."""
-        preview_window = ctk.CTkToplevel(self.master)
-        preview_window.title("Bildvorschau")
-        preview_window.geometry("800x600")
-        preview_window.transient(self.master)
-        
+        """Zeigt ein Bild vergrößert innerhalb der App (Overlay)."""
         try:
             from PIL import Image, ImageTk
+
+            # Erstelle ein Overlay-Frame über dem gesamten Content
+            overlay = ctk.CTkFrame(
+                self.content_frame,
+                fg_color=("gray90", "gray10"),  # Leicht transparent wirkend
+                corner_radius=0
+            )
+            overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+            # Lade und skaliere das Bild
             image = Image.open(image_path)
-            
-            # Bild auf FenstergrÃƒÂ¶ÃƒÅ¸e anpassen
-            display_size = (780, 550)
-            image.thumbnail(display_size, Image.Resampling.LANCZOS)
+
+            # Bestimme die maximale Größe (90% der Content-Frame-Größe)
+            max_width = int(self.content_frame.winfo_width() * 0.9)
+            max_height = int(self.content_frame.winfo_height() * 0.9)
+
+            # Fallback falls Frame noch nicht gerendert wurde
+            if max_width < 100:
+                max_width = 900
+            if max_height < 100:
+                max_height = 700
+
+            # Skaliere das Bild
+            image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
             photo = ImageTk.PhotoImage(image)
-            
-            label = tk.Label(preview_window, image=photo)
-            label.image = photo
-            label.pack(expand=True, fill='both', padx=10, pady=10)
-            
-            # SchlieÃƒÅ¸en-Button
-            ctk.CTkButton(
-                preview_window,
-                text="SchlieÃƒÅ¸en (ESC)",
-                command=preview_window.destroy,
-                width=150,
-                height=35
-            ).pack(pady=10)
-            
-            # TastenkÃƒÂ¼rzel
-            preview_window.bind('<Escape>', lambda e: preview_window.destroy())
-            preview_window.bind('<Return>', lambda e: preview_window.destroy())
-            
+
+            # Container für zentriertes Bild
+            image_container = ctk.CTkFrame(overlay, fg_color="transparent")
+            image_container.place(relx=0.5, rely=0.5, anchor="center")
+
+            # Bild-Label
+            image_label = ctk.CTkLabel(image_container, image=photo, text="")
+            image_label.image = photo  # Referenz behalten
+            image_label.pack()
+
+            # Hinweis-Text
+            hint_label = ctk.CTkLabel(
+                image_container,
+                text="(Klick zum Schließen)",
+                font=ctk.CTkFont(size=12),
+                text_color="gray"
+            )
+            hint_label.pack(pady=(5, 0))
+
+            # Schließen bei Klick auf das Overlay oder das Bild
+            def close_overlay(event=None):
+                overlay.destroy()
+
+            overlay.bind("<Button-1>", close_overlay)
+            image_label.bind("<Button-1>", close_overlay)
+            hint_label.bind("<Button-1>", close_overlay)
+
+            # Cursor-Stil für alle klickbaren Elemente
+            overlay.configure(cursor="hand2")
+            image_label.configure(cursor="hand2")
+            hint_label.configure(cursor="hand2")
+
         except Exception as e:
             logging.error(f"Fehler in Vollbild-Ansicht: {e}")
-            ctk.CTkLabel(
-                preview_window,
-                text=f"Fehler beim Laden:\n{e}",
-                font=ctk.CTkFont(size=12),
-                text_color="red"
-            ).pack(pady=20)
+            messagebox.showerror("Fehler", f"Fehler beim Laden des Bildes:\n{e}")
 
 
     def _show_answer_and_rating(self, answer_container, show_btn, rating_frame):
