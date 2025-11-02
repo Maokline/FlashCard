@@ -6258,6 +6258,15 @@ class FlashcardApp:
             self.cards_to_learn.pop(0)
 
         self.show_card_window_dynamically()
+
+    def _handle_correct_answer(self):
+        """Wrapper-Methode für korrekte Antwort im Leitner-System."""
+        self.handle_leitner_correct()
+
+    def _handle_incorrect_answer(self):
+        """Wrapper-Methode für inkorrekte Antwort im Leitner-System."""
+        self.handle_leitner_incorrect()
+
     def show_srs_learning_options(self):
         """Zeigt die SRS-Lernoptionen mit erweiterten Filtern an."""
         self._clear_content_frame()
@@ -6966,8 +6975,8 @@ class FlashcardApp:
         retry_label = ctk.CTkLabel(
             stats_frame,
             text=f"Wdh: {retry_count}",
-            font=ctk.CTkFont(size=13),
-            text_color="orange"
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color="#1e3a8a"
         )
         retry_label.pack(side='left', padx=10)
 
@@ -6975,8 +6984,8 @@ class FlashcardApp:
         success_label = ctk.CTkLabel(
             stats_frame,
             text=success_text,
-            font=ctk.CTkFont(size=13),
-            text_color="#2ecc71"
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color="#1e3a8a"
         )
         success_label.pack(side='right', padx=10)
         
@@ -7068,24 +7077,24 @@ class FlashcardApp:
         
         ctk.CTkButton(
             button_container,
-            text="Ã¢Å“â€œ Richtig",
+            text="✓ Richtig",
             command=lambda: self._handle_correct_answer(),
             width=150,
             height=50,
             fg_color="#2ecc71",
             hover_color="#27ae60",
-            font=ctk.CTkFont(size=14, weight="bold")
+            font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left', padx=10)
-        
+
         ctk.CTkButton(
             button_container,
-            text="Ã¢Å“â€” Falsch",
+            text="✗ Falsch",
             command=lambda: self._handle_incorrect_answer(),
             width=150,
             height=50,
             fg_color="#e74c3c",
             hover_color="#c0392b",
-            font=ctk.CTkFont(size=14, weight="bold")
+            font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left', padx=10)
 
 
