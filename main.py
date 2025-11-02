@@ -238,7 +238,7 @@ def ensure_initial_files(data_manager: DataManager):
         with flashcards_file.open('r', encoding='utf-8') as f:
             flashcards_content = json.load(f)
         if not flashcards_content:
-            logging.info("Flashcards-Datei ist leer. FÃƒÂ¼ge Standard-Flashcards hinzu.")
+            logging.info("Flashcards-Datei ist leer. Füge Standard-Flashcards hinzu.")
             default_flashcards = [
                 Flashcard(
                     question="Was ist die Hauptstadt von Frankreich?",
@@ -325,7 +325,7 @@ def ensure_initial_files(data_manager: DataManager):
         with categories_file.open('r', encoding='utf-8') as f:
             categories_content = json.load(f)
         if not categories_content:
-            logging.info("Kategorien-Datei ist leer. FÃƒÂ¼ge Standard-Kategorien hinzu.")
+            logging.info("Kategorien-Datei ist leer. Füge Standard-Kategorien hinzu.")
             default_categories = {
                 "geographie": {
                     "hauptstädte": [],
@@ -370,7 +370,7 @@ def ensure_initial_files(data_manager: DataManager):
     if files_created:
         backup_dir = Path(data_manager.backup_dir)
         backup_dir.mkdir(parents=True, exist_ok=True)
-        logging.info("Backup-Verzeichnis überprÃƒÂ¼ft/erstellt")
+        logging.info("Backup-Verzeichnis überprüft/erstellt")
         
         timestamp = datetime.datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
         backup_path = backup_dir / f'initial_backup_{timestamp}'
@@ -673,7 +673,7 @@ class FlashcardApp:
                 self.data_manager.save_stats()
                 if hasattr(self, 'leitner_system'):
                     self.leitner_system.save_cards()
-                logging.info("Auto-Save erfolgreich durchgefÃƒÂ¼hrt.")
+                logging.info("Auto-Save erfolgreich durchgeführt.")
             except Exception as e:
                 logging.error(f"Fehler beim Auto-Save: {e}")
             finally:
@@ -684,7 +684,7 @@ class FlashcardApp:
         self.master.after(300000, auto_save)
  
     def confirm_and_reschedule(self):
-        """ Zeigt eine Bestätigungsbox an und fÃƒÂ¼hrt die Neuplanung aus. """
+        """ Zeigt eine Bestätigungsbox an und führt die Neuplanung aus. """
         answer = messagebox.askyesno(
             "Fälligkeiten neu planen?",
             "WARNUNG:\n\n"
@@ -704,10 +704,10 @@ class FlashcardApp:
                     success = self.leitner_system.reschedule_due_dates_evenly()
                     self.master.config(cursor="") # Setze Cursor zurück
                     if success:
-                        messagebox.showinfo("Erfolg", "Die FÃƒÂ¤lligkeitstermine wurden erfolgreich neu geplant.")
+                        messagebox.showinfo("Erfolg", "Die Fälligkeitstermine wurden erfolgreich neu geplant.")
                         # Optional: UI aktualisieren, falls nötig (z.B. Statistik oder Editor neu laden)
                     else:
-                        messagebox.showerror("Fehler", "Die Neuplanung konnte nicht vollständig abgeschlossen werden. Bitte überprÃƒÂ¼fen Sie die Logdatei für Details.")
+                        messagebox.showerror("Fehler", "Die Neuplanung konnte nicht vollständig abgeschlossen werden. Bitte überprüfen Sie die Logdatei für Details.")
                 except Exception as e:
                     self.master.config(cursor="") # Setze Cursor zurück
                     logging.exception("Ein unerwarteter Fehler ist während der Neuplanung aufgetreten.")
@@ -733,7 +733,7 @@ class FlashcardApp:
             messagebox.showerror("Fehler", f"App-Icon konnte nicht gesetzt werden: {e}")
     def ensure_default_themes(self):
         """
-        PrÃƒÂ¼ft und erzeugt ggf. Standard-Themes, falls sie nicht existieren.
+        Prüft und erzeugt ggf. Standard-Themes, falls sie nicht existieren.
         """
         predefined = {
             "light": {
@@ -969,7 +969,7 @@ class FlashcardApp:
 
     def _create_progress_stats(self, parent_frame):
         """
-        Erstellt den Statistik-Tab mit einem zweizeiligen Filter-MenÃƒÂ¼ oben
+        Erstellt den Statistik-Tab mit einem zweizeiligen Filter-Menü oben
         und einem scrollbaren Bereich für den gesamten Inhalt (inkl. Chart).
         """
 
@@ -986,7 +986,7 @@ class FlashcardApp:
         self.start_date_var = tk.StringVar()
         self.end_date_var = tk.StringVar()
 
-        # ---------------- ZWEIZEILIGES FILTER-MENÃƒÅ“ ----------------
+        # ---------------- ZWEIZEILIGES FILTER-MENÜ ----------------
 
         # ========== Zeile 0: Diagrammtyp, Zeitraumfilter, Datums-Frame ==========
         filter_row_0 = ctk.CTkFrame(scrollable_frame)
@@ -1133,7 +1133,7 @@ class FlashcardApp:
         self.second_category_var.trace_add('write', update_second_subcategories)
 
     def show_card_management(self):
-        """Zeigt das Karten-Management-MenÃƒÂ¼ an."""
+        """Zeigt das Karten-Management-Menü an."""
         self._clear_content_frame()
         
         # Header
@@ -1292,7 +1292,7 @@ class FlashcardApp:
                 subcategories = sorted(self.data_manager.categories.get(selected_category, {}).keys())
                 if subcategories:
                     self.subcategory_menu.configure(state="normal", values=["Alle"] + subcategories)
-                    # Wenn die letzte Subkategorie nicht mehr gÃƒÂ¼ltig ist, setze auf "Alle"
+                    # Wenn die letzte Subkategorie nicht mehr gültig ist, setze auf "Alle"
                     if self.subcategory_var.get() not in (["Alle"] + subcategories):
                          self.subcategory_var.set("Alle")
                     # Wenn die letzte Subkategorie "Keine" war, setze auf "Alle"
@@ -1302,10 +1302,10 @@ class FlashcardApp:
                 else:
                     self.subcategory_menu.configure(state="disabled", values=["Keine"])
                     self.subcategory_var.set("Keine")
-            # WICHTIG: Filterung wird jetzt durch command/trace der MenÃƒÂ¼s ausgelöst
+            # WICHTIG: Filterung wird jetzt durch command/trace der Menüs ausgelöst
 
         # Initialen Zustand setzen und erste Filterung
-        update_subcategories() # FÃƒÂ¼llt Subkategorien initial korrekt
+        update_subcategories() # Füllt Subkategorien initial korrekt
         self.apply_card_management_filters() # Zeigt initial alle Karten oder basierend auf last_category
 
         def show_card_preview(self, card, image_path):
@@ -1316,7 +1316,7 @@ class FlashcardApp:
             
             try:
                 image = Image.open(image_path)
-                # Bild auf maximale GrÃƒÂ¶ÃƒÅ¸e skalieren
+                # Bild auf maximale Größe skalieren
                 display_size = (780, 580)
                 image.thumbnail(display_size, Image.Resampling.LANCZOS)
                 photo = ImageTk.PhotoImage(image)
@@ -1328,13 +1328,13 @@ class FlashcardApp:
                 # SchlieÃƒÅ¸en-Button hinzufügen
                 close_btn = ctk.CTkButton(
                     preview_window,
-                    text="SchlieÃƒÅ¸en",
+                    text="Schließen",
                     command=preview_window.destroy,
                     width=100
                 )
                 close_btn.pack(pady=10)
                 
-                # TastenkÃƒÂ¼rzel zum SchlieÃƒÅ¸en
+                # Tastenkürzel zum Schließen
                 preview_window.bind('<Escape>', lambda e: preview_window.destroy())
                 
             except Exception as e:
@@ -1425,8 +1425,8 @@ class FlashcardApp:
             search_term = self.search_var.get().strip()
 
             # Filtere Kategorie und Subkategorie für die Anzeige
-            category_filter = category if category not in [None, "Bitte wÃƒÂ¤hlen..."] else None
-            subcategory_filter = subcategory if subcategory not in [None, "Bitte wÃƒÂ¤hlen...", "Bitte zuerst Kategorie wÃƒÂ¤hlen", "Keine Unterkategorien verfügbar"] else None
+            category_filter = category if category not in [None, "Bitte wählen..."] else None
+            subcategory_filter = subcategory if subcategory not in [None, "Bitte wählen...", "Bitte zuerst Kategorie wählen", "Keine Unterkategorien verfügbar"] else None
 
             # Rufe die (modifizierte) Anzeigemethode auf
             self.display_filtered_cards(
@@ -1498,7 +1498,7 @@ class FlashcardApp:
         
         def choose_question_image():
             file_path = filedialog.askopenfilename(
-                title="Bild für Frage auswÃƒÂ¤hlen",
+                title="Bild für Frage auswählen",
                 filetypes=[("Bilder", "*.jpg *.jpeg *.png *.gif *.bmp"), ("Alle", "*.*")]
             )
             if file_path:
@@ -1506,7 +1506,7 @@ class FlashcardApp:
         
         ctk.CTkButton(
             question_img_frame,
-            text="Bild wÃƒÂ¤hlen",
+            text="Bild wählen",
             command=choose_question_image,
             width=120
         ).pack(side='left', padx=5)
@@ -1559,7 +1559,7 @@ class FlashcardApp:
         
         def choose_answer_image():
             file_path = filedialog.askopenfilename(
-                title="Bild für Antwort auswÃƒÂ¤hlen",
+                title="Bild für Antwort auswählen",
                 filetypes=[("Bilder", "*.jpg *.jpeg *.png *.gif *.bmp"), ("Alle", "*.*")]
             )
             if file_path:
@@ -1567,7 +1567,7 @@ class FlashcardApp:
         
         ctk.CTkButton(
             answer_img_frame,
-            text="Bild wÃƒÂ¤hlen",
+            text="Bild wählen",
             command=choose_answer_image,
             width=120
         ).pack(side='left', padx=5)
@@ -1615,7 +1615,7 @@ class FlashcardApp:
         subcategory_menu = ctk.CTkOptionMenu(
             subcat_frame,
             variable=edit_subcategory_var,
-            values=["Bitte Kategorie wÃƒÂ¤hlen"],
+            values=["Bitte Kategorie wählen"],
             width=200
         )
         subcategory_menu.pack(side='left', padx=10)
@@ -1626,7 +1626,7 @@ class FlashcardApp:
                 subcats = sorted(self.data_manager.categories.get(selected_cat, {}).keys())
                 subcategory_menu.configure(values=subcats if subcats else ["Keine Unterkategorien"])
             else:
-                subcategory_menu.configure(values=["Bitte Kategorie wÃƒÂ¤hlen"])
+                subcategory_menu.configure(values=["Bitte Kategorie wählen"])
         
         edit_category_var.trace_add('write', update_subcategories)
         update_subcategories()
@@ -1742,14 +1742,14 @@ class FlashcardApp:
 
     # Hilfsmethode zum Wiederherstellen der Filter nach Bearbeitung/Abbruch
     def restore_card_management_filters(self, category, subcategory, search_term, page):
-        """Setzt die Filter-Widgets und lÃƒÂ¤dt die Karten für die gegebene Seite."""
+        """Setzt die Filter-Widgets und lädt die Karten für die gegebene Seite."""
         try:
             if hasattr(self, 'category_var'):
                  self.category_var.set(category if category else "Alle")
                  # Manuelles Triggern des Updates für Subkategorien, falls Kategorie nicht "Alle"
                  if category and category != "Alle":
                      self.update_subcategories_srs() # Oder eine generische Update-Funktion
-                 # Kurze VerzÃƒÂ¶gerung, damit das Subkategorie-MenÃƒÂ¼ aktualisiert ist
+                 # Kurze Verzögerung, damit das Subkategorie-Menü aktualisiert ist
                  self.master.after(100, lambda: self.subcategory_var.set(subcategory if subcategory else "Alle") if hasattr(self, 'subcategory_var') else None)
 
             if hasattr(self, 'search_var'):
@@ -1773,7 +1773,7 @@ class FlashcardApp:
         Konvertiert datetime-Objekte in ISO-Strings für die Speicherung.
         """
         if not flashcard_obj or not leitner_card:
-            logging.warning("Versuch, Flashcard von ungÃƒÂ¼ltigem LeitnerCard/Flashcard zu aktualisieren.")
+            logging.warning("Versuch, Flashcard von ungültigem LeitnerCard/Flashcard zu aktualisieren.")
             return
 
         try:
@@ -1802,7 +1802,7 @@ class FlashcardApp:
             logging.exception(f"Unerwarteter Fehler beim Aktualisieren der Flashcard {flashcard_obj.id} von Leitner.")
 
     def display_filtered_cards(self, category, subcategory, page=1, cards_per_page=30, search_term=None):
-        """Zeigt die gefilterten Karten im Grid-Layout an, berÃƒÂ¼cksichtigt Suche und Paginierung."""
+        """Zeigt die gefilterten Karten im Grid-Layout an, berücksichtigt Suche und Paginierung."""
         try:
             # Speichere aktuelle Filter-Einstellungen
             self.last_category = category if category else "Alle"
@@ -1825,7 +1825,7 @@ class FlashcardApp:
             else:
                 filtered_cards = base_filtered_cards
 
-            # Speichere die VOLLSTÃƒâ€žNDIGE gefilterte Liste
+            # Speichere die VOLLSTÄNDIGE gefilterte Liste
             self.currently_displayed_filtered_cards = filtered_cards
 
             # === Paginierung ===
@@ -1836,7 +1836,7 @@ class FlashcardApp:
             # === Kartenanzeige ===
 
             # 1. Scroll-Frame sicher holen oder neu erstellen
-            # PrÃƒÂ¼fe, ob der Frame existiert UND zum cards_display_container gehÃƒÂ¶rt
+            # Prüfe, ob der Frame existiert UND zum cards_display_container gehört
             # Stelle sicher, dass cards_display_container existiert (wird in show_card_details_manager erstellt)
             if not hasattr(self, 'cards_display_container') or not self.cards_display_container.winfo_exists():
                  logging.error("cards_display_container existiert nicht in display_filtered_cards. Breche ab.")
@@ -1848,7 +1848,7 @@ class FlashcardApp:
             if hasattr(self, 'scroll_frame_manage') and \
                self.scroll_frame_manage.winfo_exists() and \
                self.scroll_frame_manage.master == self.cards_display_container:
-                if page == 1: # Nur auf Seite 1 alles lÃƒÂ¶schen
+                if page == 1: # Nur auf Seite 1 alles löschen
                      logging.debug("Seite 1: Leere bestehenden Scroll-Frame.")
                      for widget in self.scroll_frame_manage.winfo_children():
                         widget.destroy()
@@ -1859,7 +1859,7 @@ class FlashcardApp:
                     create_new_scroll_frame = False
             else: # Wenn Frame fehlt oder falsch platziert ist
                  if hasattr(self, 'scroll_frame_manage') and self.scroll_frame_manage.winfo_exists():
-                     logging.warning("Altes scroll_frame_manage gefunden, wird zerstÃƒÂ¶rt.")
+                     logging.warning("Altes scroll_frame_manage gefunden, wird zerstört.")
                      self.scroll_frame_manage.destroy() # Altes Frame sicher entfernen
                  create_new_scroll_frame = True
 
@@ -1926,7 +1926,7 @@ class FlashcardApp:
                      info_text_parts.append(f"L-Level: {leitner_status['level']}. {level_name}")
                      info_text_parts.append(f"L-Punkte: {leitner_status['points']}")
                      if leitner_status['days_overdue'] > 0:
-                          info_text_parts.append(f"ÃƒÅ“berfÃƒÂ¤llig: {leitner_status['days_overdue']} T.")
+                          info_text_parts.append(f"Überfällig: {leitner_status['days_overdue']} T.")
                  else:
                      info_text_parts.append(f"Wdh.: {getattr(card, 'repetitions', 0)}")
                      srs_success_rate = (getattr(card, 'success_count', 0) / max(1, getattr(card, 'repetitions', 1)) * 100)
@@ -2080,7 +2080,7 @@ class FlashcardApp:
                 ("Leitner Wiederaufbau", 'Ja' if getattr(card, 'in_recovery_mode', False) else 'Nein'),
                 ("Nächste Wiederholung (Leitner)", leitner_status['next_review_date'].strftime('%d.%m.%Y') if isinstance(leitner_status.get('next_review_date'), (datetime.date, datetime.datetime)) else 'N/A'),
                 ("Letzte Wiederholung (Leitner)", leitner_status['last_reviewed'].strftime('%d.%m.%Y %H:%M') if isinstance(leitner_status.get('last_reviewed'), datetime.datetime) else 'N/A'),
-                ("Tage ÃƒÅ“berfÃƒÂ¤llig (Leitner)", leitner_status['days_overdue'])
+                ("Tage Überfällig (Leitner)", leitner_status['days_overdue'])
             ]
             stats_data.extend(leitner_stats_specific)
         # --- Ende der Statistik-Liste ---
@@ -2975,7 +2975,7 @@ class FlashcardApp:
         
         def choose_question_image():
             file_path = filedialog.askopenfilename(
-                title="Bild für Frage auswÃƒÂ¤hlen",
+                title="Bild für Frage auswählen",
                 filetypes=[
                     ("Bilder", "*.jpg *.jpeg *.png *.gif *.bmp"),
                     ("Alle Dateien", "*.*")
@@ -3038,7 +3038,7 @@ class FlashcardApp:
         
         def choose_answer_image():
             file_path = filedialog.askopenfilename(
-                title="Bild für Antwort auswÃƒÂ¤hlen",
+                title="Bild für Antwort auswählen",
                 filetypes=[
                     ("Bilder", "*.jpg *.jpeg *.png *.gif *.bmp"),
                     ("Alle Dateien", "*.*")
@@ -3097,7 +3097,7 @@ class FlashcardApp:
         subcategory_menu = ctk.CTkOptionMenu(
             subcat_frame,
             variable=self.subcategory_var,
-            values=["Bitte Kategorie wÃƒÂ¤hlen"],
+            values=["Bitte Kategorie wählen"],
             width=200
         )
         subcategory_menu.pack(side='left', padx=10)
@@ -3110,7 +3110,7 @@ class FlashcardApp:
                 if subcats:
                     self.subcategory_var.set(subcats[0])
             else:
-                subcategory_menu.configure(values=["Bitte Kategorie wÃƒÂ¤hlen"])
+                subcategory_menu.configure(values=["Bitte Kategorie wählen"])
                 self.subcategory_var.set("Bitte Kategorie wÃƒÂ¤hlen")
         
         self.category_var.trace_add('write', update_subcategories)
@@ -5339,13 +5339,13 @@ class FlashcardApp:
 
     def start_learning_session(self, category, subcategory):
         """
-        Startet eine Lernsitzung basierend auf der ausgewÃƒÂ¤hlten Kategorie und Subkategorie.
+        Startet eine Lernsitzung basierend auf der ausgewählten Kategorie und Subkategorie.
         """
-        # Verwenden der DataManager-Methode, um fÃƒÂ¤llige Flashcards zu erhalten
+        # Verwenden der DataManager-Methode, um fällige Flashcards zu erhalten
         due_flashcards = self.data_manager.get_due_flashcards(category=category, subcategory=subcategory)
 
         if not due_flashcards:
-            messagebox.showinfo("Info", "Keine Karten zur ÃƒÅ“berprÃƒÂ¼fung fÃƒÂ¤llig.")
+            messagebox.showinfo("Info", "Keine Karten zur Überprüfung fällig.")
             self.navigate_back()
             return
 
@@ -5382,7 +5382,7 @@ class FlashcardApp:
         # Header
         header = ctk.CTkLabel(
             self.content_frame,
-            text="Lernmethode auswÃƒÂ¤hlen",
+            text="Lernmethode auswählen",
             font=ctk.CTkFont(size=24, weight="bold")
         )
         header.pack(pady=20)
@@ -5472,7 +5472,7 @@ class FlashcardApp:
         
         ctk.CTkLabel(
             mixed_frame,
-            text="Verschachtelte ÃƒÅ“bungen aus verschiedenen Kategorien",
+            text="Verschachtelte Übungen aus verschiedenen Kategorien",
             font=ctk.CTkFont(size=12)
         ).pack(pady=5)
         
@@ -5618,7 +5618,7 @@ class FlashcardApp:
                 mixed_cards.extend(cards)
         
             if not mixed_cards:
-                messagebox.showinfo("Info", "Keine fÃƒÂ¤lligen Karten in den ausgewÃƒÂ¤hlten Kategorien.")
+                messagebox.showinfo("Info", "Keine fälligen Karten in den ausgewählten Kategorien.")
                 return
         
             # Mische die Karten
@@ -5684,7 +5684,7 @@ class FlashcardApp:
 
         self.toggle_rules_btn = ctk.CTkButton(
             header_container,
-            text="Regeln anzeigen Ã¢â€“Â¼",
+            text="Regeln anzeigen ▼",
             command=self._toggle_leitner_rules,
             width=180
         )
@@ -5698,10 +5698,10 @@ class FlashcardApp:
         ctk.CTkLabel(
             info_frame, 
             text="Das optimierte 10-Level Leitner-System mit exponentiellen Multiplikatoren und Streak-Boni.\n"
-                "Ã¢â‚¬Â¢ Exponentielle Erfolgsquoten-Kurve: 0%Ã¢â€ â€™0x, 50%Ã¢â€ â€™1x, 85%Ã¢â€ â€™2x, 100%Ã¢â€ â€™3x\n"
-                "Ã¢â‚¬Â¢ Streak-Boni belohnen Konsistenz: 5er (Ãƒâ€”1.5), 10er (Ãƒâ€”2), 15er (Ãƒâ€”2.5), 20er (Ãƒâ€”3)\n"
-                "Ã¢â‚¬Â¢ Intelligenter Punktabzug: Gesamtfehler Ãƒâ€” Level-Faktor Ãƒâ€” Streak-Verlust-Faktor\n"
-                "Ã¢â‚¬Â¢ Level 10 ist schwer zu erreichen und zu halten - nur für wahre Meister!",
+                "• Exponentielle Erfolgsquoten-Kurve: 0%→0x, 50%→1x, 85%→2x, 100%→3x\n"
+                "• Streak-Boni belohnen Konsistenz: 5er (×1.5), 10er (×2), 15er (×2.5), 20er (×3)\n"
+                "• Intelligenter Punktabzug: Gesamtfehler × Level-Faktor × Streak-Verlust-Faktor\n"
+                "• Level 10 ist schwer zu erreichen und zu halten - nur für wahre Meister!",
             font=ctk.CTkFont(size=13), 
             justify="left"
         ).pack(pady=10, padx=10)
@@ -5777,10 +5777,10 @@ class FlashcardApp:
                                     command=lambda x: self.preview_leitner_cards())
         level_menu.pack(side='left', padx=5)
         
-        ctk.CTkLabel(level_filter_frame, text="FÃƒÂ¤lligkeit:", font=ctk.CTkFont(size=12)).pack(side='left', padx=20)
-        self.due_var = tk.StringVar(value="Nur fÃƒÂ¤llige Karten")
-        due_options = ["Nur fÃƒÂ¤llige Karten", "Alle Karten", "In 7 Tagen fÃƒÂ¤llig", 
-                    "In 14 Tagen fÃƒÂ¤llig", "In 30 Tagen fÃƒÂ¤llig"]
+        ctk.CTkLabel(level_filter_frame, text="Fälligkeit:", font=ctk.CTkFont(size=12)).pack(side='left', padx=20)
+        self.due_var = tk.StringVar(value="Nur fällige Karten")
+        due_options = ["Nur fällige Karten", "Alle Karten", "In 7 Tagen fällig",
+                    "In 14 Tagen fällig", "In 30 Tagen fällig"]
         due_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.due_var, 
                                     values=due_options, width=180, 
                                     command=lambda x: self.preview_leitner_cards())
@@ -5845,7 +5845,7 @@ class FlashcardApp:
         self.preview_leitner_cards()
 
     def preview_leitner_cards(self):
-        """Zeigt eine Vorschau der fÃƒÂ¤lligen Leitner-Karten an, inkl. Erfolgsquote."""
+        """Zeigt eine Vorschau der fälligen Leitner-Karten an, inkl. Erfolgsquote."""
         for widget in self.cards_container.winfo_children():
             widget.destroy()
         
@@ -5865,11 +5865,11 @@ class FlashcardApp:
             
             due_date_filter = None
             include_non_due = False
-            if due_filter == "Nur fÃƒÂ¤llige Karten": due_date_filter = today
+            if due_filter == "Nur fällige Karten": due_date_filter = today
             elif due_filter == "Alle Karten": include_non_due = True
-            elif "In 7 Tagen fÃƒÂ¤llig" in due_filter: due_date_filter = today + datetime.timedelta(days=7); include_non_due = True
-            elif "In 14 Tagen fÃƒÂ¤llig" in due_filter: due_date_filter = today + datetime.timedelta(days=14); include_non_due = True
-            elif "In 30 Tagen fÃƒÂ¤llig" in due_filter: due_date_filter = today + datetime.timedelta(days=30); include_non_due = True
+            elif "In 7 Tagen fällig" in due_filter: due_date_filter = today + datetime.timedelta(days=7); include_non_due = True
+            elif "In 14 Tagen fällig" in due_filter: due_date_filter = today + datetime.timedelta(days=14); include_non_due = True
+            elif "In 30 Tagen fällig" in due_filter: due_date_filter = today + datetime.timedelta(days=30); include_non_due = True
             
             all_cards = list(self.leitner_system.cards.values())
             
@@ -5965,7 +5965,7 @@ class FlashcardApp:
                 date_frame.pack(fill='x', padx=5, pady=(0, 5))
                 next_review_date = status['next_review_date']
                 date_str = next_review_date.strftime("%d.%m.%Y") if isinstance(next_review_date, (datetime.date, datetime.datetime)) else str(next_review_date)
-                date_text = f"FÃƒÂ¤llig: {date_str} (ÃƒÅ“berfÃƒÂ¤llig)" if status['days_overdue'] > 0 else (f"FÃƒÂ¤llig: {date_str} (Heute)" if status['days_overdue'] == 0 else f"Nächste Wiederholung: {date_str} (in {status['days_until_review']} Tagen)")
+                date_text = f"Fällig: {date_str} (Überfällig)" if status['days_overdue'] > 0 else (f"Fällig: {date_str} (Heute)" if status['days_overdue'] == 0 else f"Nächste Wiederholung: {date_str} (in {status['days_until_review']} Tagen)")
                 date_color = "#dc3545" if status['days_overdue'] > 0 else ("#fd7e14" if status['days_overdue'] == 0 else "#28a745")
                 ctk.CTkLabel(date_frame, text=date_text, font=ctk.CTkFont(size=10), text_color=date_color).pack(side='left', padx=5)
 
@@ -6023,17 +6023,17 @@ class FlashcardApp:
             due_date_filter = None
             include_non_due = False
             
-            if due_filter == "Nur fÃƒÂ¤llige Karten":
+            if due_filter == "Nur fällige Karten":
                 due_date_filter = today
             elif due_filter == "Alle Karten":
                 include_non_due = True
-            elif "In 7 Tagen fÃƒÂ¤llig" in due_filter:
+            elif "In 7 Tagen fällig" in due_filter:
                 due_date_filter = today + datetime.timedelta(days=7)
                 include_non_due = True
-            elif "In 14 Tagen fÃƒÂ¤llig" in due_filter:
+            elif "In 14 Tagen fällig" in due_filter:
                 due_date_filter = today + datetime.timedelta(days=14)
                 include_non_due = True
-            elif "In 30 Tagen fÃƒÂ¤llig" in due_filter:
+            elif "In 30 Tagen fällig" in due_filter:
                 due_date_filter = today + datetime.timedelta(days=30)
                 include_non_due = True
             
@@ -6383,7 +6383,7 @@ class FlashcardApp:
         self.card_status_menu = ctk.CTkOptionMenu(
             row2,
             variable=self.card_status_var,
-            values=["Filter aus", "FÃƒÂ¤llige Karten", "Neue Karten"],
+            values=["Filter aus", "Fällige Karten", "Neue Karten"],
             width=120,
             command=lambda x: self.preview_filtered_count()
         )
@@ -6637,7 +6637,7 @@ class FlashcardApp:
             # Kartenstatus
             card_status = self.card_status_var.get()
             if card_status != "Filter aus":
-                if card_status == "FÃƒÂ¤llige Karten":
+                if card_status == "Fällige Karten":
                     filtered_cards = [
                         c for c in filtered_cards
                         if self.safe_parse_date(c.next_review) <= today
@@ -6756,10 +6756,10 @@ class FlashcardApp:
                     if self.safe_parse_date(card.last_reviewed) <= threshold_date
                 ]
 
-            # 3c) Kartenstatus (FÃƒÂ¤llig/Neu)
+            # 3c) Kartenstatus (Fällig/Neu)
             card_status = self.card_status_var.get()
             if card_status != "Filter aus":
-                if card_status == "FÃƒÂ¤llige Karten":
+                if card_status == "Fällige Karten":
                     filtered_cards = [
                         card for card in filtered_cards
                         if self.safe_parse_date(card.next_review_date) <= today
@@ -7224,25 +7224,25 @@ class FlashcardApp:
             # Berechne eine Position basierend auf der Erfolgsquote
             success_rate = current_card.success_count / current_card.repetitions if current_card.repetitions > 0 else 0
             
-            # Je niedriger die Erfolgsquote, desto frÃƒÂ¼her kommt die Karte wieder
+            # Je niedriger die Erfolgsquote, desto früher kommt die Karte wieder
             if success_rate < 0.3:  # Sehr schwierige Karte
-                # Wiederholung nach 3-5 Karten oder frÃƒÂ¼her falls weniger Karten ÃƒÂ¼brig
+                # Wiederholung nach 3-5 Karten oder früher falls weniger Karten übrig
                 min_pos = min(3, remaining_cards)
                 max_pos = min(5, remaining_cards)
             elif success_rate < 0.5:  # Schwierige Karte
-                # Wiederholung nach 5-8 Karten oder frÃƒÂ¼her falls weniger Karten ÃƒÂ¼brig
+                # Wiederholung nach 5-8 Karten oder früher falls weniger Karten übrig
                 min_pos = min(5, remaining_cards)
                 max_pos = min(8, remaining_cards)
             elif success_rate < 0.65:  # Mittelschwere Karte
-                # Wiederholung nach 8-10 Karten oder frÃƒÂ¼her falls weniger Karten ÃƒÂ¼brig
+                # Wiederholung nach 8-10 Karten oder früher falls weniger Karten übrig
                 min_pos = min(8, remaining_cards)
                 max_pos = min(10, remaining_cards)
             else:  # Einfachere Karte
-                # Wiederholung nach 15-30 Karten oder frÃƒÂ¼her falls weniger Karten ÃƒÂ¼brig
+                # Wiederholung nach 15-30 Karten oder früher falls weniger Karten übrig
                 min_pos = min(15, remaining_cards)
                 max_pos = min(30, remaining_cards)
 
-            # Bestimme zufÃƒÂ¤llige Position innerhalb des berechneten Bereichs
+            # Bestimme zufällige Position innerhalb des berechneten Bereichs
             insert_pos = random.randint(min_pos, max_pos)
             self.cards_to_learn.insert(insert_pos, current_card)
         else:
@@ -7628,7 +7628,7 @@ class FlashcardApp:
                     image_frame,
                     image=photo,
                     bg=self.default_bg,
-                    cursor="hand2"  # Zeigt Hand-Cursor beim ÃƒÅ“berfahren
+                    cursor="hand2"  # Zeigt Hand-Cursor beim Überfahren
                 )
                 image_label.image = photo
                 image_label.pack()
