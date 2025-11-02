@@ -657,7 +657,7 @@ class FlashcardApp:
             "Einstellungen": self.configure_appearance,
             "Theme-Verwaltung": self.show_theme_manager,
             "Backup-Verwaltung": self.show_backup_manager,
-            "Hilfe": lambda: None  # Platzhalter
+            "Hilfe": self.show_help
         }.get(name)
         
         if action:
@@ -6160,16 +6160,16 @@ class FlashcardApp:
         logging.info(f"Leitner Karte falsch: {self.current_card.question}")
         logging.info(f"  -> Punkte: -{points_subtracted}, Basis: {base_points}, Multiplikator: {multiplier}")
 
-        # Speichere im KORREKTEN Format (8 Werte)
+        # Speichere im KORREKTEN Format (8 Werte) - WICHTIG: negative Punkte für falsche Antworten
         self.session_results.append((
-            self.current_card,    # 0
-            False,                # 1
-            time_spent,           # 2
-            points_subtracted,    # 3
-            base_points,          # 4
-            multiplier,           # 5
-            level_before,         # 6
-            level_after           # 7
+            self.current_card,      # 0
+            False,                  # 1
+            time_spent,             # 2
+            -points_subtracted,     # 3 - NEGATIV für Punktabzug
+            base_points,            # 4
+            multiplier,             # 5
+            level_before,           # 6
+            level_after             # 7
         ))
 
         # Flashcard aktualisieren
@@ -6300,10 +6300,10 @@ class FlashcardApp:
             total_time_seconds = (datetime.datetime.now() - self.session_start_time).total_seconds()
         total_time_minutes = total_time_seconds / 60
 
-        # Berechne Punkte
-        points_gained = sum(result[3] for result in self.session_results if len(result) > 3 and result[1])
-        points_lost = sum(result[3] for result in self.session_results if len(result) > 3 and not result[1])
-        net_points = points_gained - points_lost
+        # Berechne Punkte (result[3] ist bereits korrekt vorzeichenbehaftet)
+        points_gained = sum(result[3] for result in self.session_results if len(result) > 3 and result[1] and result[3] > 0)
+        points_lost = abs(sum(result[3] for result in self.session_results if len(result) > 3 and not result[1]))
+        net_points = sum(result[3] for result in self.session_results if len(result) > 3)
 
         # Erfolgsquote
         success_rate = (correct_count / total_cards * 100) if total_cards > 0 else 0
@@ -7308,9 +7308,9 @@ class FlashcardApp:
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left', padx=10)
 
-        # Session beenden Button
+        # Session beenden Button (unten rechts)
         end_session_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
-        end_session_frame.pack(pady=20)
+        end_session_frame.pack(fill='x', pady=20)
 
         ctk.CTkButton(
             end_session_frame,
@@ -7321,7 +7321,7 @@ class FlashcardApp:
             fg_color="#95a5a6",
             hover_color="#7f8c8d",
             font=ctk.CTkFont(size=14)
-        ).pack()
+        ).pack(side='right', padx=20)
 
 
     def _display_image(self, parent_frame, image_path, max_size=(500, 300), label_text=None):
@@ -9488,6 +9488,251 @@ class FlashcardApp:
 
         # Setze den aktiven Button auf 'backup'
         self.highlight_active_button('backup')
+
+    def show_help(self):
+        """Zeigt eine umfassende Hilfe-Seite zum Leitner-System."""
+        self._clear_content_frame()
+
+        # Scrollable Frame für den gesamten Inhalt
+        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
+        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Header
+        ctk.CTkLabel(
+            scroll_frame,
+            text="🎓 Leitner-System Hilfe",
+            font=ctk.CTkFont(size=28, weight="bold")
+        ).pack(pady=(10, 30))
+
+        # Übersicht
+        overview_frame = ctk.CTkFrame(scroll_frame)
+        overview_frame.pack(fill='x', pady=10, padx=10)
+
+        ctk.CTkLabel(
+            overview_frame,
+            text="📚 Übersicht",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=20, anchor="w")
+
+        overview_text = """Das Leitner-System ist eine wissenschaftlich fundierte Lernmethode, die auf dem Prinzip
+der verteilten Wiederholung basiert. Karten, die Sie gut beherrschen, werden seltener
+wiederholt, während schwierige Karten häufiger erscheinen."""
+
+        ctk.CTkLabel(
+            overview_frame,
+            text=overview_text,
+            font=ctk.CTkFont(size=14),
+            wraplength=800,
+            justify="left",
+            anchor="w"
+        ).pack(pady=(0, 15), padx=20, anchor="w")
+
+        # Level-System
+        level_frame = ctk.CTkFrame(scroll_frame)
+        level_frame.pack(fill='x', pady=10, padx=10)
+
+        ctk.CTkLabel(
+            level_frame,
+            text="📊 10-Level System",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=20, anchor="w")
+
+        level_text = """Karten durchlaufen 10 Level basierend auf Ihrem Punktestand:
+
+Level 1 (0-10 Punkte):       Täglich wiederholen (1 Tag Intervall)
+Level 2 (11-25 Punkte):      Alle 2 Tage
+Level 3 (26-50 Punkte):      Alle 4 Tage
+Level 4 (51-85 Punkte):      Wöchentlich (7 Tage)
+Level 5 (86-120 Punkte):     Alle 10 Tage
+Level 6 (121-175 Punkte):    Alle 12 Tage
+Level 7 (176-220 Punkte):    Zweiwöchentlich (14 Tage)
+Level 8 (221-285 Punkte):    Alle 20 Tage
+Level 9 (286-350 Punkte):    Alle 25 Tage
+Level 10 (350+ Punkte):      Alle 30 Tage
+
+Je höher das Level, desto besser beherrschen Sie die Karte!"""
+
+        ctk.CTkLabel(
+            level_frame,
+            text=level_text,
+            font=ctk.CTkFont(size=13, family="Courier"),
+            justify="left",
+            anchor="w"
+        ).pack(pady=(0, 15), padx=20, anchor="w")
+
+        # Punktesystem
+        points_frame = ctk.CTkFrame(scroll_frame)
+        points_frame.pack(fill='x', pady=10, padx=10)
+
+        ctk.CTkLabel(
+            points_frame,
+            text="🎯 Punktesystem",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=20, anchor="w")
+
+        points_text = """Bei richtigen Antworten:
+━━━━━━━━━━━━━━━━━━━━━
+Basis-Punkte = Ihre aktuelle Streak (Anzahl aufeinanderfolgender richtiger Antworten)
+
+Dann werden diese Basis-Punkte mit zwei Multiplikatoren verstärkt:
+
+1. Erfolgsquoten-Multiplikator (basierend auf Ihren letzten 10 Antworten):
+   • 0% Erfolgsquote   → 0× Multiplikator
+   • 50% Erfolgsquote  → 1× Multiplikator (normal)
+   • 85% Erfolgsquote  → 2× Multiplikator
+   • 100% Erfolgsquote → 3× Multiplikator (maximum!)
+
+2. Streak-Bonus (belohnt lange Erfolgsserien):
+   • Streak 1-4:   × 1.0 (kein Bonus)
+   • Streak 5-9:   × 1.5
+   • Streak 10-14: × 2.0
+   • Streak 15-19: × 2.5
+   • Streak 20+:   × 3.0 (maximum!)
+
+Gesamtpunkte = Basis-Punkte × Erfolgsquoten-Multiplikator × Streak-Bonus
+
+Beispiel: Bei Streak 10 und 80% Erfolgsquote:
+→ 10 Basis-Punkte × 1.8 (Erfolgsquote) × 2.0 (Streak) = 36 Punkte!
+
+
+Bei falschen Antworten:
+━━━━━━━━━━━━━━━━━━━━━
+Punktabzug = Fehler-Faktor × Level-Faktor × Streak-Verlust-Faktor
+
+• Fehler-Faktor (basierend auf Gesamtfehleranzahl):
+   1-5 Fehler:   ×1    16-20 Fehler: ×4
+   6-10 Fehler:  ×2    21+ Fehler:   ×5
+   11-15 Fehler: ×3
+
+• Level-Faktor (je höher das Level, desto größer der Verlust):
+   Level 1-2:   ×1.0 - ×1.25    Level 7-8:  ×2.5 - ×2.75
+   Level 3-4:   ×1.5 - ×1.75    Level 9:    ×3.0
+   Level 5-6:   ×2.0 - ×2.25    Level 10:   ×4.0
+
+• Streak-Verlust-Faktor (Strafe für unterbrochene Erfolgsserien):
+   Streak < 5:   ×1.0 (keine Extra-Strafe)
+   Streak 5-9:   ×1.5
+   Streak 10-14: ×2.0
+   Streak 15-19: ×3.0
+   Streak 20+:   ×4.0
+
+Beispiel: Level 5, Streak 12 verloren, 8 Fehler insgesamt:
+→ 2 × 2.0 × 2.0 = 8 Punkte Abzug"""
+
+        ctk.CTkLabel(
+            points_frame,
+            text=points_text,
+            font=ctk.CTkFont(size=13, family="Courier"),
+            justify="left",
+            anchor="w"
+        ).pack(pady=(0, 15), padx=20, anchor="w")
+
+        # Wiederholungslogik
+        repeat_frame = ctk.CTkFrame(scroll_frame)
+        repeat_frame.pack(fill='x', pady=10, padx=10)
+
+        ctk.CTkLabel(
+            repeat_frame,
+            text="🔄 Wiederholungslogik",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=20, anchor="w")
+
+        repeat_text = """Wann erscheint eine Karte wieder?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bei richtiger Antwort (erste Antwort in der Session):
+• Die Karte wird aus der aktuellen Session entfernt
+• Nächstes Review-Datum wird basierend auf dem Level gesetzt
+• Karte erscheint erst wieder am nächsten Review-Datum
+
+Bei falscher Antwort:
+• Karte wird SOFORT wieder verfügbar (noch am selben Tag!)
+• Karte erscheint 3-5 Positionen später in der aktuellen Session nochmal
+• Recovery-Modus wird aktiviert
+• Sie können die Karte in der gleichen oder nächsten Session nochmal üben
+
+Spezialfall - Karte nochmal richtig nach vorherigem Fehler:
+• Wenn Sie eine Karte in der Session falsch beantwortet haben und sie
+  später in der gleichen Session richtig beantworten:
+  → +0 Punkte (keine Punktänderung)
+  → Karte wird für diese Session als abgeschlossen markiert
+  → Sie können sie in der nächsten Session erneut üben
+
+Wie werden Karten einsortiert?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Gruppierung nach Fälligkeitsdatum
+   • Überfällige Karten haben höchste Priorität
+   • Innerhalb jedes Datums: zufällige Reihenfolge
+
+2. Innerhalb einer Session:
+   • Falsch beantwortete Karten erscheinen 3-5 Positionen später
+   • So üben Sie schwierige Karten mehrfach, aber nicht sofort hintereinander
+
+3. Recovery-Modus nach Fehler:
+   • Karte startet mit 1-Tag Intervall
+   • Bei jeder richtigen Antwort verdoppelt sich das Intervall
+   • Bis das normale Level-Intervall wieder erreicht ist"""
+
+        ctk.CTkLabel(
+            repeat_frame,
+            text=repeat_text,
+            font=ctk.CTkFont(size=13, family="Courier"),
+            justify="left",
+            anchor="w"
+        ).pack(pady=(0, 15), padx=20, anchor="w")
+
+        # Tipps
+        tips_frame = ctk.CTkFrame(scroll_frame)
+        tips_frame.pack(fill='x', pady=10, padx=10)
+
+        ctk.CTkLabel(
+            tips_frame,
+            text="💡 Tipps für effektives Lernen",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=20, anchor="w")
+
+        tips_text = """1. Ehrlich bleiben: Bewerten Sie Ihre Antworten ehrlich. Nur so funktioniert
+   das System optimal.
+
+2. Regelmäßigkeit: Lernen Sie täglich, auch wenn es nur 10-15 Minuten sind.
+   Konstanz schlägt Intensität!
+
+3. Nicht aufgeben: Wenn eine Karte oft falsch ist, ist das normal! Das System
+   sorgt dafür, dass Sie sie häufiger üben.
+
+4. Session-Größe: Starten Sie mit 10-20 Karten pro Session. Sie können die
+   Anzahl später anpassen.
+
+5. Bilder nutzen: Nutzen Sie die Bildfunktion für komplexe Inhalte. Visuelle
+   Anker verbessern die Merkfähigkeit erheblich!
+
+6. Kategorien: Organisieren Sie Ihre Karten in sinnvolle Kategorien für
+   gezieltes Lernen."""
+
+        ctk.CTkLabel(
+            tips_frame,
+            text=tips_text,
+            font=ctk.CTkFont(size=13),
+            justify="left",
+            anchor="w",
+            wraplength=800
+        ).pack(pady=(0, 15), padx=20, anchor="w")
+
+        # Zurück-Button
+        ctk.CTkButton(
+            scroll_frame,
+            text="← Zurück zum Hauptmenü",
+            command=self.create_main_menu,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=30)
 
     # -----------------------------------------------------------------------------------
     # KATEGORIEN & KARTENVERWALTUNG

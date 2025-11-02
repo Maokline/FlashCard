@@ -18,7 +18,7 @@ class LeitnerCard:
     Repräsentiert eine Lernkarte im optimierten 10-Level Leitner-System.
     """
 
-    def __init__(self, card_id, question, answer, category, subcategory, tags=None, image_path=None):
+    def __init__(self, card_id, question, answer, category, subcategory, tags=None, image_path=None, question_image_path=None):
         self.card_id = card_id
         self.question = question
         self.answer = answer
@@ -26,6 +26,7 @@ class LeitnerCard:
         self.subcategory = subcategory
         self.tags = tags or []
         self.image_path = image_path
+        self.question_image_path = question_image_path
         
         # Leitner-spezifische Eigenschaften
         self.points = 0
@@ -568,7 +569,8 @@ class LeitnerSystem:
                 category=card_data.category,
                 subcategory=card_data.subcategory,
                 tags=card_data.tags,
-                image_path=getattr(card_data, 'image_path', None)
+                image_path=getattr(card_data, 'image_path', None),
+                question_image_path=getattr(card_data, 'question_image_path', None)
             )
 
             # Bestehende Daten laden
