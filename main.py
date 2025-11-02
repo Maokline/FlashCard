@@ -5664,7 +5664,7 @@ class FlashcardApp:
     def show_leitner_options(self):
         """Zeigt die Leitner-System Lernoptionen an mit optimiertem 10-Level System."""
         self._clear_content_frame()
-        self.leitner_rules_visible = False  # Regeln sind standardmÃƒÂ¤ÃƒÅ¸ig eingeklappt
+        self.leitner_rules_visible = False  # Regeln sind standardmäßig eingeklappt
 
         # Haupt-Container, der das Grid-Layout steuert
         main_container = ctk.CTkFrame(self.content_frame)
@@ -5720,15 +5720,15 @@ class FlashcardApp:
 
         # NEUE 10-LEVEL REGELN MIT OPTIMIERTEN MULTIPLIKATOREN
         rules_info = [
-            ("1. Grundlagen", "0-10", "TÃƒÂ¤glich", "Exp. Kurve", "Ãƒâ€”1-3"),
-            ("2. Basis", "11-25", "Alle 2 Tage", "0%Ã¢â€ â€™0x", "Streak-Bonus:"),
-            ("3. Aufbau", "26-50", "Alle 4 Tage", "50%Ã¢â€ â€™1x", "5er: Ãƒâ€”1.5"),
-            ("4. Kompetent", "51-85", "WÃƒÂ¶chentlich", "85%Ã¢â€ â€™2x", "10er: Ãƒâ€”2.0"),
-            ("5. Fortgeschritten", "86-120", "Alle 10 Tage", "100%Ã¢â€ â€™3x", "15er: Ãƒâ€”2.5"),
-            ("6. Proficient", "121-175", "Alle 12 Tage", "", "20er: Ãƒâ€”3.0"),
-            ("7. Spezialist", "176-220", "ZweiwÃƒÂ¶chentlich", "Punktabzug:", ""),
-            ("8. Experte", "221-285", "Alle 20 Tage", "Fehler Ãƒâ€” Level", ""),
-            ("9. Meister", "286-350", "Alle 25 Tage", "Ãƒâ€” Streak-Verl.", ""),
+            ("1. Grundlagen", "0-10", "Täglich", "Exp. Kurve", "×1-3"),
+            ("2. Basis", "11-25", "Alle 2 Tage", "0%→0x", "Streak-Bonus:"),
+            ("3. Aufbau", "26-50", "Alle 4 Tage", "50%→1x", "5er: ×1.5"),
+            ("4. Kompetent", "51-85", "Wöchentlich", "85%→2x", "10er: ×2.0"),
+            ("5. Fortgeschritten", "86-120", "Alle 10 Tage", "100%→3x", "15er: ×2.5"),
+            ("6. Proficient", "121-175", "Alle 12 Tage", "", "20er: ×3.0"),
+            ("7. Spezialist", "176-220", "Zweiwöchentlich", "Punktabzug:", ""),
+            ("8. Experte", "221-285", "Alle 20 Tage", "Fehler × Level", ""),
+            ("9. Meister", "286-350", "Alle 25 Tage", "× Streak-Verl.", ""),
             ("10. Master", "350+", "Alle 30 Tage", "Hart aber fair!", ""),
         ]
         
@@ -5911,7 +5911,7 @@ class FlashcardApp:
             self.card_count_label.configure(text=f"Gefilterte Karten: {len(filtered_cards)} (Angezeigt: {len(display_cards)})")
             
             if not display_cards:
-                ctk.CTkLabel(self.cards_container, text="Keine Karten für die gewÃƒÂ¤hlten Filter gefunden.").pack(pady=20)
+                ctk.CTkLabel(self.cards_container, text="Keine Karten für die gewählten Filter gefunden.").pack(pady=20)
                 return
 
             header_info_frame = ctk.CTkFrame(self.cards_container)
@@ -5935,9 +5935,9 @@ class FlashcardApp:
                 
                 priority_color, priority_text = "#28a745", "Normal"
                 if status['days_overdue'] > 0:
-                    priority_color, priority_text = ("#dc3545", f"Hohe PrioritÃƒÂ¤t (+{status['days_overdue']} T.)") if status['days_overdue'] >= 7 else (("#fd7e14", f"Mittel (+{status['days_overdue']} T.)") if status['days_overdue'] >= 3 else ("#ffc107", f"Niedrig (+{status['days_overdue']} T.)"))
+                    priority_color, priority_text = ("#dc3545", f"Hohe Priorität (+{status['days_overdue']} T.)") if status['days_overdue'] >= 7 else (("#fd7e14", f"Mittel (+{status['days_overdue']} T.)") if status['days_overdue'] >= 3 else ("#ffc107", f"Niedrig (+{status['days_overdue']} T.)"))
                 elif status['days_until_review'] > 0:
-                    priority_color, priority_text = "#007bff", f"In {status['days_until_review']} Tagen fÃƒÂ¤llig"
+                    priority_color, priority_text = "#007bff", f"In {status['days_until_review']} Tagen fällig"
                 
                 ctk.CTkLabel(header_frame, text=f"{idx+1}. {card.question}", font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(side='left', padx=5, fill='x', expand=True)
                 ctk.CTkLabel(header_frame, text=priority_text, font=ctk.CTkFont(size=10), text_color=priority_color).pack(side='right', padx=5)
@@ -5958,8 +5958,8 @@ class FlashcardApp:
                 ctk.CTkLabel(info_frame, text=f"{level_name}", font=ctk.CTkFont(size=10)).grid(row=0, column=0)
                 ctk.CTkLabel(info_frame, text=f"{status['points']} Pkt", font=ctk.CTkFont(size=10)).grid(row=0, column=1)
                 ctk.CTkLabel(info_frame, text=f"{success_rate:.0%}", font=ctk.CTkFont(size=10)).grid(row=0, column=2)
-                ctk.CTkLabel(info_frame, text=f"Ãƒâ€”{exp_mult:.2f}", font=ctk.CTkFont(size=10)).grid(row=0, column=3)
-                ctk.CTkLabel(info_frame, text=f"Streak: {pos_streak} (Ãƒâ€”{streak_bonus:.1f})", font=ctk.CTkFont(size=10)).grid(row=0, column=4)
+                ctk.CTkLabel(info_frame, text=f"×{exp_mult:.2f}", font=ctk.CTkFont(size=10)).grid(row=0, column=3)
+                ctk.CTkLabel(info_frame, text=f"Streak: {pos_streak} (×{streak_bonus:.1f})", font=ctk.CTkFont(size=10)).grid(row=0, column=4)
                 
                 date_frame = ctk.CTkFrame(card_frame)
                 date_frame.pack(fill='x', padx=5, pady=(0, 5))
@@ -5988,7 +5988,7 @@ class FlashcardApp:
         
         today = datetime.date.today()
         if hasattr(self, 'due_var') and self.due_var.get() != "Alle":
-            if self.due_var.get() == "Heute fÃƒÂ¤llig":
+            if self.due_var.get() == "Heute fällig":
                 filtered_cards = [c for c in filtered_cards if c.next_review_date.date() <= today]
             elif self.due_var.get() == "Diese Woche":
                 week_end = today + datetime.timedelta(days=7)
@@ -6004,7 +6004,7 @@ class FlashcardApp:
 
 
     def start_leitner_session(self):
-        """Startet eine Leitner-Lernsession mit den ausgewÃƒÂ¤hlten Karten."""
+        """Startet eine Leitner-Lernsession mit den ausgewählten Karten."""
         try:
             category = None if self.category_var.get() == "Alle" else self.category_var.get()
             subcategory = None if self.subcategory_var.get() == "Alle" else self.subcategory_var.get()
@@ -6137,11 +6137,11 @@ class FlashcardApp:
             # Ã¢Å“â€¦ NEU: Markiere Karte als in dieser Session falsch
             self.cards_wrong_in_session.add(self.current_card.card_id)
 
-        # Fange ALLE RÃƒÂ¼ckgabewerte ab
+        # Fange ALLE Rückgabewerte ab
         result = self.current_card.answer_incorrect()
-        
+
         # Debug: Zeige was zurückgegeben wurde
-        logging.info(f"answer_incorrect() gab zurück: {result} (Typ: {type(result)}, LÃƒÂ¤nge: {len(result) if isinstance(result, tuple) else 'N/A'})")
+        logging.info(f"answer_incorrect() gab zurück: {result} (Typ: {type(result)}, Länge: {len(result) if isinstance(result, tuple) else 'N/A'})")
         
         # Extrahiere nur die ersten 3 Werte (egal wie viele es sind)
         if isinstance(result, tuple):
@@ -6178,7 +6178,7 @@ class FlashcardApp:
             self._update_flashcard_from_leitner(flashcard_obj, self.current_card)
             self.data_manager.save_flashcards()
 
-        # Karte wieder einfÃƒÂ¼gen
+        # Karte wieder einfügen
         if self.cards_to_learn:
             current_card = self.cards_to_learn.pop(0)
             remaining_cards = len(self.cards_to_learn)
@@ -6203,7 +6203,7 @@ class FlashcardApp:
         self.total_answers += 1
         self.correct_answers += 1
 
-        # Ã¢Å“â€¦ NEU: PrÃƒÂ¼fe ob Karte bereits in dieser Session falsch war
+        # ✓ NEU: Prüfe ob Karte bereits in dieser Session falsch war
         was_wrong_in_session = (
             hasattr(self, 'cards_wrong_in_session') and 
             self.current_card.card_id in self.cards_wrong_in_session
@@ -6216,7 +6216,7 @@ class FlashcardApp:
         result = self.current_card.answer_correct(was_wrong_in_session=was_wrong_in_session)
         
         # Debug: Zeige was zurückgegeben wurde
-        logging.info(f"answer_correct() gab zurück: {result} (Typ: {type(result)}, LÃƒÂ¤nge: {len(result) if isinstance(result, tuple) else 'N/A'})")
+        logging.info(f"answer_correct() gab zurück: {result} (Typ: {type(result)}, Länge: {len(result) if isinstance(result, tuple) else 'N/A'})")
         
         # Extrahiere nur die ersten 3 Werte (egal wie viele es sind)
         if isinstance(result, tuple):
@@ -6934,7 +6934,7 @@ class FlashcardApp:
         # Hauptcontainer mit Scrollbar
         scroll_container = ctk.CTkScrollableFrame(
             self.content_frame,
-            fg_color=self.appearance_settings.text_bg_color  # FIXED: bg_color Ã¢â€ â€™ text_bg_color
+            fg_color=self.appearance_settings.text_bg_color  # FIXED: bg_color → text_bg_color
         )
         scroll_container.pack(fill='both', expand=True, padx=20, pady=20)
         
@@ -7367,8 +7367,8 @@ class FlashcardApp:
                 font=ctk.CTkFont(size=13)
             ).pack(side='left', padx=(5, 10))
 
-            # Ã¢Å“â€¦ NEU: Korrekte Punkteberechnung mit tatsÃƒÂ¤chlichen Werten
-            sign = "+" if is_correct else "Ã¢Ë†â€™"
+            # Ã¢Å“â€¦ NEU: Korrekte Punkteberechnung mit tatsächlichen Werten
+            sign = "+" if is_correct else "-"
             calc_text = f"Punkte: {sign}{points_change} (Basis: {base_points}, Multiplikator: Ãƒâ€”{multiplier:.1f})"
             
             ctk.CTkLabel(
@@ -7381,10 +7381,10 @@ class FlashcardApp:
             # Ã¢Å“â€¦ NEU: Level-Änderung anzeigen
             if level_change != 0:
                 if level_change > 0:
-                    level_text = f"Ã¢â€ â€˜ Level aufgestiegen: {level_before} Ã¢â€ â€™ {level_after}"
-                    level_color = "#28a745"  # GrÃƒÂ¼n
+                    level_text = f"↑ Level aufgestiegen: {level_before} → {level_after}"
+                    level_color = "#28a745"  # Grün
                 else:
-                    level_text = f"Ã¢â€ â€œ Level abgestiegen: {level_before} Ã¢â€ â€™ {level_after}"
+                    level_text = f"↓ Level abgestiegen: {level_before} → {level_after}"
                     level_color = "#dc3545"  # Rot
                 
                 ctk.CTkLabel(
