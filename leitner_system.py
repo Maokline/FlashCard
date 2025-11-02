@@ -319,7 +319,7 @@ class LeitnerCard:
         # ✓ GEÄNDERT: Setze Datum auf HEUTE (nicht +1 Tag)
         self.in_recovery_mode = True
         self.recovery_interval = 1
-        self.next_review_date = datetime.datetime.now()  # ÃÂ¢ÃÂ¬Ã¢â¬Â¦ÃÂ¯ÃÂ¸ÃÂ Entfernt: "+ datetime.timedelta(days=1)"
+        self.next_review_date = datetime.datetime.now()  # ✓ Entfernt: "+ datetime.timedelta(days=1)"
         self.last_reviewed = datetime.datetime.now()
         
         self.review_history.append({
