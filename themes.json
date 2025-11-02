@@ -1,0 +1,29 @@
+{
+    "light": {
+        "default_bg": "#ffffff",
+        "text_bg_color": "#ffffff",
+        "text_fg_color": "#000000",
+        "button_bg_color": "#4a90e2",
+        "button_fg_color": "#ffffff",
+        "font_family": "Segoe UI",
+        "font_size": 12
+    },
+    "dark": {
+        "default_bg": "#2c3e50",
+        "text_bg_color": "#34495e",
+        "text_fg_color": "#ecf0f1",
+        "button_bg_color": "#2980b9",
+        "button_fg_color": "#ecf0f1",
+        "font_family": "Segoe UI",
+        "font_size": 12
+    },
+    "system": {
+        "default_bg": "#ffffff",
+        "text_bg_color": "#ffffff",
+        "text_fg_color": "#000000",
+        "button_bg_color": "#4a90e2",
+        "button_fg_color": "#ffffff",
+        "font_family": "Segoe UI",
+        "font_size": 12
+    }
+}
