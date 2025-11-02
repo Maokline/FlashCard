@@ -119,10 +119,10 @@ class LeitnerCard:
         """
         Gibt den Streak-Bonus für richtige Antworten zurück.
         
-        Streak 5:  ÃÆÃ¢â¬â1.5
-        Streak 10: ÃÆÃ¢â¬â2.0
-        Streak 15: ÃÆÃ¢â¬â2.5
-        Streak 20+: ÃÆÃ¢â¬â3.0
+        Streak 5:  ×1.5
+        Streak 10: ×2.0
+        Streak 15: ×2.5
+        Streak 20+: ×3.0
         """
         if self.positive_streak >= 20:
             return 3.0
@@ -204,7 +204,7 @@ class LeitnerCard:
         """
         Verarbeitet eine richtige Antwort mit exponentiellen Multiplikatoren und Streak-Bonus.
         
-        ÃÂ¢ÃâÃ¢â¬Â¦ OPTIMIERT: Session-basierte Punktevergabe
+        ✓ OPTIMIERT: Session-basierte Punktevergabe
         - Wenn Karte in dieser Session bereits falsch war: +0 Punkte
         - Karte wird für Session abgeschlossen, taucht aber in nächster Session wieder auf
         
@@ -214,7 +214,7 @@ class LeitnerCard:
         Returns: 
             tuple: (points_added, base_points, success_multiplier, streak_bonus)
         """
-        # ÃÂ¢ÃâÃ¢â¬Â¦ NEU: Session-basierte Logik
+        # ✓ NEU: Session-basierte Logik
         if was_wrong_in_session:
             self.last_reviewed = datetime.datetime.now()
             self._update_success_rate(True)
@@ -229,7 +229,7 @@ class LeitnerCard:
             
             return (0, 0, 0.0, 0.0)  # Keine Punkte, Karte für Session abgeschlossen
         
-        # ÃÂ¢ÃÂ¬Ã¢â¬Â¡ÃÂ¯ÃÂ¸ÃÂ NORMALE VERARBEITUNG (wie bisher)
+        # ⚡ NORMALE VERARBEITUNG (wie bisher)
         self.positive_streak += 1
         self.negative_streak = 0
         self.consecutive_correct += 1
@@ -288,7 +288,7 @@ class LeitnerCard:
         """
         Verarbeitet eine falsche Antwort mit optimiertem Punktabzug-System.
         
-        ÃÂ¢ÃâÃ¢â¬Â¦ OPTIMIERT: Datum-Reset auf HEUTE
+        ✓ OPTIMIERT: Datum-Reset auf HEUTE
         - Ermöglicht mehrfaches Üben am selben Tag
         - Karte taucht in weiteren Sessions am gleichen Tag wieder auf
         
@@ -310,13 +310,13 @@ class LeitnerCard:
         level_factor = self._get_level_penalty_factor()
         streak_loss_factor = self._get_streak_loss_penalty(broken_streak)
         
-        # Punktabzug = -(Fehler-Faktor ÃÆÃ¢â¬â Level-Faktor ÃÆÃ¢â¬â Streak-Verlust-Faktor)
+        # Punktabzug = -(Fehler-Faktor × Level-Faktor × Streak-Verlust-Faktor)
         points_to_subtract = int(error_factor * level_factor * streak_loss_factor)
         self.points = max(0, self.points - points_to_subtract)
         
         self._update_level()
         
-        # ÃÂ¢ÃâÃ¢â¬Â¦ GEÄNDERT: Setze Datum auf HEUTE (nicht +1 Tag)
+        # ✓ GEÄNDERT: Setze Datum auf HEUTE (nicht +1 Tag)
         self.in_recovery_mode = True
         self.recovery_interval = 1
         self.next_review_date = datetime.datetime.now()  # ÃÂ¢ÃÂ¬Ã¢â¬Â¦ÃÂ¯ÃÂ¸ÃÂ Entfernt: "+ datetime.timedelta(days=1)"
@@ -341,9 +341,9 @@ class LeitnerCard:
                     f"Success Rate: {self.success_rate:.2%}, "
                     f"Total Errors: {self.total_incorrect_count}, "
                     f"Broken Streak: {broken_streak}, "
-                    f"Factors: {error_factor} ÃÆÃ¢â¬â {level_factor} ÃÆÃ¢â¬â {streak_loss_factor}, "
+                    f"Factors: {error_factor} × {level_factor} × {streak_loss_factor}, "
                     f"Points: -{points_to_subtract} -> {self.points} (Level {self.level}) | "
-                    f"ÃÂ¢ÃâÃ¢â¬Â¦ Verfügbar für nächste Session HEUTE")
+                    f"✓ Verfügbar für nächste Session HEUTE")
 
         return points_to_subtract, error_factor, level_factor, streak_loss_factor
 

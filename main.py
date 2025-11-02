@@ -5829,10 +5829,10 @@ class FlashcardApp:
         self.leitner_rules_visible = not self.leitner_rules_visible
         if self.leitner_rules_visible:
             self.leitner_rules_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
-            self.toggle_rules_btn.configure(text="Regeln verbergen Ã¢â€“Â²")
+            self.toggle_rules_btn.configure(text="Regeln verbergen ▲")
         else:
             self.leitner_rules_frame.grid_remove()
-            self.toggle_rules_btn.configure(text="Regeln anzeigen Ã¢â€“Â¼")
+            self.toggle_rules_btn.configure(text="Regeln anzeigen ▼")
     def update_leitner_subcategories(self, *args):
         """Aktualisiert die Unterkategorien für die Leitner-Optionen."""
         selected_category = self.category_var.get()
@@ -9364,11 +9364,11 @@ class FlashcardApp:
         self.grid_frame = tk.Frame(self.content_frame, bg=self.default_bg)
         self.grid_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
 
-        # 6) Button-Frame (z. B. "Alle auswÃƒÂ¤hlen" / "Session starten")
+        # 6) Button-Frame (z. B. "Alle auswählen" / "Session starten")
         button_frame = tk.Frame(self.content_frame, bg=self.default_bg)
         button_frame.pack(pady=10, fill='x', padx=20)
 
-        self.all_selected = False  # Toggle-Variable für "Alle auswÃƒÂ¤hlen"
+        self.all_selected = False  # Toggle-Variable für "Alle auswählen"
         def select_all_filtered():
             """
             Wechselt den Zustand (alle an/aus) für die gefilterten Karten.
@@ -9956,7 +9956,7 @@ class FlashcardApp:
             dropdown_frame = ctk.CTkFrame(category_frame, fg_color="transparent")
             dropdown_frame.pack(fill='x', pady=0)  # Kein vertikaler Abstand
             def toggle_subcategories(category, dropdown_frame):
-                """Verbesserte Toggle-Funktion mit dynamischen AbstÃƒÂ¤nden"""
+                """Verbesserte Toggle-Funktion mit dynamischen Abständen"""
                 if category not in self.category_dropdowns:
                     return
                     
@@ -9966,17 +9966,17 @@ class FlashcardApp:
                 is_open = state["is_open"]
                 
                 if is_open:
-                    # SchlieÃƒÅ¸en
-                    toggle_btn.configure(text="Ã¢â€“Â¼")
+                    # Schließen
+                    toggle_btn.configure(text="▼")
                     for widget in dropdown_frame.winfo_children():
                         widget.destroy()
-                    category_frame.pack_configure(pady=2)  # Minimaler Abstand beim SchlieÃƒÅ¸en
+                    category_frame.pack_configure(pady=2)  # Minimaler Abstand beim Schließen
                     state["is_open"] = False
                 else:
-                    # Ãƒâ€“ffnen
-                    toggle_btn.configure(text="Ã¢â€“Â²")
+                    # Öffnen
+                    toggle_btn.configure(text="▲")
                     subcategories = sorted(self.data_manager.categories[category].keys())
-                    category_frame.pack_configure(pady=(2, 10))  # Mehr Abstand beim Ãƒâ€“ffnen
+                    category_frame.pack_configure(pady=(2, 10))  # Mehr Abstand beim Öffnen
                     
                     for i, subcat in enumerate(subcategories):
                         subcat_btn = ctk.CTkButton(
@@ -10224,34 +10224,34 @@ class FlashcardApp:
                 # Sidebar einklappen
                 self.sidebar_frame.configure(width=self.sidebar_collapsed_width)
                 if self.toggle_button.winfo_exists():
-                    self.toggle_button.configure(text="Ã¢â€“Âº")  # Pfeil nach rechts
+                    self.toggle_button.configure(text="►")  # Pfeil nach rechts
                 
                 # Verstecke Button-Texte
                 for name, button in self.sidebar_buttons.items():
-                    # PrÃƒÂ¼fe ob Button noch existiert
+                    # Prüfe ob Button noch existiert
                     if button.winfo_exists():
                         button.pack_forget()
                         # Speichere originalen Text falls noch nicht geschehen
                         if not hasattr(button, '_original_text'):
                             button._original_text = button.cget('text')
                         button.configure(width=2)  # Reduziere Button-Breite
-                        button.configure(text="Ã¢â‚¬Â¢")  # Zeige nur einen Punkt
+                        button.configure(text="•")  # Zeige nur einen Punkt
                         button.pack(pady=(0,10), padx=5)
                     else:
-                        # Entferne zerstÃƒÂ¶rte Buttons aus dem Dictionary
+                        # Entferne zerstörte Buttons aus dem Dictionary
                         del self.sidebar_buttons[name]
                     
             else:
                 # Sidebar ausklappen
                 self.sidebar_frame.configure(width=self.sidebar_width)
                 if self.toggle_button.winfo_exists():
-                    self.toggle_button.configure(text="Ã¢â€”â€ž")  # Pfeil nach links
+                    self.toggle_button.configure(text="◄")  # Pfeil nach links
                 
                 # Stelle Button-Texte wieder her
                 for name, button in self.sidebar_buttons.items():
                     if button.winfo_exists():
                         button.pack_forget()
-                        button.configure(width=20)  # Stelle ursprÃƒÂ¼ngliche Breite wieder her
+                        button.configure(width=20)  # Stelle ursprüngliche Breite wieder her
                         # Stelle originalen Text wieder her falls vorhanden
                         if hasattr(button, '_original_text'):
                             button.configure(text=button._original_text)
@@ -10269,7 +10269,7 @@ class FlashcardApp:
             self.sidebar_expanded = True
             self.sidebar_frame.configure(width=self.sidebar_width)
             if self.toggle_button.winfo_exists():
-                self.toggle_button.configure(text="Ã¢â€”â€ž")
+                self.toggle_button.configure(text="◄")
 
     def add_tooltip(self, widget, text):
         def show_tooltip(event):
