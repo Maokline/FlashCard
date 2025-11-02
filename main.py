@@ -6267,6 +6267,217 @@ class FlashcardApp:
         """Wrapper-Methode für inkorrekte Antwort im Leitner-System."""
         self.handle_leitner_incorrect()
 
+    def end_leitner_session(self):
+        """Beendet die aktuelle Leitner-Session vorzeitig und zeigt die Zusammenfassung."""
+        if not hasattr(self, 'session_results') or not self.session_results:
+            messagebox.showinfo("Info", "Keine Session-Daten vorhanden.")
+            self.create_main_menu()
+            return
+
+        # Speichere alle Änderungen
+        self.leitner_system.save_cards()
+        self.data_manager.save_flashcards()
+
+        # Zeige Zusammenfassung
+        self.show_leitner_session_summary(force_ended=True)
+
+    def show_leitner_session_summary(self, force_ended=False):
+        """Zeigt eine detaillierte Zusammenfassung der Leitner-Session."""
+        self._clear_content_frame()
+
+        # Berechne Statistiken
+        if not hasattr(self, 'session_results') or not self.session_results:
+            messagebox.showinfo("Info", "Keine Session-Daten vorhanden.")
+            self.create_main_menu()
+            return
+
+        total_cards = len(self.session_results)
+        correct_count = sum(1 for result in self.session_results if len(result) > 1 and result[1])
+
+        # Berechne Lernzeit
+        total_time_seconds = 0
+        if hasattr(self, 'session_start_time'):
+            total_time_seconds = (datetime.datetime.now() - self.session_start_time).total_seconds()
+        total_time_minutes = total_time_seconds / 60
+
+        # Berechne Punkte
+        points_gained = sum(result[3] for result in self.session_results if len(result) > 3 and result[1])
+        points_lost = sum(result[3] for result in self.session_results if len(result) > 3 and not result[1])
+        net_points = points_gained - points_lost
+
+        # Erfolgsquote
+        success_rate = (correct_count / total_cards * 100) if total_cards > 0 else 0
+
+        # Header
+        header_text = "Session vorzeitig beendet!" if force_ended else "Session abgeschlossen!"
+        header = ctk.CTkLabel(
+            self.content_frame,
+            text=header_text,
+            font=ctk.CTkFont(size=24, weight="bold")
+        )
+        header.pack(pady=20)
+
+        # Zusammenfassung in Grid
+        summary_frame = ctk.CTkFrame(self.content_frame)
+        summary_frame.pack(padx=20, pady=10)
+        summary_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+
+        # Statistik-Karten
+        stats = [
+            ("Karten", f"{correct_count}/{total_cards}", "#28a745" if success_rate >= 70 else "#ffa500"),
+            ("Erfolgsquote", f"{success_rate:.0f}%", "#28a745" if success_rate >= 70 else ("#ffa500" if success_rate >= 50 else "#dc3545")),
+            ("Netto-Punkte", f"{net_points:+d}", "#28a745" if net_points > 0 else ("#ffa500" if net_points == 0 else "#dc3545")),
+            ("Lernzeit", f"{total_time_minutes:.1f} min", "#4a90e2")
+        ]
+
+        for col, (label, value, color) in enumerate(stats):
+            stat_frame = ctk.CTkFrame(summary_frame)
+            stat_frame.grid(row=0, column=col, padx=10, pady=10, sticky="nsew")
+
+            ctk.CTkLabel(
+                stat_frame,
+                text=label,
+                font=ctk.CTkFont(size=12)
+            ).pack(pady=(10, 0))
+
+            ctk.CTkLabel(
+                stat_frame,
+                text=value,
+                font=ctk.CTkFont(size=20, weight="bold"),
+                text_color=color
+            ).pack(pady=(0, 10))
+
+        # Detaillierte Kartenübersicht
+        details_header_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        details_header_frame.pack(fill='x', padx=25, pady=(15, 5))
+        ctk.CTkLabel(
+            details_header_frame,
+            text="Detaillierter Verlauf:",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(side='left')
+
+        details_frame = ctk.CTkScrollableFrame(self.content_frame)
+        details_frame.pack(fill='both', expand=True, padx=20, pady=10)
+
+        for idx, result in enumerate(self.session_results, 1):
+            card_frame = ctk.CTkFrame(details_frame, border_width=1, border_color=("gray80", "gray30"))
+            card_frame.pack(fill='x', pady=4, padx=5)
+            card_frame.grid_columnconfigure(0, weight=3)
+            card_frame.grid_columnconfigure(1, weight=2)
+
+            # Extrahiere Werte
+            card = result[0]
+            is_correct = result[1] if len(result) > 1 else False
+            time_spent = result[2] if len(result) > 2 else 0
+            points_change = result[3] if len(result) > 3 else 0
+            level_before = result[6] if len(result) > 6 else getattr(card, 'level', 1)
+            level_after = result[7] if len(result) > 7 else getattr(card, 'level', 1)
+            level_change = level_after - level_before
+
+            # Info Frame
+            info_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+            info_frame.grid(row=0, column=0, sticky="w", padx=10, pady=8)
+
+            status_symbol = "✓" if is_correct else "✗"
+            color = "#28a745" if is_correct else "#dc3545"
+            card_text = card.question[:55] + "..." if len(card.question) > 55 else card.question
+
+            # Status und Frage
+            status_question_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+            status_question_frame.pack(anchor='w')
+
+            ctk.CTkLabel(
+                status_question_frame,
+                text=f"{idx}. {status_symbol}",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color=color
+            ).pack(side='left')
+
+            ctk.CTkLabel(
+                status_question_frame,
+                text=card_text,
+                font=ctk.CTkFont(size=13)
+            ).pack(side='left', padx=(5, 0))
+
+            # Punkte und Level
+            detail_text = f"Punkte: {points_change:+d} | Level: {level_before} → {level_after}"
+            if level_change != 0:
+                detail_text += f" ({level_change:+d})"
+
+            ctk.CTkLabel(
+                info_frame,
+                text=detail_text,
+                font=ctk.CTkFont(size=11),
+                text_color="gray50"
+            ).pack(anchor='w')
+
+            # Stats Frame rechts
+            stats_frame_right = ctk.CTkFrame(card_frame, fg_color="transparent")
+            stats_frame_right.grid(row=0, column=1, sticky="e", padx=10, pady=8)
+
+            # Aktuelle Werte
+            current_stats = f"Punkte: {card.points} | Level: {card.level}"
+            ctk.CTkLabel(
+                stats_frame_right,
+                text=current_stats,
+                font=ctk.CTkFont(size=11, weight="bold")
+            ).pack(anchor='e')
+
+            # Streak Info
+            if card.positive_streak > 0:
+                streak_text = f"Streak: {card.positive_streak} ✓"
+                ctk.CTkLabel(
+                    stats_frame_right,
+                    text=streak_text,
+                    font=ctk.CTkFont(size=10),
+                    text_color="#28a745"
+                ).pack(anchor='e')
+
+        # Button Frame
+        button_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        button_frame.pack(pady=20)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Neue Lernsession",
+            command=self.show_leitner_learning_options,
+            font=ctk.CTkFont(size=14),
+            height=35,
+            fg_color="#4a90e2",
+            hover_color="#357abd"
+        ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Zurück zum Hauptmenü",
+            command=self.create_main_menu,
+            font=ctk.CTkFont(size=14),
+            height=35,
+            fg_color="gray",
+            hover_color="darkgray"
+        ).pack(side='left', padx=5)
+
+        # Speichere Statistik
+        session_stat = {
+            "date": datetime.datetime.now().strftime("%d.%m.%Y"),
+            "time": datetime.datetime.now().strftime("%H:%M"),
+            "cards_total": total_cards,
+            "cards_correct": correct_count,
+            "total_time": total_time_minutes,
+            "avg_time_per_card": total_time_minutes / total_cards if total_cards > 0 else 0,
+            "success_rate": success_rate,
+            "system": "Leitner",
+            "force_ended": force_ended,
+            "net_points": net_points
+        }
+
+        try:
+            if hasattr(self, 'stats_manager'):
+                self.stats_manager.add_session_summary(session_stat)
+            logging.info("Leitner-Sitzungsstatistik gespeichert")
+        except Exception as e:
+            logging.error(f"Fehler beim Speichern der Leitner-Statistik: {e}")
+
     def show_srs_learning_options(self):
         """Zeigt die SRS-Lernoptionen mit erweiterten Filtern an."""
         self._clear_content_frame()
@@ -6932,13 +7143,13 @@ class FlashcardApp:
         Zeigt die aktuelle Karte mit UnterstÃƒÂ¼tzung für Bilder bei Frage UND Antwort.
         """
         if not self.cards_to_learn:
-            self.show_session_summary()
+            self.show_leitner_session_summary()
             return
-        
+
         self._clear_content_frame()
-        
-        # Aktuelle Karte laden
-        self.current_card = self.cards_to_learn.pop(0)
+
+        # Aktuelle Karte laden (NICHT pop, da das in handle_leitner_correct/incorrect gemacht wird)
+        self.current_card = self.cards_to_learn[0]
         
         # Hauptcontainer mit Scrollbar
         scroll_container = ctk.CTkScrollableFrame(
@@ -7096,6 +7307,21 @@ class FlashcardApp:
             hover_color="#c0392b",
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left', padx=10)
+
+        # Session beenden Button
+        end_session_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        end_session_frame.pack(pady=20)
+
+        ctk.CTkButton(
+            end_session_frame,
+            text="Session beenden",
+            command=self.end_leitner_session,
+            width=200,
+            height=40,
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d",
+            font=ctk.CTkFont(size=14)
+        ).pack()
 
 
     def _display_image(self, parent_frame, image_path, max_size=(500, 300), label_text=None):
