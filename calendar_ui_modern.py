@@ -16,20 +16,22 @@ from learning_sets import LearningSetManager
 from planner_manager import PlannerManager, get_default_planner_icons
 
 
-# Moderne Farbpalette
+# Moderne Farbpalette mit verbesserter Lesbarkeit
 COLORS = {
-    'primary': '#3b82f6',      # Modernes Blau
-    'primary_hover': '#2563eb',
-    'secondary': '#8b5cf6',    # Lila
-    'success': '#10b981',      # Grün
-    'warning': '#f59e0b',      # Orange
-    'danger': '#ef4444',       # Rot
-    'background': '#0f172a',   # Dunkelblau
-    'surface': '#1e293b',      # Mittel-Dunkel
-    'card': '#1e293b',         # Card Background
-    'text': '#f1f5f9',         # Heller Text
-    'text_secondary': '#94a3b8', # Sekundärer Text
-    'border': '#334155',       # Border
+    'primary': '#60a5fa',      # Helleres Blau für bessere Lesbarkeit
+    'primary_hover': '#3b82f6',
+    'secondary': '#a78bfa',    # Helleres Lila
+    'success': '#34d399',      # Helleres Grün
+    'warning': '#fbbf24',      # Helleres Orange
+    'danger': '#f87171',       # Helleres Rot
+    'background': '#1e293b',   # Aufgehelltes Dunkelblau
+    'surface': '#334155',      # Hellere Surface
+    'card': '#475569',         # Hellere Card Background für besseren Kontrast
+    'text': '#f8fafc',         # Sehr heller Text
+    'text_secondary': '#cbd5e1', # Hellerer sekundärer Text
+    'border': '#475569',       # Hellerer Border
+    'accent': '#38bdf8',       # Akzentfarbe
+    'card_hover': '#64748b',   # Hover-State für Cards
 }
 
 
@@ -158,13 +160,13 @@ class PlannerSelectionView(ctk.CTkFrame):
         self.scroll_frame.grid_columnconfigure(1, weight=1)
 
     def _create_planner_card(self, planner: Dict, is_active: bool) -> ctk.CTkFrame:
-        """Erstellt eine moderne Card für einen Planer."""
+        """Erstellt eine moderne Card für einen Planer mit verbessertem Design."""
         card = ctk.CTkFrame(
             self.scroll_frame,
-            fg_color=COLORS['card'],
-            corner_radius=15,
-            border_width=3 if is_active else 0,
-            border_color=COLORS['primary'] if is_active else None
+            fg_color=COLORS['surface'],
+            corner_radius=18,
+            border_width=3 if is_active else 2,
+            border_color=COLORS['primary'] if is_active else COLORS['border']
         )
 
         # Card-Content
@@ -178,7 +180,7 @@ class PlannerSelectionView(ctk.CTkFrame):
         icon_label = ctk.CTkLabel(
             header,
             text=planner.get('icon', '📅'),
-            font=ctk.CTkFont(size=40)
+            font=ctk.CTkFont(size=44)
         )
         icon_label.pack(side='left', padx=(0, 15))
 
@@ -188,99 +190,133 @@ class PlannerSelectionView(ctk.CTkFrame):
         name = ctk.CTkLabel(
             title_frame,
             text=planner['name'],
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=ctk.CTkFont(size=22, weight="bold"),
             text_color=COLORS['text'],
             anchor='w'
         )
         name.pack(fill='x')
 
-        # Active Badge
+        # Active Badge mit Animation-Effekt
         if is_active:
+            badge_frame = ctk.CTkFrame(title_frame, fg_color=COLORS['primary'], corner_radius=6)
+            badge_frame.pack(fill='x', pady=(5, 0))
+
             badge = ctk.CTkLabel(
-                title_frame,
+                badge_frame,
                 text="✓ AKTIV",
                 font=ctk.CTkFont(size=11, weight="bold"),
-                text_color=COLORS['primary'],
-                anchor='w'
+                text_color=COLORS['text']
             )
-            badge.pack(fill='x')
+            badge.pack(padx=8, pady=3)
 
-        # Statistiken
+        # Statistiken mit modernem Design
         stats = self.planner_manager.get_planner_statistics(planner['id'])
 
-        stats_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['background'], corner_radius=10)
+        stats_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['card'], corner_radius=12, border_width=1, border_color=COLORS['border'])
         stats_frame.pack(fill='x', pady=(0, 15))
 
+        # Grid für Statistiken
+        stats_grid = ctk.CTkFrame(stats_frame, fg_color="transparent")
+        stats_grid.pack(fill='x', padx=15, pady=12)
+        stats_grid.grid_columnconfigure((0, 1), weight=1)
+
         # Lernsets
-        lernsets_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"📚 {stats['total_lernsets']} Lernsets  •  🎯 {stats['total_categories']} Kategorien",
-            font=ctk.CTkFont(size=12),
-            text_color=COLORS['text_secondary']
-        )
-        lernsets_label.pack(padx=15, pady=10)
+        lernsets_frame = ctk.CTkFrame(stats_grid, fg_color="transparent")
+        lernsets_frame.grid(row=0, column=0, sticky='w', padx=(0, 10))
 
-        # Ziele
-        goals_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"Ziel: {stats['total_daily_goal']} Karten/Tag",
+        ctk.CTkLabel(
+            lernsets_frame,
+            text="📚",
+            font=ctk.CTkFont(size=16)
+        ).pack(side='left', padx=(0, 5))
+
+        ctk.CTkLabel(
+            lernsets_frame,
+            text=f"{stats['total_lernsets']} Lernsets",
             font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=COLORS['success']
-        )
-        goals_label.pack(padx=15, pady=(0, 10))
+            text_color=COLORS['text']
+        ).pack(side='left')
 
-        # Buttons
+        # Kategorien
+        cats_frame = ctk.CTkFrame(stats_grid, fg_color="transparent")
+        cats_frame.grid(row=0, column=1, sticky='e', padx=(10, 0))
+
+        ctk.CTkLabel(
+            cats_frame,
+            text="🎯",
+            font=ctk.CTkFont(size=16)
+        ).pack(side='left', padx=(0, 5))
+
+        ctk.CTkLabel(
+            cats_frame,
+            text=f"{stats['total_categories']} Kategorien",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(side='left')
+
+        # Ziel-Badge
+        goal_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['success'], corner_radius=10)
+        goal_frame.pack(fill='x', pady=(0, 15))
+
+        ctk.CTkLabel(
+            goal_frame,
+            text=f"🎯 Tägliches Ziel: {stats['total_daily_goal']} Karten",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(padx=15, pady=10)
+
+        # Buttons mit verbessertem Layout
         button_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         button_frame.pack(fill='x')
 
         if not is_active:
             activate_btn = ctk.CTkButton(
                 button_frame,
-                text="Auswählen",
+                text="▶ Auswählen",
                 font=ctk.CTkFont(size=13, weight="bold"),
                 fg_color=COLORS['primary'],
                 hover_color=COLORS['primary_hover'],
                 command=lambda: self._select_planner(planner['id']),
-                height=35,
-                corner_radius=8
+                height=38,
+                corner_radius=10
             )
-            activate_btn.pack(side='left', padx=(0, 8))
+            activate_btn.pack(side='left', fill='x', expand=True, padx=(0, 8))
         else:
             open_btn = ctk.CTkButton(
                 button_frame,
-                text="Öffnen",
+                text="▶ Öffnen",
                 font=ctk.CTkFont(size=13, weight="bold"),
-                fg_color=COLORS['success'],
-                hover_color='#059669',
+                fg_color=COLORS['accent'],
+                hover_color=COLORS['primary'],
                 command=lambda: self._open_planner(planner['id']),
-                height=35,
-                corner_radius=8
+                height=38,
+                corner_radius=10
             )
-            open_btn.pack(side='left', padx=(0, 8))
+            open_btn.pack(side='left', fill='x', expand=True, padx=(0, 8))
 
         edit_btn = ctk.CTkButton(
             button_frame,
-            text="⚙️",
-            font=ctk.CTkFont(size=14),
-            fg_color=COLORS['surface'],
-            hover_color=COLORS['border'],
+            text="⚙",
+            font=ctk.CTkFont(size=16),
+            fg_color=COLORS['card'],
+            hover_color=COLORS['card_hover'],
             command=lambda: self._edit_planner(planner['id']),
-            width=35,
-            height=35,
-            corner_radius=8
+            width=38,
+            height=38,
+            corner_radius=10
         )
         edit_btn.pack(side='left', padx=(0, 8))
 
         delete_btn = ctk.CTkButton(
             button_frame,
             text="🗑",
-            font=ctk.CTkFont(size=14),
+            font=ctk.CTkFont(size=16),
             fg_color=COLORS['danger'],
             hover_color='#dc2626',
             command=lambda: self._delete_planner(planner['id']),
-            width=35,
-            height=35,
-            corner_radius=8
+            width=38,
+            height=38,
+            corner_radius=10
         )
         delete_btn.pack(side='left')
 
@@ -518,61 +554,67 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             self.scroll_frame.grid_columnconfigure(i, weight=1, minsize=200)
 
     def _create_day_frame(self, parent, day_index: int, day_name: str) -> ctk.CTkFrame:
-        """Erstellt ein modernes Frame für einen Tag."""
+        """Erstellt ein modernes Frame für einen Tag mit verbessertem Design."""
         frame = ctk.CTkFrame(
             parent,
-            fg_color=COLORS['card'],
-            corner_radius=12
+            fg_color=COLORS['surface'],
+            corner_radius=15,
+            border_width=2,
+            border_color=COLORS['border']
         )
 
-        # Header
-        header = ctk.CTkFrame(frame, fg_color=COLORS['background'], corner_radius=10)
-        header.pack(fill='x', padx=8, pady=8)
+        # Header mit Gradient-Look
+        header = ctk.CTkFrame(frame, fg_color=COLORS['background'], corner_radius=12)
+        header.pack(fill='x', padx=10, pady=10)
 
         day_label = ctk.CTkLabel(
             header,
             text=day_name,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(size=15, weight="bold"),
             text_color=COLORS['text']
         )
-        day_label.pack(pady=8)
+        day_label.pack(pady=(10, 5))
 
         date_label = ctk.CTkLabel(
             header,
             text="",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=13),
             text_color=COLORS['text_secondary']
         )
-        date_label.pack(pady=(0, 8))
+        date_label.pack(pady=(0, 10))
 
-        # Badge für fällige Karten
-        badge_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        badge_frame.pack(fill='x', padx=8, pady=8)
+        # Badge für fällige Karten mit modernem Design
+        badge_frame = ctk.CTkFrame(
+            frame,
+            fg_color=COLORS['card'],
+            corner_radius=8
+        )
+        badge_frame.pack(fill='x', padx=10, pady=(0, 10))
 
         badge_label = ctk.CTkLabel(
             badge_frame,
             text="",
-            font=ctk.CTkFont(size=11),
-            text_color=COLORS['text_secondary']
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=COLORS['text']
         )
-        badge_label.pack()
+        badge_label.pack(pady=8)
 
         # Sessions Container
         sessions_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        sessions_frame.pack(fill='both', expand=True, padx=8, pady=8)
+        sessions_frame.pack(fill='both', expand=True, padx=10, pady=(0, 10))
 
-        # Add Button
+        # Add Button mit modernem Design
         add_btn = ctk.CTkButton(
             frame,
-            text="+ Session",
-            font=ctk.CTkFont(size=12),
-            fg_color=COLORS['surface'],
-            hover_color=COLORS['border'],
+            text="➕ Session hinzufügen",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color=COLORS['accent'],
+            hover_color=COLORS['primary'],
             command=lambda idx=day_index: self._add_session(idx),
-            height=32,
-            corner_radius=8
+            height=36,
+            corner_radius=10
         )
-        add_btn.pack(padx=8, pady=8)
+        add_btn.pack(padx=10, pady=(0, 10), fill='x')
 
         # Speichere Referenzen
         frame.day_label = day_label
@@ -684,63 +726,85 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             self._create_session_widget(day_frame.sessions_frame, entry, date)
 
     def _create_session_widget(self, parent, entry: Dict, date: datetime.date):
-        """Erstellt ein Widget für eine Session."""
+        """Erstellt ein Widget für eine Session mit verbessertem Design."""
+        # Session Frame mit Gradient-Effekt
         session_frame = ctk.CTkFrame(
             parent,
-            fg_color=COLORS['background'],
-            corner_radius=8
+            fg_color=COLORS['surface'],
+            corner_radius=10,
+            border_width=2,
+            border_color=COLORS['border']
         )
-        session_frame.pack(fill='x', pady=4)
+        session_frame.pack(fill='x', pady=6)
 
         # Status Icon
         status = entry.get('status', 'offen')
         if status == 'erledigt':
             icon = '✓'
             color = COLORS['success']
+            border_color = COLORS['success']
         elif status == 'übersprungen':
             icon = '✗'
             color = COLORS['warning']
+            border_color = COLORS['warning']
         else:
             icon = '⏳'
-            color = COLORS['text_secondary']
+            color = COLORS['accent']
+            border_color = COLORS['accent']
+
+        session_frame.configure(border_color=border_color)
+
+        # Header mit Icon und Kategorie
+        header_frame = ctk.CTkFrame(session_frame, fg_color="transparent")
+        header_frame.pack(fill='x', padx=10, pady=(10, 5))
+
+        ctk.CTkLabel(
+            header_frame,
+            text=icon,
+            font=ctk.CTkFont(size=16),
+            text_color=color
+        ).pack(side='left', padx=(0, 8))
 
         # Kategorie
         kategorie_text = f"{entry['kategorie']}"
         if entry.get('unterkategorie'):
-            kategorie_text += f"\n{entry['unterkategorie']}"
+            kategorie_text += f" • {entry['unterkategorie']}"
 
         kategorie_label = ctk.CTkLabel(
-            session_frame,
+            header_frame,
             text=kategorie_text,
-            font=ctk.CTkFont(size=11),
-            text_color=color,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=COLORS['text'],
             anchor='w'
         )
-        kategorie_label.pack(anchor='w', padx=8, pady=(8, 4))
+        kategorie_label.pack(side='left', fill='x', expand=True)
 
-        # Karten
-        info_text = f"{entry.get('erwartete_karten', 0)} Karten"
+        # Karten-Info mit Icon
+        info_frame = ctk.CTkFrame(session_frame, fg_color="transparent")
+        info_frame.pack(fill='x', padx=10, pady=5)
+
+        info_text = f"🎴 {entry.get('erwartete_karten', 0)} Karten"
         ctk.CTkLabel(
-            session_frame,
+            info_frame,
             text=info_text,
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=11),
             text_color=COLORS['text_secondary'],
             anchor='w'
-        ).pack(anchor='w', padx=8, pady=(0, 8))
+        ).pack(side='left')
 
         if status == 'offen':
-            # Lernen Button
+            # Lernen Button mit modernem Design
             learn_btn = ctk.CTkButton(
                 session_frame,
-                text="Lernen",
-                font=ctk.CTkFont(size=10),
+                text="▶ Lernen starten",
+                font=ctk.CTkFont(size=11, weight="bold"),
                 fg_color=COLORS['primary'],
                 hover_color=COLORS['primary_hover'],
                 command=lambda: self._start_session(entry),
-                height=28,
-                corner_radius=6
+                height=32,
+                corner_radius=8
             )
-            learn_btn.pack(padx=8, pady=(0, 8))
+            learn_btn.pack(padx=10, pady=(5, 10), fill='x')
 
     def _count_due_cards_for_date(self, date: datetime.date) -> int:
         """Zählt fällige Karten für ein Datum."""
@@ -807,29 +871,39 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         self._create_stat_card(stats_grid, 3, "🎯", "Wochenziel", goal_text)
 
     def _create_stat_card(self, parent, column: int, icon: str, label: str, value: str):
-        """Erstellt eine Statistik-Card."""
-        card = ctk.CTkFrame(parent, fg_color=COLORS['background'], corner_radius=10)
+        """Erstellt eine moderne Statistik-Card mit verbessertem Design."""
+        card = ctk.CTkFrame(
+            parent,
+            fg_color=COLORS['surface'],
+            corner_radius=12,
+            border_width=2,
+            border_color=COLORS['border']
+        )
         card.grid(row=0, column=column, padx=8, sticky='ew')
 
+        # Icon mit Hintergrund
+        icon_frame = ctk.CTkFrame(card, fg_color=COLORS['card'], corner_radius=10)
+        icon_frame.pack(pady=(15, 10))
+
         ctk.CTkLabel(
-            card,
+            icon_frame,
             text=icon,
-            font=ctk.CTkFont(size=24)
-        ).pack(pady=(10, 5))
+            font=ctk.CTkFont(size=28)
+        ).pack(padx=15, pady=10)
 
         ctk.CTkLabel(
             card,
             text=label,
-            font=ctk.CTkFont(size=11),
+            font=ctk.CTkFont(size=12),
             text_color=COLORS['text_secondary']
-        ).pack()
+        ).pack(pady=(0, 5))
 
         ctk.CTkLabel(
             card,
             text=value,
-            font=ctk.CTkFont(size=18, weight="bold"),
+            font=ctk.CTkFont(size=20, weight="bold"),
             text_color=COLORS['text']
-        ).pack(pady=(0, 10))
+        ).pack(pady=(0, 15))
 
     # Event Handler
     def _previous_week(self):
@@ -921,72 +995,128 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
 
 
 class CreateLearningSetFrame(ctk.CTkFrame):
-    """Inline Frame zum Erstellen eines neuen Lernsets."""
+    """Inline Frame zum Erstellen eines neuen Lernsets mit modernem Dropdown-Design."""
 
     def __init__(self, parent, data_manager, on_close_callback=None):
-        super().__init__(parent, fg_color=COLORS['surface'], corner_radius=15)
+        super().__init__(parent, fg_color=COLORS['background'], corner_radius=20, border_width=2, border_color=COLORS['border'])
         self.data_manager = data_manager
         self.learning_set_manager = LearningSetManager(data_manager)
         self.on_close_callback = on_close_callback
 
-        self.selected_categories = []
+        self.selected_categories = {}  # Dict: {category: [subcategories]}
+        self.category_widgets = {}  # Speichert Referenzen zu Widgets
         self._create_ui()
 
     def _create_ui(self):
-        """Erstellt die UI."""
-        # Header
+        """Erstellt die UI mit modernem Design."""
+        # Header mit Gradient-Effekt
+        header_frame = ctk.CTkFrame(self, fg_color=COLORS['surface'], corner_radius=15)
+        header_frame.pack(fill='x', padx=20, pady=20)
+
         header = ctk.CTkLabel(
-            self,
+            header_frame,
             text="📚  Neues Lernset erstellen",
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=ctk.CTkFont(size=24, weight="bold"),
             text_color=COLORS['text']
         )
         header.pack(pady=20)
 
         # Beschreibung
         desc = ctk.CTkLabel(
-            self,
-            text="Wähle Kategorien aus, die du in diesem Lernset lernen möchtest",
-            font=ctk.CTkFont(size=12),
-            text_color=COLORS['text_secondary']
+            header_frame,
+            text="Wähle Kategorien aus, die du in diesem Lernset lernen möchtest\nBeim Auswählen einer Kategorie werden automatisch alle Unterkategorien hinzugefügt",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary'],
+            justify='center'
         )
         desc.pack(pady=(0, 20))
 
+        # Content Frame
+        content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        content_frame.pack(fill='both', expand=True, padx=20)
+
         # Name
+        name_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['surface'], corner_radius=12)
+        name_frame.pack(fill='x', pady=(0, 15))
+
         ctk.CTkLabel(
-            self,
-            text="Name des Lernsets:",
-            font=ctk.CTkFont(size=14),
+            name_frame,
+            text="📝 Name des Lernsets:",
+            font=ctk.CTkFont(size=14, weight="bold"),
             text_color=COLORS['text']
-        ).pack(pady=(10, 5))
+        ).pack(pady=(15, 5), padx=15, anchor='w')
 
         self.name_entry = ctk.CTkEntry(
-            self,
-            width=400,
+            name_frame,
             height=40,
             font=ctk.CTkFont(size=14),
-            placeholder_text="z.B. Mathematik Grundlagen"
+            placeholder_text="z.B. Mathematik Grundlagen",
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
         )
-        self.name_entry.pack(pady=(0, 20))
+        self.name_entry.pack(fill='x', pady=(0, 15), padx=15)
 
-        # Kategorien-Auswahl
+        # Kategorien-Auswahl mit Dropdown
+        cat_header = ctk.CTkFrame(content_frame, fg_color="transparent")
+        cat_header.pack(fill='x', pady=(10, 10))
+
         ctk.CTkLabel(
-            self,
-            text="Kategorien auswählen:",
-            font=ctk.CTkFont(size=14),
+            cat_header,
+            text="🏷️ Kategorien auswählen:",
+            font=ctk.CTkFont(size=14, weight="bold"),
             text_color=COLORS['text']
-        ).pack(pady=(10, 5))
+        ).pack(side='left')
 
-        # Scrollable Frame für Kategorien
-        self.categories_frame = ctk.CTkScrollableFrame(
-            self,
-            fg_color=COLORS['background'],
-            height=250,
-            width=400
+        # Dropdown für Kategorie-Auswahl
+        dropdown_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['surface'], corner_radius=12)
+        dropdown_frame.pack(fill='x', pady=(0, 15))
+
+        ctk.CTkLabel(
+            dropdown_frame,
+            text="Kategorie hinzufügen:",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS['text_secondary']
+        ).pack(pady=(15, 5), padx=15, anchor='w')
+
+        # Hole verfügbare Kategorien
+        self.available_categories = self.learning_set_manager.get_available_categories()
+        category_names = list(self.available_categories.keys())
+
+        # Dropdown
+        self.category_dropdown = ctk.CTkComboBox(
+            dropdown_frame,
+            values=category_names if category_names else ["Keine Kategorien verfügbar"],
+            command=self._on_category_selected,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            dropdown_font=ctk.CTkFont(size=12),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border'],
+            button_color=COLORS['primary'],
+            button_hover_color=COLORS['primary_hover']
         )
-        self.categories_frame.pack(pady=(0, 20), padx=20)
+        self.category_dropdown.pack(fill='x', pady=(0, 15), padx=15)
+        if category_names:
+            self.category_dropdown.set("Kategorie auswählen...")
 
-        self._load_available_categories()
+        # Ausgewählte Kategorien Anzeige
+        ctk.CTkLabel(
+            content_frame,
+            text="✓ Ausgewählte Kategorien:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(pady=(10, 10), anchor='w')
+
+        # Scrollable Frame für ausgewählte Kategorien
+        self.selected_frame = ctk.CTkScrollableFrame(
+            content_frame,
+            fg_color=COLORS['surface'],
+            height=200,
+            corner_radius=12
+        )
+        self.selected_frame.pack(fill='both', expand=True, pady=(0, 15))
+
+        self._update_selected_display()
 
         # Buttons
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -994,88 +1124,152 @@ class CreateLearningSetFrame(ctk.CTkFrame):
 
         ctk.CTkButton(
             button_frame,
-            text="Erstellen",
+            text="✓ Erstellen",
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=COLORS['success'],
-            hover_color='#059669',
+            hover_color='#22c55e',
             command=self._create,
-            width=150,
-            height=40
+            width=160,
+            height=45,
+            corner_radius=10
         ).pack(side='left', padx=10)
 
         ctk.CTkButton(
             button_frame,
-            text="Abbrechen",
-            font=ctk.CTkFont(size=14),
-            fg_color=COLORS['surface'],
-            hover_color=COLORS['border'],
+            text="✗ Abbrechen",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=COLORS['danger'],
+            hover_color='#dc2626',
             command=self._cancel,
-            width=150,
-            height=40
+            width=160,
+            height=45,
+            corner_radius=10
         ).pack(side='left', padx=10)
 
-    def _load_available_categories(self):
-        """Lädt alle verfügbaren Kategorien."""
-        available = self.learning_set_manager.get_available_categories()
-
-        if not available:
-            ctk.CTkLabel(
-                self.categories_frame,
-                text="Keine Kategorien vorhanden.\nErstelle zuerst Flashcards mit Kategorien.",
-                text_color=COLORS['text_secondary']
-            ).pack(pady=20)
+    def _on_category_selected(self, selected_category: str):
+        """Wird aufgerufen wenn eine Kategorie aus dem Dropdown ausgewählt wird.
+        Fügt automatisch alle Unterkategorien hinzu."""
+        if selected_category == "Kategorie auswählen..." or selected_category == "Keine Kategorien verfügbar":
             return
 
-        for category, subcategories in available.items():
-            # Category Header
-            cat_frame = ctk.CTkFrame(self.categories_frame, fg_color=COLORS['card'], corner_radius=8)
-            cat_frame.pack(fill='x', pady=5, padx=5)
+        # Prüfe ob Kategorie bereits ausgewählt ist
+        if selected_category in self.selected_categories:
+            messagebox.showinfo("Info", f"'{selected_category}' ist bereits ausgewählt.")
+            self.category_dropdown.set("Kategorie auswählen...")
+            return
 
-            # Category Checkbox
-            cat_var = ctk.IntVar()
-            cat_checkbox = ctk.CTkCheckBox(
-                cat_frame,
-                text=f"📁 {category}",
-                variable=cat_var,
-                font=ctk.CTkFont(size=13, weight="bold"),
-                command=lambda c=category, v=cat_var, subs=subcategories: self._toggle_category(c, v, subs)
+        # Hole alle Unterkategorien
+        subcategories = self.available_categories.get(selected_category, [])
+
+        # Füge Kategorie mit allen Unterkategorien hinzu
+        self.selected_categories[selected_category] = subcategories.copy()
+
+        # Aktualisiere Anzeige
+        self._update_selected_display()
+
+        # Zeige Bestätigung
+        messagebox.showinfo(
+            "Kategorie hinzugefügt",
+            f"✓ '{selected_category}' wurde hinzugefügt\n"
+            f"Alle {len(subcategories)} Unterkategorien wurden automatisch ausgewählt."
+        )
+
+        # Reset Dropdown
+        self.category_dropdown.set("Kategorie auswählen...")
+
+    def _update_selected_display(self):
+        """Aktualisiert die Anzeige der ausgewählten Kategorien."""
+        # Lösche alte Widgets
+        for widget in self.selected_frame.winfo_children():
+            widget.destroy()
+
+        if not self.selected_categories:
+            ctk.CTkLabel(
+                self.selected_frame,
+                text="Noch keine Kategorien ausgewählt.\nWähle Kategorien aus dem Dropdown oben.",
+                font=ctk.CTkFont(size=12),
+                text_color=COLORS['text_secondary'],
+                justify='center'
+            ).pack(expand=True, pady=40)
+            return
+
+        # Zeige ausgewählte Kategorien
+        for category, subcategories in self.selected_categories.items():
+            # Category Card
+            cat_card = ctk.CTkFrame(
+                self.selected_frame,
+                fg_color=COLORS['card'],
+                corner_radius=12,
+                border_width=2,
+                border_color=COLORS['primary']
             )
-            cat_checkbox.pack(anchor='w', padx=10, pady=10)
+            cat_card.pack(fill='x', pady=8, padx=10)
 
-            # Subcategories
+            # Header
+            header_frame = ctk.CTkFrame(cat_card, fg_color="transparent")
+            header_frame.pack(fill='x', padx=15, pady=(15, 10))
+
+            # Icon und Name
+            icon_label = ctk.CTkLabel(
+                header_frame,
+                text="📁",
+                font=ctk.CTkFont(size=20)
+            )
+            icon_label.pack(side='left', padx=(0, 10))
+
+            title_label = ctk.CTkLabel(
+                header_frame,
+                text=category,
+                font=ctk.CTkFont(size=15, weight="bold"),
+                text_color=COLORS['text']
+            )
+            title_label.pack(side='left')
+
+            # Entfernen-Button
+            remove_btn = ctk.CTkButton(
+                header_frame,
+                text="✗",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color=COLORS['danger'],
+                hover_color='#dc2626',
+                command=lambda c=category: self._remove_category(c),
+                width=32,
+                height=32,
+                corner_radius=8
+            )
+            remove_btn.pack(side='right')
+
+            # Unterkategorien
             if subcategories:
-                subcat_frame = ctk.CTkFrame(cat_frame, fg_color="transparent")
-                subcat_frame.pack(fill='x', padx=30, pady=(0, 10))
+                subcat_frame = ctk.CTkFrame(cat_card, fg_color=COLORS['background'], corner_radius=8)
+                subcat_frame.pack(fill='x', padx=15, pady=(0, 15))
 
-                for subcat in subcategories:
-                    sub_var = ctk.IntVar()
-                    sub_cb = ctk.CTkCheckBox(
-                        subcat_frame,
-                        text=subcat,
-                        variable=sub_var,
-                        font=ctk.CTkFont(size=12),
-                        command=lambda c=category, s=subcat, v=sub_var: self._toggle_subcategory(c, s, v)
-                    )
-                    sub_cb.pack(anchor='w', pady=2)
+                ctk.CTkLabel(
+                    subcat_frame,
+                    text=f"✓ {len(subcategories)} Unterkategorien automatisch ausgewählt:",
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color=COLORS['success']
+                ).pack(anchor='w', padx=10, pady=(10, 5))
 
-    def _toggle_category(self, category: str, var: ctk.IntVar, subcategories: List[str]):
-        """Wählt alle Unterkategorien einer Kategorie aus/ab."""
-        # Diese Funktion wird aufgerufen wenn die Hauptkategorie angeklickt wird
-        # Wir müssen alle Unterkategorien entsprechend setzen
-        pass
+                # Zeige Unterkategorien in kompakter Form
+                subcat_text = " • ".join(subcategories)
+                ctk.CTkLabel(
+                    subcat_frame,
+                    text=subcat_text,
+                    font=ctk.CTkFont(size=10),
+                    text_color=COLORS['text_secondary'],
+                    anchor='w',
+                    wraplength=450
+                ).pack(anchor='w', padx=10, pady=(0, 10))
 
-    def _toggle_subcategory(self, category: str, subcategory: str, var: ctk.IntVar):
-        """Fügt/Entfernt eine Unterkategorie."""
-        cat_subcat = (category, subcategory)
-        if var.get():
-            if cat_subcat not in self.selected_categories:
-                self.selected_categories.append(cat_subcat)
-        else:
-            if cat_subcat in self.selected_categories:
-                self.selected_categories.remove(cat_subcat)
+    def _remove_category(self, category: str):
+        """Entfernt eine Kategorie und alle ihre Unterkategorien."""
+        if category in self.selected_categories:
+            del self.selected_categories[category]
+            self._update_selected_display()
 
     def _create(self):
-        """Erstellt das Lernset."""
+        """Erstellt das Lernset mit automatisch ausgewählten Unterkategorien."""
         name = self.name_entry.get().strip()
 
         if not name:
@@ -1083,20 +1277,17 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             return
 
         if not self.selected_categories:
-            messagebox.showwarning("Fehler", "Bitte wähle mindestens eine Kategorie/Unterkategorie aus.")
+            messagebox.showwarning("Fehler", "Bitte wähle mindestens eine Kategorie aus.")
             return
 
-        # Konvertiere selected_categories in das richtige Format
-        kategorien_dict = {}
-        for cat, subcat in self.selected_categories:
-            if cat not in kategorien_dict:
-                kategorien_dict[cat] = []
-            kategorien_dict[cat].append(subcat)
-
+        # Konvertiere selected_categories (Dict) in das richtige Format
         kategorien_list = [
             {'kategorie': cat, 'unterkategorien': subcats}
-            for cat, subcats in kategorien_dict.items()
+            for cat, subcats in self.selected_categories.items()
         ]
+
+        # Zähle Gesamtzahl der Unterkategorien
+        total_subcats = sum(len(subcats) for subcats in self.selected_categories.values())
 
         # Erstelle Set mit Standardzielen
         set_id = self.learning_set_manager.create_set(
@@ -1107,7 +1298,13 @@ class CreateLearningSetFrame(ctk.CTkFrame):
         )
 
         if set_id:
-            messagebox.showinfo("Erfolg", f"Lernset '{name}' wurde erstellt!")
+            messagebox.showinfo(
+                "✓ Erfolg",
+                f"Lernset '{name}' wurde erstellt!\n\n"
+                f"📁 {len(self.selected_categories)} Kategorien\n"
+                f"📂 {total_subcats} Unterkategorien (automatisch ausgewählt)\n"
+                f"🎯 Tägliches Ziel: 20 Karten"
+            )
             if self.on_close_callback:
                 self.on_close_callback(set_id)
         else:
