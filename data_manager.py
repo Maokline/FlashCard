@@ -771,6 +771,7 @@ class DataManager:
         self.weekly_plan_file = get_persistent_path('weekly_plan.json')
         self.learning_sets_file = get_persistent_path('learning_sets.json')
         self.algorithm_settings_file = get_persistent_path('algorithm_settings.json')
+        self.planners_file = get_persistent_path('planners.json')
 
         # Stelle sicher, dass alle Verzeichnisse existieren
         os.makedirs(os.path.dirname(self.flashcards_file), exist_ok=True)
@@ -797,6 +798,7 @@ class DataManager:
         self.weekly_plan: Dict = {}
         self.learning_sets: Dict = {}
         self.algorithm_settings: Dict = {}
+        self.planners: Dict = {}
 
         # Locks für Thread-Sicherheit
         self.flashcards_lock = threading.RLock()
@@ -805,6 +807,7 @@ class DataManager:
         self.weekly_plan_lock = threading.RLock()
         self.learning_sets_lock = threading.RLock()
         self.algorithm_settings_lock = threading.RLock()
+        self.planners_lock = threading.RLock()
 
         # Daten laden
         self.load_flashcards()
@@ -816,6 +819,7 @@ class DataManager:
         self.weekly_plan = self.load_weekly_plan()
         self.learning_sets = self.load_learning_sets()
         self.algorithm_settings = self.load_algorithm_settings()
+        self.planners = self.load_planners()
 
         # Bilder-Verzeichnis initialisieren
         self.images_dir = get_persistent_path('images')
@@ -1977,6 +1981,44 @@ class DataManager:
             'niedrige_erfolgsquote': 60,
             'max_tage_ohne_lernen': 7
         })
+
+    # -----------------------------------------------------------------------------
+    # PLANER VERWALTUNG
+    # ------------------------------------------------------------------------------
+
+    def load_planners(self) -> dict:
+        """Lädt Planer aus JSON."""
+        if not os.path.exists(self.planners_file):
+            logging.info(f"Planer-Datei {self.planners_file} existiert nicht. Initialisiere leere Planer.")
+            return {'planners': {}, 'active_planner': None}
+        try:
+            with open(self.planners_file, 'r', encoding='utf-8') as f:
+                planners = json.load(f)
+            logging.info(f"Planer aus {self.planners_file} geladen.")
+            return planners
+        except Exception as e:
+            logging.error(f"Fehler beim Laden der Planer: {e}")
+            return {'planners': {}, 'active_planner': None}
+
+    def save_planners(self) -> bool:
+        """Speichert Planer als JSON."""
+        try:
+            with self.planners_lock:
+                temp_file_path = self.planners_file + ".tmp"
+                with open(temp_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.planners, f, indent=4, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
+                shutil.move(temp_file_path, self.planners_file)
+                logging.info(f"Planer erfolgreich in {self.planners_file} gespeichert.")
+                return True
+        except Exception as e:
+            logging.error(f"Fehler beim Speichern der Planer: {e}")
+            return False
+
+    def save_data(self) -> bool:
+        """Speichert alle Daten (für Rückwärtskompatibilität mit PlannerManager)."""
+        return self.save_planners()
 
 # ------------------------------------------------------------------------------
 # INITIALISIERUNG DES LOGGINGS UND BEISPIELFUNKTION
