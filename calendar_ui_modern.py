@@ -1399,7 +1399,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
 
         # Öffne Präferenzen-Dialog
         dialog = PlannerPreferencesDialog(
-            self.root,
+            self,
             categories=sorted(list(all_categories)),
             total_daily_goal=total_daily_goal if total_daily_goal > 0 else 20
         )
