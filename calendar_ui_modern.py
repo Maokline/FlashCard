@@ -1062,13 +1062,39 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 self.master.destroy()
 
     def _add_session(self, day_index: int):
-        """Öffnet Dialog zum Hinzufügen einer Session."""
+        """Öffnet Inline-Editor zum Hinzufügen einer Session."""
         date = self.week_start + datetime.timedelta(days=day_index)
-        self._show_session_dialog(date, entry=None)
+        self._show_session_editor(date, entry=None)
 
     def _edit_session(self, entry: Dict, date: datetime.date):
-        """Öffnet Dialog zum Bearbeiten einer Session."""
-        self._show_session_dialog(date, entry=entry)
+        """Öffnet Inline-Editor zum Bearbeiten einer Session."""
+        self._show_session_editor(date, entry=entry)
+
+    def _show_session_editor(self, date: datetime.date, entry: Optional[Dict] = None):
+        """Zeigt Inline-Editor zum Erstellen/Bearbeiten einer Session."""
+        # Verstecke Kalenderansicht
+        for widget in self.winfo_children():
+            widget.pack_forget()
+
+        # Erstelle Session-Editor Frame
+        editor_frame = SessionEditorFrame(
+            self,
+            self.data_manager,
+            self.planner_manager,
+            self.planner_id,
+            date,
+            entry,
+            on_close_callback=self._on_session_editor_closed
+        )
+        editor_frame.pack(fill='both', expand=True)
+
+    def _on_session_editor_closed(self):
+        """Callback wenn Session-Editor geschlossen wird."""
+        # Stelle Kalenderansicht wieder her
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._create_ui()
+        self._load_week_data()
 
     def _show_session_dialog(self, date: datetime.date, entry: Optional[Dict] = None):
         """Zeigt Dialog zum Erstellen/Bearbeiten einer Session."""
@@ -1670,22 +1696,316 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         messagebox.showinfo("Info", "Export wird implementiert...")
 
 
-class CreateLearningSetFrame(ctk.CTkFrame):
-    """Inline Frame zum Erstellen eines neuen Lernsets mit modernem Dropdown-Design."""
+class SessionEditorFrame(ctk.CTkFrame):
+    """Inline Frame zum Erstellen/Bearbeiten einer Session."""
 
-    def __init__(self, parent, data_manager, on_close_callback=None):
+    def __init__(self, parent, data_manager, planner_manager, planner_id, date, entry=None, on_close_callback=None):
+        super().__init__(parent, fg_color="transparent")
+        self.data_manager = data_manager
+        self.planner_manager = planner_manager
+        self.planner_id = planner_id
+        self.date = date
+        self.entry = entry
+        self.on_close_callback = on_close_callback
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt die UI."""
+        # Container
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill='both', expand=True, padx=40, pady=30)
+
+        # Header mit Zurück-Button
+        header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        header_frame.pack(fill='x', pady=(0, 20))
+
+        back_btn = ctk.CTkButton(
+            header_frame,
+            text="← Zurück",
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=self._cancel,
+            width=100,
+            height=35,
+            corner_radius=8
+        )
+        back_btn.pack(side='left')
+
+        # Titel
+        title_text = "✏️ Session bearbeiten" if self.entry else "➕ Neue Session"
+        header = ctk.CTkLabel(
+            main_container,
+            text=title_text,
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=COLORS['text']
+        )
+        header.pack(pady=(20, 30))
+
+        # Hole Planer-Kategorien
+        planner_categories = self.planner_manager.get_planner_categories(self.planner_id)
+        category_dict = {}
+        for cat, subcat in planner_categories:
+            if cat not in category_dict:
+                category_dict[cat] = []
+            category_dict[cat].append(subcat)
+
+        # Content Frame (scrollbar)
+        content = ctk.CTkScrollableFrame(main_container, fg_color=COLORS['surface'], corner_radius=12)
+        content.pack(fill='both', expand=True, pady=(0, 20))
+
+        # Innerer Content mit Padding
+        inner_content = ctk.CTkFrame(content, fg_color="transparent")
+        inner_content.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Datum
+        ctk.CTkLabel(
+            inner_content,
+            text=f"📅 Datum: {self.date.strftime('%d.%m.%Y')}",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', pady=(0, 15))
+
+        # Kategorie
+        ctk.CTkLabel(
+            inner_content,
+            text="Kategorie:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        self.category_var = ctk.StringVar(
+            value=self.entry['kategorie'] if self.entry else (list(category_dict.keys())[0] if category_dict else "")
+        )
+        category_combo = ctk.CTkComboBox(
+            inner_content,
+            values=list(category_dict.keys()) if category_dict else ["Keine Kategorien"],
+            variable=self.category_var,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        category_combo.pack(fill='x', pady=(0, 15))
+
+        # Unterkategorie
+        ctk.CTkLabel(
+            inner_content,
+            text="Unterkategorie:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        def update_subcategories(*args):
+            cat = self.category_var.get()
+            subcats = category_dict.get(cat, [])
+            self.subcategory_combo.configure(values=subcats if subcats else ["Keine"])
+            if subcats and not self.entry:
+                self.subcategory_var.set(subcats[0])
+
+        self.subcategory_var = ctk.StringVar(value=self.entry['unterkategorie'] if self.entry else "")
+        self.subcategory_combo = ctk.CTkComboBox(
+            inner_content,
+            variable=self.subcategory_var,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        self.subcategory_combo.pack(fill='x', pady=(0, 15))
+
+        # Update Subcategories bei Kategorie-Wechsel
+        self.category_var.trace_add('write', update_subcategories)
+        update_subcategories()
+
+        # Erwartete Karten
+        ctk.CTkLabel(
+            inner_content,
+            text="Erwartete Karten:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        self.cards_entry = ctk.CTkEntry(
+            inner_content,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        self.cards_entry.insert(0, str(self.entry.get('erwartete_karten', 20)) if self.entry else "20")
+        self.cards_entry.pack(fill='x', pady=(0, 15))
+
+        # Priorität
+        ctk.CTkLabel(
+            inner_content,
+            text="Priorität:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        self.priority_var = ctk.StringVar(value=self.entry.get('prioritaet', 'mittel') if self.entry else 'mittel')
+        priority_frame = ctk.CTkFrame(inner_content, fg_color="transparent")
+        priority_frame.pack(fill='x', pady=(0, 15))
+
+        for prio in ['niedrig', 'mittel', 'hoch']:
+            ctk.CTkRadioButton(
+                priority_frame,
+                text=prio.capitalize(),
+                variable=self.priority_var,
+                value=prio,
+                font=ctk.CTkFont(size=13)
+            ).pack(side='left', padx=10)
+
+        # Notizen
+        ctk.CTkLabel(
+            inner_content,
+            text="Notizen (optional):",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        self.notes_textbox = ctk.CTkTextbox(
+            inner_content,
+            height=100,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        if self.entry and self.entry.get('notizen'):
+            self.notes_textbox.insert('1.0', self.entry['notizen'])
+        self.notes_textbox.pack(fill='x', pady=(0, 20))
+
+        # Buttons (fixiert unten)
+        button_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        button_frame.pack(pady=(0, 10))
+
+        ctk.CTkButton(
+            button_frame,
+            text="✓ Speichern",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=COLORS['success'],
+            hover_color='#059669',
+            command=self._save_session,
+            width=140,
+            height=40,
+            corner_radius=10
+        ).pack(side='left', padx=5)
+
+        if self.entry:
+            ctk.CTkButton(
+                button_frame,
+                text="🗑 Löschen",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color=COLORS['danger'],
+                hover_color='#dc2626',
+                command=self._delete_session,
+                width=140,
+                height=40,
+                corner_radius=10
+            ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="✗ Abbrechen",
+            font=ctk.CTkFont(size=14),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=self._cancel,
+            width=140,
+            height=40,
+            corner_radius=10
+        ).pack(side='left', padx=5)
+
+    def _save_session(self):
+        """Speichert die Session."""
+        try:
+            kategorie = self.category_var.get()
+            unterkategorie = self.subcategory_var.get()
+            erwartete_karten = int(self.cards_entry.get().strip())
+            prioritaet = self.priority_var.get()
+            notizen = self.notes_textbox.get('1.0', 'end').strip()
+
+            if not kategorie or not unterkategorie:
+                messagebox.showwarning("Fehler", "Bitte wähle Kategorie und Unterkategorie.")
+                return
+
+            if erwartete_karten <= 0:
+                messagebox.showwarning("Fehler", "Erwartete Karten muss größer als 0 sein.")
+                return
+
+            if self.entry:
+                # Bearbeite bestehende Session
+                self.data_manager.update_plan_entry(
+                    self.entry['id'],
+                    kategorie=kategorie,
+                    unterkategorie=unterkategorie,
+                    erwartete_karten=erwartete_karten,
+                    prioritaet=prioritaet,
+                    notizen=notizen
+                )
+            else:
+                # Neue Session
+                self.data_manager.add_plan_entry(
+                    date=self.date,
+                    kategorie=kategorie,
+                    unterkategorie=unterkategorie,
+                    aktion='lernen',
+                    erwartete_karten=erwartete_karten,
+                    prioritaet=prioritaet,
+                    notizen=notizen,
+                    auto_generiert=False
+                )
+
+            if self.on_close_callback:
+                self.on_close_callback()
+
+        except ValueError:
+            messagebox.showwarning("Fehler", "Erwartete Karten muss eine Zahl sein.")
+
+    def _delete_session(self):
+        """Löscht die Session."""
+        if self.entry and messagebox.askyesno("Löschen", "Session wirklich löschen?"):
+            self.data_manager.delete_plan_entry(self.entry['id'])
+            if self.on_close_callback:
+                self.on_close_callback()
+
+    def _cancel(self):
+        """Bricht ab."""
+        if self.on_close_callback:
+            self.on_close_callback()
+
+
+class CreateLearningSetFrame(ctk.CTkFrame):
+    """Inline Frame zum Erstellen/Bearbeiten eines Lernsets mit modernem Dropdown-Design."""
+
+    def __init__(self, parent, data_manager, set_id=None, on_close_callback=None):
         super().__init__(parent, fg_color=COLORS['background'], corner_radius=20, border_width=2, border_color=COLORS['border'])
         self.data_manager = data_manager
         self.learning_set_manager = LearningSetManager(data_manager)
+        self.set_id = set_id
         self.on_close_callback = on_close_callback
 
         self.selected_categories = {}  # Dict: {category: [subcategories]}
         self.category_widgets = {}  # Speichert Referenzen zu Widgets
+
+        # Lade bestehende Daten wenn wir bearbeiten
+        self.existing_set = None
+        if set_id:
+            all_sets = self.learning_set_manager.get_all_sets()
+            self.existing_set = all_sets.get(set_id)
+            if self.existing_set:
+                # Konvertiere Kategorien in das richtige Format
+                for kat_entry in self.existing_set.get('kategorien', []):
+                    cat = kat_entry['kategorie']
+                    subcats = kat_entry.get('unterkategorien', [])
+                    self.selected_categories[cat] = subcats
+
         self._create_ui()
 
     def _create_ui(self):
         """Erstellt die UI mit modernem Design."""
-        # Header mit Gradient-Effekt
+        # Header mit Gradient-Effekt (nicht scrollbar)
         header_frame = ctk.CTkFrame(self, fg_color=COLORS['surface'], corner_radius=15)
         header_frame.pack(fill='x', padx=20, pady=20)
 
@@ -1707,27 +2027,29 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             )
             back_btn.pack(side='left')
 
+        title_text = "✏️  Lernset bearbeiten" if self.set_id else "📚  Neues Lernset erstellen"
         header = ctk.CTkLabel(
             header_frame,
-            text="📚  Neues Lernset erstellen",
+            text=title_text,
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=COLORS['text']
         )
         header.pack(pady=20)
 
         # Beschreibung
+        desc_text = "Bearbeite dein Lernset und passe Ziele an" if self.set_id else "Wähle Kategorien aus, die du in diesem Lernset lernen möchtest\nBeim Auswählen einer Kategorie werden automatisch alle Unterkategorien hinzugefügt"
         desc = ctk.CTkLabel(
             header_frame,
-            text="Wähle Kategorien aus, die du in diesem Lernset lernen möchtest\nBeim Auswählen einer Kategorie werden automatisch alle Unterkategorien hinzugefügt",
+            text=desc_text,
             font=ctk.CTkFont(size=13),
             text_color=COLORS['text_secondary'],
             justify='center'
         )
         desc.pack(pady=(0, 20))
 
-        # Content Frame
-        content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.pack(fill='both', expand=True, padx=20)
+        # Scrollable Content Frame für den gesamten Inhalt
+        content_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        content_frame.pack(fill='both', expand=True, padx=20, pady=(0, 10))
 
         # Name
         name_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['surface'], corner_radius=12)
@@ -1748,6 +2070,8 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             fg_color=COLORS['card'],
             border_color=COLORS['border']
         )
+        if self.existing_set:
+            self.name_entry.insert(0, self.existing_set['name'])
         self.name_entry.pack(fill='x', pady=(0, 15), padx=15)
 
         # Ziel-Einstellungen
@@ -1785,7 +2109,8 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             fg_color=COLORS['card'],
             border_color=COLORS['border']
         )
-        self.daily_goal_entry.insert(0, "20")  # Standardwert
+        daily_default = str(self.existing_set.get('taegliches_ziel', 20)) if self.existing_set else "20"
+        self.daily_goal_entry.insert(0, daily_default)
         self.daily_goal_entry.pack(fill='x')
 
         # Wöchentliches Ziel
@@ -1807,7 +2132,8 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             fg_color=COLORS['card'],
             border_color=COLORS['border']
         )
-        self.weekly_goal_entry.insert(0, "100")  # Standardwert
+        weekly_default = str(self.existing_set.get('woechentliches_ziel', 100)) if self.existing_set else "100"
+        self.weekly_goal_entry.insert(0, weekly_default)
         self.weekly_goal_entry.pack(fill='x')
 
         # Kategorien-Auswahl mit Dropdown
@@ -1861,24 +2187,24 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             text_color=COLORS['text']
         ).pack(pady=(10, 10), anchor='w')
 
-        # Scrollable Frame für ausgewählte Kategorien
-        self.selected_frame = ctk.CTkScrollableFrame(
+        # Frame für ausgewählte Kategorien (jetzt innerhalb des scrollbaren Bereichs)
+        self.selected_frame = ctk.CTkFrame(
             content_frame,
             fg_color=COLORS['surface'],
-            height=200,
             corner_radius=12
         )
-        self.selected_frame.pack(fill='both', expand=True, pady=(0, 15))
+        self.selected_frame.pack(fill='x', pady=(0, 15))
 
         self._update_selected_display()
 
-        # Buttons
+        # Buttons bleiben unten fixiert (außerhalb des Scrollbereichs)
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
-        button_frame.pack(pady=20)
+        button_frame.pack(pady=(10, 20))
 
+        button_text = "✓ Speichern" if self.set_id else "✓ Erstellen"
         ctk.CTkButton(
             button_frame,
-            text="✓ Erstellen",
+            text=button_text,
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=COLORS['success'],
             hover_color='#22c55e',
@@ -2023,7 +2349,7 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             self._update_selected_display()
 
     def _create(self):
-        """Erstellt das Lernset mit automatisch ausgewählten Unterkategorien."""
+        """Erstellt oder aktualisiert das Lernset mit automatisch ausgewählten Unterkategorien."""
         name = self.name_entry.get().strip()
 
         if not name:
@@ -2060,27 +2386,51 @@ class CreateLearningSetFrame(ctk.CTkFrame):
         # Zähle Gesamtzahl der Unterkategorien
         total_subcats = sum(len(subcats) for subcats in self.selected_categories.values())
 
-        # Erstelle Set mit benutzerdefinierten Zielen
-        set_id = self.learning_set_manager.create_set(
-            name=name,
-            kategorien=kategorien_list,
-            taegliches_ziel=daily_goal,
-            woechentliches_ziel=weekly_goal
-        )
-
-        if set_id:
-            messagebox.showinfo(
-                "✓ Erfolg",
-                f"Lernset '{name}' wurde erstellt!\n\n"
-                f"📁 {len(self.selected_categories)} Kategorien\n"
-                f"📂 {total_subcats} Unterkategorien (automatisch ausgewählt)\n"
-                f"🎯 Tägliches Ziel: {daily_goal} Karten\n"
-                f"📅 Wöchentliches Ziel: {weekly_goal} Karten"
+        if self.set_id:
+            # Aktualisiere bestehendes Set
+            success = self.learning_set_manager.update_set(
+                self.set_id,
+                name=name,
+                kategorien=kategorien_list,
+                taegliches_ziel=daily_goal,
+                woechentliches_ziel=weekly_goal
             )
-            if self.on_close_callback:
-                self.on_close_callback(set_id)
+
+            if success:
+                messagebox.showinfo(
+                    "✓ Erfolg",
+                    f"Lernset '{name}' wurde aktualisiert!\n\n"
+                    f"📁 {len(self.selected_categories)} Kategorien\n"
+                    f"📂 {total_subcats} Unterkategorien\n"
+                    f"🎯 Tägliches Ziel: {daily_goal} Karten\n"
+                    f"📅 Wöchentliches Ziel: {weekly_goal} Karten"
+                )
+                if self.on_close_callback:
+                    self.on_close_callback(self.set_id)
+            else:
+                messagebox.showerror("Fehler", "Fehler beim Aktualisieren des Lernsets.")
         else:
-            messagebox.showerror("Fehler", "Fehler beim Erstellen des Lernsets.")
+            # Erstelle neues Set
+            set_id = self.learning_set_manager.create_set(
+                name=name,
+                kategorien=kategorien_list,
+                taegliches_ziel=daily_goal,
+                woechentliches_ziel=weekly_goal
+            )
+
+            if set_id:
+                messagebox.showinfo(
+                    "✓ Erfolg",
+                    f"Lernset '{name}' wurde erstellt!\n\n"
+                    f"📁 {len(self.selected_categories)} Kategorien\n"
+                    f"📂 {total_subcats} Unterkategorien (automatisch ausgewählt)\n"
+                    f"🎯 Tägliches Ziel: {daily_goal} Karten\n"
+                    f"📅 Wöchentliches Ziel: {weekly_goal} Karten"
+                )
+                if self.on_close_callback:
+                    self.on_close_callback(set_id)
+            else:
+                messagebox.showerror("Fehler", "Fehler beim Erstellen des Lernsets.")
 
     def _cancel(self):
         """Bricht ab."""
@@ -2254,6 +2604,26 @@ class CreatePlannerFrame(ctk.CTkFrame):
         )
         creator.pack(fill='both', expand=True, padx=20, pady=20)
 
+    def _edit_lernset(self, set_id: str):
+        """Zeigt den Lernset-Editor inline."""
+        # Lösche bestehenden Inhalt
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
+
+        # Zeige CreateLearningSetFrame im Edit-Modus
+        editor = CreateLearningSetFrame(
+            self.main_container,
+            self.data_manager,
+            set_id=set_id,
+            on_close_callback=self._on_lernset_edited
+        )
+        editor.pack(fill='both', expand=True, padx=20, pady=20)
+
+    def _on_lernset_edited(self, set_id):
+        """Callback wenn Lernset bearbeitet wurde."""
+        # Zurück zum Planer-Formular
+        self._show_planner_form()
+
     def _on_lernset_created(self, set_id):
         """Callback wenn Lernset erstellt oder abgebrochen wurde."""
         if set_id:
@@ -2265,7 +2635,7 @@ class CreatePlannerFrame(ctk.CTkFrame):
         self._show_planner_form()
 
     def _load_lernsets(self):
-        """Lädt alle verfügbaren Lernsets."""
+        """Lädt alle verfügbaren Lernsets mit Edit-Buttons."""
         all_sets = self.learning_set_manager.get_all_sets()
 
         if not all_sets:
@@ -2277,19 +2647,36 @@ class CreatePlannerFrame(ctk.CTkFrame):
             return
 
         for set_id, lernset in all_sets.items():
+            # Frame für jedes Lernset (Checkbox + Edit Button)
+            set_frame = ctk.CTkFrame(self.lernsets_scroll, fg_color="transparent")
+            set_frame.pack(fill='x', pady=5)
+
             var = ctk.IntVar()
             # Setze Checkbox wenn bereits ausgewählt
             if set_id in self.selected_lernsets:
                 var.set(1)
 
             cb = ctk.CTkCheckBox(
-                self.lernsets_scroll,
-                text=f"{lernset['name']} ({len(lernset['kategorien'])} Kategorien)",
+                set_frame,
+                text=f"{lernset['name']} ({len(lernset['kategorien'])} Kategorien, Ziel: {lernset.get('taegliches_ziel', 20)}/Tag)",
                 variable=var,
                 font=ctk.CTkFont(size=13),
                 command=lambda sid=set_id, v=var: self._toggle_lernset(sid, v)
             )
-            cb.pack(anchor='w', pady=5)
+            cb.pack(side='left', fill='x', expand=True)
+
+            # Edit-Button
+            edit_btn = ctk.CTkButton(
+                set_frame,
+                text="✏️",
+                font=ctk.CTkFont(size=14),
+                fg_color=COLORS['primary'],
+                hover_color=COLORS['primary_hover'],
+                command=lambda sid=set_id: self._edit_lernset(sid),
+                width=40,
+                height=28
+            )
+            edit_btn.pack(side='right', padx=(10, 0))
 
     def _toggle_lernset(self, set_id: str, var: ctk.IntVar):
         """Fügt/Entfernt Lernset aus Auswahl."""
