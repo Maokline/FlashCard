@@ -408,65 +408,171 @@ class WeeklyPlanner:
 
     def auto_plan_week(self, start_date: datetime.date,
                       active_learning_set: Optional[Dict] = None,
-                      daily_target: int = 20) -> bool:
+                      daily_target: int = 20,
+                      all_learning_sets: Optional[List[Dict]] = None) -> bool:
         """
-        Verteilt Sessions intelligent über 7 Tage.
+        Verteilt Sessions intelligent über 7 Tage mit verbesserter Logik.
 
         Args:
             start_date: Startdatum der Woche (normalerweise Montag)
-            active_learning_set: Das aktive Lernset
+            active_learning_set: Das primäre Lernset (deprecated, nutze all_learning_sets)
             daily_target: Ziel-Anzahl Karten pro Tag
+            all_learning_sets: Liste aller Lernsets des Planers
 
         Returns:
             bool: True wenn erfolgreich
         """
         try:
-            logging.info(f"Starte Auto-Planung für Woche ab {start_date}")
+            logging.info(f"Starte intelligente Auto-Planung für Woche ab {start_date}")
 
             # Lösche bestehende Auto-generierte Einträge für diese Woche
             self._clear_auto_generated_entries(start_date)
 
-            # Jeden Tag der Woche planen
-            for day_offset in range(7):
-                date = start_date + datetime.timedelta(days=day_offset)
+            # Verwende all_learning_sets wenn verfügbar, sonst Fallback
+            learning_sets = all_learning_sets if all_learning_sets else ([active_learning_set] if active_learning_set else [])
 
-                # Hole Top-Empfehlungen für diesen Tag
-                recommendations = self.category_scorer.get_top_recommendations(
-                    date=date,
-                    n=3,  # Top 3 pro Tag
-                    learning_set=active_learning_set
+            if not learning_sets:
+                logging.warning("Keine Lernsets für Auto-Planung verfügbar")
+                return False
+
+            # Sammle alle Kategorien aus allen Lernsets
+            all_categories = set()
+            for lernset in learning_sets:
+                if not lernset or 'kategorien' not in lernset:
+                    continue
+                for kat_entry in lernset['kategorien']:
+                    cat = kat_entry['kategorie']
+                    for subcat in kat_entry.get('unterkategorien', []):
+                        all_categories.add((cat, subcat))
+
+            if not all_categories:
+                logging.warning("Keine Kategorien in Lernsets gefunden")
+                return False
+
+            # Berechne Scores für alle Kategorien einmalig
+            category_scores = {}
+            for cat, subcat in all_categories:
+                score_result = self.category_scorer.calculate_score(cat, subcat, start_date)
+                category_scores[(cat, subcat)] = score_result
+
+            # Sortiere Kategorien nach Score
+            sorted_categories = sorted(
+                category_scores.items(),
+                key=lambda x: x[1]['total_score'],
+                reverse=True
+            )
+
+            # Intelligente Verteilung über die Woche
+            used_categories_per_day = {i: set() for i in range(7)}
+            sessions_per_day = {i: [] for i in range(7)}
+
+            # Berechne optimale Sessions pro Tag basierend auf Lernset-Zielen
+            total_daily_goals = sum(ls.get('taegliches_ziel', 20) for ls in learning_sets)
+            avg_cards_per_day = total_daily_goals // len(learning_sets) if learning_sets else 20
+
+            # Verteile High-Priority Kategorien zuerst
+            for (cat, subcat), score_data in sorted_categories:
+                # Finde besten Tag für diese Kategorie
+                best_day = self._find_best_day_for_category(
+                    cat,
+                    used_categories_per_day,
+                    sessions_per_day,
+                    score_data
                 )
 
-                # Füge Empfehlungen als Sessions hinzu
-                for i, rec in enumerate(recommendations):
-                    # Berechne Priorität basierend auf Score
-                    if rec['total_score'] >= 80:
+                if best_day is not None:
+                    used_categories_per_day[best_day].add(cat)
+
+                    # Berechne erwartete Karten intelligent
+                    due_cards = score_data['details']['fällige_karten']
+                    overdue_cards = score_data['details']['überfällige_karten']
+                    expected_cards = min(
+                        due_cards + overdue_cards,
+                        avg_cards_per_day  # Begrenze auf Tagesziel
+                    )
+
+                    # Bestimme Priorität
+                    if score_data['total_score'] >= 75:
                         prioritaet = 'hoch'
-                    elif rec['total_score'] >= 50:
+                    elif score_data['total_score'] >= 50:
                         prioritaet = 'mittel'
                     else:
                         prioritaet = 'niedrig'
 
-                    # Füge Session hinzu
+                    session = {
+                        'kategorie': cat,
+                        'unterkategorie': subcat,
+                        'erwartete_karten': expected_cards if expected_cards > 0 else 10,
+                        'prioritaet': prioritaet,
+                        'score': score_data['total_score']
+                    }
+                    sessions_per_day[best_day].append(session)
+
+            # Erstelle tatsächliche Plan-Einträge
+            for day_offset in range(7):
+                date = start_date + datetime.timedelta(days=day_offset)
+
+                for session in sessions_per_day[day_offset]:
                     self.data_manager.add_plan_entry(
                         date=date,
-                        kategorie=rec['kategorie'],
-                        unterkategorie=rec['unterkategorie'],
+                        kategorie=session['kategorie'],
+                        unterkategorie=session['unterkategorie'],
                         aktion='lernen',
-                        erwartete_karten=rec['details']['fällige_karten'] + rec['details']['überfällige_karten'],
-                        prioritaet=prioritaet,
+                        erwartete_karten=session['erwartete_karten'],
+                        prioritaet=session['prioritaet'],
                         auto_generiert=True
                     )
 
-                    logging.info(f"Session geplant: {rec['kategorie']}/{rec['unterkategorie']} "
-                               f"am {date} (Score: {rec['total_score']})")
+                    logging.info(
+                        f"Session geplant: {session['kategorie']}/{session['unterkategorie']} "
+                        f"am {date} (Score: {session['score']:.1f}, Karten: {session['erwartete_karten']})"
+                    )
 
-            logging.info("Auto-Planung erfolgreich abgeschlossen.")
+            logging.info("Intelligente Auto-Planung erfolgreich abgeschlossen.")
             return True
 
         except Exception as e:
             logging.error(f"Fehler bei Auto-Planung: {e}", exc_info=True)
             return False
+
+    def _find_best_day_for_category(self, category: str, used_categories_per_day: Dict,
+                                    sessions_per_day: Dict, score_data: Dict) -> Optional[int]:
+        """
+        Findet den besten Tag für eine Kategorie basierend auf:
+        - Bereits geplante Kategorien (Vermeidung von Duplikaten)
+        - Gleichmäßige Verteilung
+        - Dringlichkeit
+
+        Returns:
+            int: Tag-Index (0-6) oder None wenn Woche voll
+        """
+        # Berechne "Last" pro Tag
+        day_loads = []
+        for day in range(7):
+            # Bevorzuge Tage ohne diese Kategorie
+            if category in used_categories_per_day[day]:
+                penalty = 1000  # Sehr hohe Strafe
+            else:
+                penalty = 0
+
+            # Bevorzuge Tage mit weniger Sessions
+            session_count = len(sessions_per_day[day])
+
+            # Gesamt-Last
+            load = penalty + session_count * 10
+            day_loads.append((day, load))
+
+        # Sortiere nach Last (aufsteigend)
+        day_loads.sort(key=lambda x: x[1])
+
+        # Prüfe ob bester Tag akzeptabel ist
+        best_day, best_load = day_loads[0]
+
+        # Maximal 4 Sessions pro Tag
+        if len(sessions_per_day[best_day]) >= 4:
+            return None
+
+        return best_day
 
     def _clear_auto_generated_entries(self, start_date: datetime.date):
         """Löscht alle auto-generierten Einträge für eine Woche."""
