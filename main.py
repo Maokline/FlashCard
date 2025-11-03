@@ -48,6 +48,7 @@ from data_manager import DataManager, ThemeManager, StatisticsManager, Flashcard
 
 from custom_widgets import ModernButton, ModernCombobox
 from export_import import export_flashcards_to_csv, import_flashcards_from_csv
+from calendar_ui import WeeklyCalendarView
 
 sns.set_style("whitegrid")
 sns.set_palette("husl")
@@ -620,6 +621,7 @@ class FlashcardApp:
         button_configs = [
             {"name": "Home", "style": "Primary.TButton"},
             {"name": "Lernsession", "style": "Secondary.TButton"},
+            {"name": "📅 Wochenplaner", "style": "Secondary.TButton"},
             {"name": "Kategorien", "style": "Secondary.TButton"},
             {"name": "Karten verwalten", "style": "Secondary.TButton"},
             {"name": "Tag-Suche", "style": "Secondary.TButton"},
@@ -649,6 +651,7 @@ class FlashcardApp:
         action = {
             "Home": self.create_main_menu,
             "Lernsession": self.show_learning_options,
+            "📅 Wochenplaner": self.show_weekly_calendar,
             "Kategorien": self.manage_categories,
             "Karten verwalten": self.show_card_management,
             "Tag-Suche": self.show_tag_search_interface,
@@ -6003,6 +6006,89 @@ class FlashcardApp:
 
 
 
+    def start_leitner_session_from_plan(self, category: str, subcategory: str, plan_id: str = None,
+                                        cards_limit: int = 30):
+        """
+        Startet eine Leitner-Session mit vordefinierten Filtern (aus Kalender).
+
+        Args:
+            category: Die Kategorie für die Session
+            subcategory: Die Unterkategorie für die Session
+            plan_id: Optional - ID des Planeintrags für Tracking
+            cards_limit: Maximale Anzahl Karten (Standard: 30)
+        """
+        try:
+            # Speichere plan_id für späteres Tracking
+            self.current_plan_id = plan_id
+
+            # Filtere nur fällige Karten für diese Kategorie/Unterkategorie
+            today = datetime.datetime.now()
+            all_cards = list(self.leitner_system.cards.values())
+            filtered_cards = []
+
+            for card in all_cards:
+                if card.category.lower() != category.lower():
+                    continue
+                if card.subcategory.lower() != subcategory.lower():
+                    continue
+
+                # Nur fällige Karten
+                if card.next_review_date <= today:
+                    filtered_cards.append(card)
+
+            if not filtered_cards:
+                messagebox.showinfo(
+                    "Keine Karten fällig",
+                    f"Für {category} - {subcategory} sind aktuell keine Karten fällig.\n\n"
+                    f"Das Lernset wird automatisch aktualisiert, sobald wieder Karten fällig sind."
+                )
+                return
+
+            # Gruppiere und mische Karten nach Fälligkeitsdatum
+            from collections import defaultdict
+            import random
+
+            cards_by_date = defaultdict(list)
+            for card in filtered_cards:
+                due_date = card.next_review_date.strftime("%Y-%m-%d")
+                cards_by_date[due_date].append(card)
+
+            sorted_cards = []
+            for due_date in sorted(cards_by_date.keys()):
+                group = cards_by_date[due_date]
+                random.shuffle(group)
+                sorted_cards.extend(group)
+
+            display_cards = sorted_cards[:cards_limit]
+
+            # Setze die Karten für die Session
+            self.cards_to_learn = display_cards
+            self.total_cards_in_session = len(display_cards)
+
+            # Tracking-Variablen initialisieren
+            self.unique_cards_seen = set()
+            self.cards_in_retry = set()
+            self.cards_wrong_in_session = set()
+            self.total_answers = 0
+            self.correct_answers = 0
+
+            # Initialisiere Session-Ergebnisse
+            self.session_results = []
+
+            # Starte Zeitmessung
+            if self.appearance_settings.track_learning_time:
+                self.session_start_time = datetime.datetime.now()
+
+            # Starte das Kartenfenster
+            self.show_card_window_dynamically()
+
+            logging.info(f"Leitner-Session gestartet: {category}/{subcategory} mit {len(display_cards)} Karten")
+
+        except Exception as e:
+            logging.error(f"Fehler beim Starten der Leitner-Session aus Kalender: {e}", exc_info=True)
+            messagebox.showerror("Fehler", f"Beim Starten der Session ist ein Fehler aufgetreten: {e}")
+            self.create_main_menu()
+
     def start_leitner_session(self):
         """Startet eine Leitner-Lernsession mit den ausgewählten Karten."""
         try:
@@ -6487,6 +6573,21 @@ class FlashcardApp:
             logging.info("Leitner-Sitzungsstatistik gespeichert")
         except Exception as e:
             logging.error(f"Fehler beim Speichern der Leitner-Statistik: {e}")
+
+        # Update Planeintrag falls vorhanden (für Kalender-Integration)
+        if hasattr(self, 'current_plan_id') and self.current_plan_id:
+            try:
+                updates = {
+                    'status': 'erledigt',
+                    'erledigt_am': datetime.datetime.now().isoformat(),
+                    'tatsaechliche_karten': total_cards
+                }
+                self.data_manager.update_plan_entry(self.current_plan_id, updates)
+                logging.info(f"Planeintrag {self.current_plan_id} als erledigt markiert.")
+                # Lösche plan_id nach Verwendung
+                delattr(self, 'current_plan_id')
+            except Exception as e:
+                logging.error(f"Fehler beim Aktualisieren des Planeintrags: {e}")
 
     def show_srs_learning_options(self):
         """Zeigt die SRS-Lernoptionen mit erweiterten Filtern an."""
@@ -10989,6 +11090,25 @@ Wie werden Karten einsortiert?
         # Setze den aktiven Button
         self.highlight_active_button('Statistik zurücksetzen')
 
+
+    # -----------------------------------------------------------------------------------
+    # WOCHENPLANER
+    # -----------------------------------------------------------------------------------
+    def show_weekly_calendar(self):
+        """Zeigt den Wochenkalender mit KI-gestützten Lernempfehlungen."""
+        self._clear_content_frame()
+
+        # Erstelle WeeklyCalendarView mit App-Referenz
+        self.calendar_view = WeeklyCalendarView(
+            self.content_frame,
+            self.data_manager,
+            self.leitner_system,
+            app=self  # Übergebe Referenz für Session-Start
+        )
+        self.calendar_view.pack(fill='both', expand=True)
+
+        self.highlight_active_button('📅 Wochenplaner')
+        logging.info("Wochenkalender geöffnet.")
 
     # -----------------------------------------------------------------------------------
     # MAINLOOP

@@ -767,6 +767,11 @@ class DataManager:
         self.theme_file       = get_persistent_path(DEFAULT_THEME_FILE)
         self.images_dir       = get_persistent_path(DEFAULT_IMAGES_DIR)
 
+        # Neue Dateien für Kalender-System
+        self.weekly_plan_file = get_persistent_path('weekly_plan.json')
+        self.learning_sets_file = get_persistent_path('learning_sets.json')
+        self.algorithm_settings_file = get_persistent_path('algorithm_settings.json')
+
         # Stelle sicher, dass alle Verzeichnisse existieren
         os.makedirs(os.path.dirname(self.flashcards_file), exist_ok=True)
         os.makedirs(os.path.dirname(self.categories_file), exist_ok=True)
@@ -788,17 +793,30 @@ class DataManager:
         self.stats: List[Dict] = []
         self.theme_manager = ThemeManager(self.theme_file)
 
+        # Neue Datenstrukturen für Kalender-System
+        self.weekly_plan: Dict = {}
+        self.learning_sets: Dict = {}
+        self.algorithm_settings: Dict = {}
+
         # Locks für Thread-Sicherheit
         self.flashcards_lock = threading.RLock()
         self.categories_lock = threading.RLock()
         self.stats_lock = threading.RLock()
+        self.weekly_plan_lock = threading.RLock()
+        self.learning_sets_lock = threading.RLock()
+        self.algorithm_settings_lock = threading.RLock()
 
         # Daten laden
         self.load_flashcards()
         self.load_categories()
         self.load_stats()
         self.theme_manager.load_themes()
-        
+
+        # Neue Kalender-Daten laden
+        self.weekly_plan = self.load_weekly_plan()
+        self.learning_sets = self.load_learning_sets()
+        self.algorithm_settings = self.load_algorithm_settings()
+
         # Bilder-Verzeichnis initialisieren
         self.images_dir = get_persistent_path('images')
         os.makedirs(self.images_dir, exist_ok=True)
@@ -1657,6 +1675,308 @@ class DataManager:
         except Exception as e:
             logging.error(f"Fehler beim Erstellen des Flashcards-Backups: {e}")
             return False
+
+    # -----------------------------------------------------------------------------
+    # WOCHENPLAN VERWALTUNG
+    # ------------------------------------------------------------------------------
+
+    def load_weekly_plan(self) -> dict:
+        """Lädt Wochenplan aus JSON."""
+        if not os.path.exists(self.weekly_plan_file):
+            logging.info(f"Wochenplan-Datei {self.weekly_plan_file} existiert nicht. Initialisiere leeren Wochenplan.")
+            return {}
+        try:
+            with open(self.weekly_plan_file, 'r', encoding='utf-8') as f:
+                plan = json.load(f)
+            logging.info(f"Wochenplan aus {self.weekly_plan_file} geladen.")
+            return plan
+        except Exception as e:
+            logging.error(f"Fehler beim Laden des Wochenplans: {e}")
+            return {}
+
+    def save_weekly_plan(self) -> bool:
+        """Speichert Wochenplan als JSON."""
+        try:
+            with self.weekly_plan_lock:
+                temp_file_path = self.weekly_plan_file + ".tmp"
+                with open(temp_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.weekly_plan, f, indent=4, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
+                shutil.move(temp_file_path, self.weekly_plan_file)
+                logging.info(f"Wochenplan erfolgreich in {self.weekly_plan_file} gespeichert.")
+                return True
+        except Exception as e:
+            logging.error(f"Fehler beim Speichern des Wochenplans: {e}")
+            return False
+
+    def add_plan_entry(self, date: datetime.date, kategorie: str, unterkategorie: str,
+                      aktion: str, **kwargs) -> str:
+        """Fügt neue Session zum Plan hinzu."""
+        date_str = date.strftime('%Y-%m-%d')
+        if date_str not in self.weekly_plan:
+            self.weekly_plan[date_str] = []
+
+        entry = {
+            'id': str(uuid.uuid4()),
+            'kategorie': kategorie,
+            'unterkategorie': unterkategorie,
+            'aktion': aktion,
+            'status': 'offen',
+            'erstellt_am': datetime.datetime.now().isoformat(),
+            'erledigt_am': None,
+            'tatsaechliche_karten': None,
+            'auto_generiert': kwargs.get('auto_generiert', False),
+            'erwartete_karten': kwargs.get('erwartete_karten', 0),
+            'geplante_dauer': kwargs.get('geplante_dauer', None),
+            'prioritaet': kwargs.get('prioritaet', 'mittel')
+        }
+
+        self.weekly_plan[date_str].append(entry)
+        self.save_weekly_plan()
+        logging.info(f"Planeintrag hinzugefügt: {kategorie} - {unterkategorie} am {date_str}")
+        return entry['id']
+
+    def get_plan_for_date(self, date: datetime.date) -> list:
+        """Gibt alle Sessions für ein Datum zurück."""
+        date_str = date.strftime('%Y-%m-%d')
+        return self.weekly_plan.get(date_str, [])
+
+    def get_plan_entry(self, plan_id: str) -> Optional[dict]:
+        """Findet spezifischen Eintrag anhand ID."""
+        for date, entries in self.weekly_plan.items():
+            for entry in entries:
+                if entry['id'] == plan_id:
+                    return entry
+        return None
+
+    def update_plan_entry(self, plan_id: str, updates: dict) -> bool:
+        """Aktualisiert einen Planeintrag."""
+        entry = self.get_plan_entry(plan_id)
+        if entry:
+            entry.update(updates)
+            self.save_weekly_plan()
+            logging.info(f"Planeintrag {plan_id} aktualisiert.")
+            return True
+        logging.warning(f"Planeintrag {plan_id} nicht gefunden.")
+        return False
+
+    def delete_plan_entry(self, plan_id: str) -> bool:
+        """Löscht einen Planeintrag."""
+        for date, entries in self.weekly_plan.items():
+            original_length = len(entries)
+            self.weekly_plan[date] = [e for e in entries if e['id'] != plan_id]
+            if len(self.weekly_plan[date]) < original_length:
+                self.save_weekly_plan()
+                logging.info(f"Planeintrag {plan_id} gelöscht.")
+                return True
+        logging.warning(f"Planeintrag {plan_id} nicht gefunden.")
+        return False
+
+    def get_plan_for_week(self, start_date: datetime.date) -> dict:
+        """Gibt alle Sessions für eine Woche zurück (7 Tage ab start_date)."""
+        week_plan = {}
+        for i in range(7):
+            date = start_date + datetime.timedelta(days=i)
+            week_plan[date.strftime('%Y-%m-%d')] = self.get_plan_for_date(date)
+        return week_plan
+
+    # -----------------------------------------------------------------------------
+    # LERNSETS VERWALTUNG
+    # ------------------------------------------------------------------------------
+
+    def load_learning_sets(self) -> dict:
+        """Lädt Lernsets aus JSON."""
+        if not os.path.exists(self.learning_sets_file):
+            logging.info(f"Lernsets-Datei {self.learning_sets_file} existiert nicht. Initialisiere leere Lernsets.")
+            return {'lernsets': {}, 'aktives_set': None}
+        try:
+            with open(self.learning_sets_file, 'r', encoding='utf-8') as f:
+                sets = json.load(f)
+            logging.info(f"Lernsets aus {self.learning_sets_file} geladen.")
+            return sets
+        except Exception as e:
+            logging.error(f"Fehler beim Laden der Lernsets: {e}")
+            return {'lernsets': {}, 'aktives_set': None}
+
+    def save_learning_sets(self) -> bool:
+        """Speichert Lernsets als JSON."""
+        try:
+            with self.learning_sets_lock:
+                temp_file_path = self.learning_sets_file + ".tmp"
+                with open(temp_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.learning_sets, f, indent=4, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
+                shutil.move(temp_file_path, self.learning_sets_file)
+                logging.info(f"Lernsets erfolgreich in {self.learning_sets_file} gespeichert.")
+                return True
+        except Exception as e:
+            logging.error(f"Fehler beim Speichern der Lernsets: {e}")
+            return False
+
+    def get_active_learning_set(self) -> Optional[dict]:
+        """Gibt das aktuell aktive Lernset zurück."""
+        active_id = self.learning_sets.get('aktives_set')
+        if active_id and active_id in self.learning_sets.get('lernsets', {}):
+            return self.learning_sets['lernsets'][active_id]
+        return None
+
+    def create_learning_set(self, name: str, kategorien: list, ziele: dict,
+                           farbe: str = '#4a90e2') -> str:
+        """Erstellt neues Lernset."""
+        set_id = str(uuid.uuid4())
+        if 'lernsets' not in self.learning_sets:
+            self.learning_sets['lernsets'] = {}
+
+        self.learning_sets['lernsets'][set_id] = {
+            'name': name,
+            'aktiv': False,
+            'kategorien': kategorien,
+            'taegliches_ziel': ziele.get('täglich', 20),
+            'woechentliches_ziel': ziele.get('wöchentlich', 100),
+            'erstellt_am': datetime.datetime.now().isoformat(),
+            'farbe': farbe
+        }
+        self.save_learning_sets()
+        logging.info(f"Lernset '{name}' erstellt mit ID {set_id}.")
+        return set_id
+
+    def activate_learning_set(self, set_id: str) -> bool:
+        """Aktiviert ein spezifisches Lernset."""
+        if 'lernsets' not in self.learning_sets or set_id not in self.learning_sets['lernsets']:
+            logging.warning(f"Lernset {set_id} nicht gefunden.")
+            return False
+
+        # Deaktiviere alle
+        for sid in self.learning_sets['lernsets']:
+            self.learning_sets['lernsets'][sid]['aktiv'] = False
+
+        # Aktiviere gewähltes
+        self.learning_sets['lernsets'][set_id]['aktiv'] = True
+        self.learning_sets['aktives_set'] = set_id
+        self.save_learning_sets()
+        logging.info(f"Lernset {set_id} aktiviert.")
+        return True
+
+    def delete_learning_set(self, set_id: str) -> bool:
+        """Löscht ein Lernset."""
+        if 'lernsets' not in self.learning_sets or set_id not in self.learning_sets['lernsets']:
+            logging.warning(f"Lernset {set_id} nicht gefunden.")
+            return False
+
+        del self.learning_sets['lernsets'][set_id]
+        if self.learning_sets.get('aktives_set') == set_id:
+            self.learning_sets['aktives_set'] = None
+        self.save_learning_sets()
+        logging.info(f"Lernset {set_id} gelöscht.")
+        return True
+
+    def update_learning_set(self, set_id: str, updates: dict) -> bool:
+        """Aktualisiert ein Lernset."""
+        if 'lernsets' not in self.learning_sets or set_id not in self.learning_sets['lernsets']:
+            logging.warning(f"Lernset {set_id} nicht gefunden.")
+            return False
+
+        self.learning_sets['lernsets'][set_id].update(updates)
+        self.save_learning_sets()
+        logging.info(f"Lernset {set_id} aktualisiert.")
+        return True
+
+    def get_all_learning_sets(self) -> dict:
+        """Gibt alle Lernsets zurück."""
+        return self.learning_sets.get('lernsets', {})
+
+    # -----------------------------------------------------------------------------
+    # ALGORITHMUS-EINSTELLUNGEN VERWALTUNG
+    # ------------------------------------------------------------------------------
+
+    def load_algorithm_settings(self) -> dict:
+        """Lädt Algorithmus-Einstellungen."""
+        if not os.path.exists(self.algorithm_settings_file):
+            logging.info(f"Algorithmus-Einstellungen {self.algorithm_settings_file} existieren nicht. Initialisiere Standardwerte.")
+            return {
+                'gewichtungen': {
+                    'dringlichkeit': 40,
+                    'effizienz': 30,
+                    'lernrhythmus': 20,
+                    'ausgeglichenheit': 10
+                },
+                'schwellenwerte': {
+                    'kritisch_ueberfallig': 20,
+                    'aufmerksamkeit_ueberfallig': 10,
+                    'niedrige_erfolgsquote': 60,
+                    'max_tage_ohne_lernen': 7
+                }
+            }
+        try:
+            with open(self.algorithm_settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            logging.info(f"Algorithmus-Einstellungen aus {self.algorithm_settings_file} geladen.")
+            return settings
+        except Exception as e:
+            logging.error(f"Fehler beim Laden der Algorithmus-Einstellungen: {e}")
+            return {
+                'gewichtungen': {
+                    'dringlichkeit': 40,
+                    'effizienz': 30,
+                    'lernrhythmus': 20,
+                    'ausgeglichenheit': 10
+                },
+                'schwellenwerte': {
+                    'kritisch_ueberfallig': 20,
+                    'aufmerksamkeit_ueberfallig': 10,
+                    'niedrige_erfolgsquote': 60,
+                    'max_tage_ohne_lernen': 7
+                }
+            }
+
+    def save_algorithm_settings(self) -> bool:
+        """Speichert Algorithmus-Einstellungen."""
+        try:
+            with self.algorithm_settings_lock:
+                temp_file_path = self.algorithm_settings_file + ".tmp"
+                with open(temp_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.algorithm_settings, f, indent=4, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
+                shutil.move(temp_file_path, self.algorithm_settings_file)
+                logging.info(f"Algorithmus-Einstellungen erfolgreich in {self.algorithm_settings_file} gespeichert.")
+                return True
+        except Exception as e:
+            logging.error(f"Fehler beim Speichern der Algorithmus-Einstellungen: {e}")
+            return False
+
+    def update_algorithm_weights(self, weights: dict) -> bool:
+        """Aktualisiert die Gewichtungen des Algorithmus."""
+        # Validiere, dass Summe 100 ergibt
+        total = sum(weights.values())
+        if total != 100:
+            logging.error(f"Gewichtungen müssen Summe 100 ergeben, aktuell: {total}")
+            return False
+
+        if 'gewichtungen' not in self.algorithm_settings:
+            self.algorithm_settings['gewichtungen'] = {}
+        self.algorithm_settings['gewichtungen'].update(weights)
+        return self.save_algorithm_settings()
+
+    def get_algorithm_weights(self) -> dict:
+        """Gibt die aktuellen Gewichtungen zurück."""
+        return self.algorithm_settings.get('gewichtungen', {
+            'dringlichkeit': 40,
+            'effizienz': 30,
+            'lernrhythmus': 20,
+            'ausgeglichenheit': 10
+        })
+
+    def get_algorithm_thresholds(self) -> dict:
+        """Gibt die Schwellenwerte zurück."""
+        return self.algorithm_settings.get('schwellenwerte', {
+            'kritisch_ueberfallig': 20,
+            'aufmerksamkeit_ueberfallig': 10,
+            'niedrige_erfolgsquote': 60,
+            'max_tage_ohne_lernen': 7
+        })
 
 # ------------------------------------------------------------------------------
 # INITIALISIERUNG DES LOGGINGS UND BEISPIELFUNKTION
