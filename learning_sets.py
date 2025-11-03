@@ -7,7 +7,7 @@ Ermöglicht das Erstellen und Verwalten von Lernsets (Ordner von Kategorien).
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import datetime
 
 
