@@ -920,6 +920,205 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         messagebox.showinfo("Info", "Export wird implementiert...")
 
 
+class CreateLearningSetFrame(ctk.CTkFrame):
+    """Inline Frame zum Erstellen eines neuen Lernsets."""
+
+    def __init__(self, parent, data_manager, on_close_callback=None):
+        super().__init__(parent, fg_color=COLORS['surface'], corner_radius=15)
+        self.data_manager = data_manager
+        self.learning_set_manager = LearningSetManager(data_manager)
+        self.on_close_callback = on_close_callback
+
+        self.selected_categories = []
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt die UI."""
+        # Header
+        header = ctk.CTkLabel(
+            self,
+            text="📚  Neues Lernset erstellen",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color=COLORS['text']
+        )
+        header.pack(pady=20)
+
+        # Beschreibung
+        desc = ctk.CTkLabel(
+            self,
+            text="Wähle Kategorien aus, die du in diesem Lernset lernen möchtest",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS['text_secondary']
+        )
+        desc.pack(pady=(0, 20))
+
+        # Name
+        ctk.CTkLabel(
+            self,
+            text="Name des Lernsets:",
+            font=ctk.CTkFont(size=14),
+            text_color=COLORS['text']
+        ).pack(pady=(10, 5))
+
+        self.name_entry = ctk.CTkEntry(
+            self,
+            width=400,
+            height=40,
+            font=ctk.CTkFont(size=14),
+            placeholder_text="z.B. Mathematik Grundlagen"
+        )
+        self.name_entry.pack(pady=(0, 20))
+
+        # Kategorien-Auswahl
+        ctk.CTkLabel(
+            self,
+            text="Kategorien auswählen:",
+            font=ctk.CTkFont(size=14),
+            text_color=COLORS['text']
+        ).pack(pady=(10, 5))
+
+        # Scrollable Frame für Kategorien
+        self.categories_frame = ctk.CTkScrollableFrame(
+            self,
+            fg_color=COLORS['background'],
+            height=250,
+            width=400
+        )
+        self.categories_frame.pack(pady=(0, 20), padx=20)
+
+        self._load_available_categories()
+
+        # Buttons
+        button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        button_frame.pack(pady=20)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Erstellen",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=COLORS['success'],
+            hover_color='#059669',
+            command=self._create,
+            width=150,
+            height=40
+        ).pack(side='left', padx=10)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Abbrechen",
+            font=ctk.CTkFont(size=14),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=self._cancel,
+            width=150,
+            height=40
+        ).pack(side='left', padx=10)
+
+    def _load_available_categories(self):
+        """Lädt alle verfügbaren Kategorien."""
+        available = self.learning_set_manager.get_available_categories()
+
+        if not available:
+            ctk.CTkLabel(
+                self.categories_frame,
+                text="Keine Kategorien vorhanden.\nErstelle zuerst Flashcards mit Kategorien.",
+                text_color=COLORS['text_secondary']
+            ).pack(pady=20)
+            return
+
+        for category, subcategories in available.items():
+            # Category Header
+            cat_frame = ctk.CTkFrame(self.categories_frame, fg_color=COLORS['card'], corner_radius=8)
+            cat_frame.pack(fill='x', pady=5, padx=5)
+
+            # Category Checkbox
+            cat_var = ctk.IntVar()
+            cat_checkbox = ctk.CTkCheckBox(
+                cat_frame,
+                text=f"📁 {category}",
+                variable=cat_var,
+                font=ctk.CTkFont(size=13, weight="bold"),
+                command=lambda c=category, v=cat_var, subs=subcategories: self._toggle_category(c, v, subs)
+            )
+            cat_checkbox.pack(anchor='w', padx=10, pady=10)
+
+            # Subcategories
+            if subcategories:
+                subcat_frame = ctk.CTkFrame(cat_frame, fg_color="transparent")
+                subcat_frame.pack(fill='x', padx=30, pady=(0, 10))
+
+                for subcat in subcategories:
+                    sub_var = ctk.IntVar()
+                    sub_cb = ctk.CTkCheckBox(
+                        subcat_frame,
+                        text=subcat,
+                        variable=sub_var,
+                        font=ctk.CTkFont(size=12),
+                        command=lambda c=category, s=subcat, v=sub_var: self._toggle_subcategory(c, s, v)
+                    )
+                    sub_cb.pack(anchor='w', pady=2)
+
+    def _toggle_category(self, category: str, var: ctk.IntVar, subcategories: List[str]):
+        """Wählt alle Unterkategorien einer Kategorie aus/ab."""
+        # Diese Funktion wird aufgerufen wenn die Hauptkategorie angeklickt wird
+        # Wir müssen alle Unterkategorien entsprechend setzen
+        pass
+
+    def _toggle_subcategory(self, category: str, subcategory: str, var: ctk.IntVar):
+        """Fügt/Entfernt eine Unterkategorie."""
+        cat_subcat = (category, subcategory)
+        if var.get():
+            if cat_subcat not in self.selected_categories:
+                self.selected_categories.append(cat_subcat)
+        else:
+            if cat_subcat in self.selected_categories:
+                self.selected_categories.remove(cat_subcat)
+
+    def _create(self):
+        """Erstellt das Lernset."""
+        name = self.name_entry.get().strip()
+
+        if not name:
+            messagebox.showwarning("Fehler", "Bitte gib einen Namen ein.")
+            return
+
+        if not self.selected_categories:
+            messagebox.showwarning("Fehler", "Bitte wähle mindestens eine Kategorie/Unterkategorie aus.")
+            return
+
+        # Konvertiere selected_categories in das richtige Format
+        kategorien_dict = {}
+        for cat, subcat in self.selected_categories:
+            if cat not in kategorien_dict:
+                kategorien_dict[cat] = []
+            kategorien_dict[cat].append(subcat)
+
+        kategorien_list = [
+            {'kategorie': cat, 'unterkategorien': subcats}
+            for cat, subcats in kategorien_dict.items()
+        ]
+
+        # Erstelle Set mit Standardzielen
+        set_id = self.learning_set_manager.create_set(
+            name=name,
+            kategorien=kategorien_list,
+            taegliches_ziel=20,
+            woechentliches_ziel=100
+        )
+
+        if set_id:
+            messagebox.showinfo("Erfolg", f"Lernset '{name}' wurde erstellt!")
+            if self.on_close_callback:
+                self.on_close_callback(set_id)
+        else:
+            messagebox.showerror("Fehler", "Fehler beim Erstellen des Lernsets.")
+
+    def _cancel(self):
+        """Bricht ab."""
+        if self.on_close_callback:
+            self.on_close_callback(None)
+
+
 class CreatePlannerDialog(ctk.CTkToplevel):
     """Dialog zum Erstellen eines neuen Planers."""
 
@@ -930,7 +1129,7 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         self.learning_set_manager = LearningSetManager(data_manager)
 
         self.title("Neuer Planer")
-        self.geometry("600x700")
+        self.geometry("600x750")
         self.resizable(False, False)
 
         # Zentriere Fenster
@@ -938,27 +1137,40 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         self.grab_set()
 
         self.selected_lernsets = []
+        self.showing_lernset_creator = False
         self._create_ui()
 
     def _create_ui(self):
         """Erstellt die UI."""
+        # Container für den Hauptinhalt
+        self.main_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_container.pack(fill='both', expand=True)
+
+        self._show_planner_form()
+
+    def _show_planner_form(self):
+        """Zeigt das Planer-Erstellungsformular."""
+        # Lösche bestehenden Inhalt
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
+
         # Header
         header = ctk.CTkLabel(
-            self,
+            self.main_container,
             text="Neuer Wochenplaner",
             font=ctk.CTkFont(size=24, weight="bold")
         )
         header.pack(pady=30)
 
         # Name
-        ctk.CTkLabel(self, text="Name:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
-        self.name_entry = ctk.CTkEntry(self, width=400, height=40, font=ctk.CTkFont(size=14))
+        ctk.CTkLabel(self.main_container, text="Name:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
+        self.name_entry = ctk.CTkEntry(self.main_container, width=400, height=40, font=ctk.CTkFont(size=14))
         self.name_entry.pack(pady=(0, 20))
 
         # Icon
-        ctk.CTkLabel(self, text="Icon:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
+        ctk.CTkLabel(self.main_container, text="Icon:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
 
-        icon_frame = ctk.CTkFrame(self, fg_color="transparent")
+        icon_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         icon_frame.pack()
 
         self.icon_var = ctk.StringVar(value="📅")
@@ -976,11 +1188,29 @@ class CreatePlannerDialog(ctk.CTkToplevel):
             )
             btn.grid(row=0, column=i, padx=5, pady=10)
 
-        # Lernsets
-        ctk.CTkLabel(self, text="Lernsets auswählen:", font=ctk.CTkFont(size=14)).pack(pady=(20, 10))
+        # Lernsets Header mit Button
+        lernset_header = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        lernset_header.pack(fill='x', padx=40, pady=(20, 10))
+
+        ctk.CTkLabel(
+            lernset_header,
+            text="Lernsets auswählen:",
+            font=ctk.CTkFont(size=14)
+        ).pack(side='left')
+
+        ctk.CTkButton(
+            lernset_header,
+            text="+ Neues Lernset",
+            font=ctk.CTkFont(size=12),
+            fg_color=COLORS['secondary'],
+            hover_color='#7c3aed',
+            command=self._show_lernset_creator,
+            width=130,
+            height=30
+        ).pack(side='right')
 
         # Liste
-        list_frame = ctk.CTkFrame(self, fg_color=COLORS['surface'])
+        list_frame = ctk.CTkFrame(self.main_container, fg_color=COLORS['surface'])
         list_frame.pack(fill='both', expand=True, padx=40, pady=(0, 20))
 
         self.lernsets_scroll = ctk.CTkScrollableFrame(list_frame, fg_color="transparent")
@@ -989,7 +1219,7 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         self._load_lernsets()
 
         # Buttons
-        button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        button_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         button_frame.pack(pady=20)
 
         ctk.CTkButton(
@@ -1014,6 +1244,30 @@ class CreatePlannerDialog(ctk.CTkToplevel):
             height=40
         ).pack(side='left', padx=10)
 
+    def _show_lernset_creator(self):
+        """Zeigt den Lernset-Ersteller inline."""
+        # Lösche bestehenden Inhalt
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
+
+        # Zeige CreateLearningSetFrame
+        creator = CreateLearningSetFrame(
+            self.main_container,
+            self.data_manager,
+            on_close_callback=self._on_lernset_created
+        )
+        creator.pack(fill='both', expand=True, padx=20, pady=20)
+
+    def _on_lernset_created(self, set_id):
+        """Callback wenn Lernset erstellt oder abgebrochen wurde."""
+        if set_id:
+            # Füge das neue Set zur Auswahl hinzu
+            if set_id not in self.selected_lernsets:
+                self.selected_lernsets.append(set_id)
+
+        # Zurück zum Planer-Formular
+        self._show_planner_form()
+
     def _load_lernsets(self):
         """Lädt alle verfügbaren Lernsets."""
         all_sets = self.learning_set_manager.get_all_sets()
@@ -1021,13 +1275,17 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         if not all_sets:
             ctk.CTkLabel(
                 self.lernsets_scroll,
-                text="Keine Lernsets vorhanden.\nErstelle zuerst Lernsets.",
+                text="Keine Lernsets vorhanden.\nKlicke auf '+ Neues Lernset' um eines zu erstellen.",
                 text_color=COLORS['text_secondary']
             ).pack(pady=20)
             return
 
         for set_id, lernset in all_sets.items():
             var = ctk.IntVar()
+            # Setze Checkbox wenn bereits ausgewählt
+            if set_id in self.selected_lernsets:
+                var.set(1)
+
             cb = ctk.CTkCheckBox(
                 self.lernsets_scroll,
                 text=f"{lernset['name']} ({len(lernset['kategorien'])} Kategorien)",
@@ -1077,17 +1335,118 @@ class EditPlannerDialog(CreatePlannerDialog):
     def __init__(self, parent, data_manager, planner_id: str):
         self.planner_id = planner_id
         super().__init__(parent, data_manager)
+        self.title("Planer bearbeiten")
 
-    def _create_ui(self):
-        """Überschreibt _create_ui um Daten zu laden."""
-        super()._create_ui()
+    def _show_planner_form(self):
+        """Überschreibt um den Titel anzupassen."""
+        # Lösche bestehenden Inhalt
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
 
         # Lade Planer-Daten
         planner = self.planner_manager.get_planner(self.planner_id)
+
+        # Header
+        header = ctk.CTkLabel(
+            self.main_container,
+            text="Planer bearbeiten",
+            font=ctk.CTkFont(size=24, weight="bold")
+        )
+        header.pack(pady=30)
+
+        # Name
+        ctk.CTkLabel(self.main_container, text="Name:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
+        self.name_entry = ctk.CTkEntry(self.main_container, width=400, height=40, font=ctk.CTkFont(size=14))
+        self.name_entry.pack(pady=(0, 20))
         if planner:
             self.name_entry.insert(0, planner['name'])
-            self.icon_var.set(planner.get('icon', '📅'))
+
+        # Icon
+        ctk.CTkLabel(self.main_container, text="Icon:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
+
+        icon_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        icon_frame.pack()
+
+        self.icon_var = ctk.StringVar(value=planner.get('icon', '📅') if planner else "📅")
+        icons = get_default_planner_icons()
+
+        for i, icon in enumerate(icons[:8]):
+            btn = ctk.CTkRadioButton(
+                icon_frame,
+                text=icon,
+                variable=self.icon_var,
+                value=icon,
+                font=ctk.CTkFont(size=20),
+                radiobutton_width=15,
+                radiobutton_height=15
+            )
+            btn.grid(row=0, column=i, padx=5, pady=10)
+
+        # Lernsets Header mit Button
+        lernset_header = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        lernset_header.pack(fill='x', padx=40, pady=(20, 10))
+
+        ctk.CTkLabel(
+            lernset_header,
+            text="Lernsets auswählen:",
+            font=ctk.CTkFont(size=14)
+        ).pack(side='left')
+
+        ctk.CTkButton(
+            lernset_header,
+            text="+ Neues Lernset",
+            font=ctk.CTkFont(size=12),
+            fg_color=COLORS['secondary'],
+            hover_color='#7c3aed',
+            command=self._show_lernset_creator,
+            width=130,
+            height=30
+        ).pack(side='right')
+
+        # Liste
+        list_frame = ctk.CTkFrame(self.main_container, fg_color=COLORS['surface'])
+        list_frame.pack(fill='both', expand=True, padx=40, pady=(0, 20))
+
+        self.lernsets_scroll = ctk.CTkScrollableFrame(list_frame, fg_color="transparent")
+        self.lernsets_scroll.pack(fill='both', expand=True, padx=10, pady=10)
+
+        self._load_lernsets()
+
+        # Buttons
+        button_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        button_frame.pack(pady=20)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Speichern",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            command=self._create,
+            width=150,
+            height=40
+        ).pack(side='left', padx=10)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Abbrechen",
+            font=ctk.CTkFont(size=14),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=self.destroy,
+            width=150,
+            height=40
+        ).pack(side='left', padx=10)
+
+    def _create_ui(self):
+        """Überschreibt _create_ui um Daten zu laden."""
+        # Lade Planer-Daten ZUERST
+        planner = self.planner_manager.get_planner(self.planner_id)
+        if planner:
             self.selected_lernsets = planner.get('lernset_ids', []).copy()
+
+        # Erstelle UI
+        super()._create_ui()
 
     def _create(self):
         """Aktualisiert den Planer statt neu zu erstellen."""
