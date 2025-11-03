@@ -583,3 +583,260 @@ class WeeklyPlanner:
             for entry in entries:
                 if entry.get('auto_generiert', False):
                     self.data_manager.delete_plan_entry(entry['id'])
+
+    def auto_plan_week_with_preferences(self, start_date: datetime.date,
+                                       all_learning_sets: List[Dict],
+                                       preferences: Dict,
+                                       day_weights: List[float]) -> bool:
+        """
+        Verteilt Sessions intelligent über 7 Tage mit Berücksichtigung der Nutzerpräferenzen.
+
+        Args:
+            start_date: Startdatum der Woche (normalerweise Montag)
+            all_learning_sets: Liste aller Lernsets des Planers
+            preferences: Dict mit Nutzerpräferenzen:
+                - priorities: Dict mit Prioritäten (success_rate, due_date, even_distribution)
+                - total_cards: Gewünschte Anzahl Karten für die Woche
+                - priority_category: Priorisierte Kategorie (optional)
+                - daily_distribution: Dict mit Tagesverteilung
+            day_weights: Liste von 7 Gewichten für jeden Tag (Montag-Sonntag)
+
+        Returns:
+            bool: True wenn erfolgreich
+        """
+        try:
+            logging.info(f"Starte intelligente Auto-Planung mit Präferenzen für Woche ab {start_date}")
+            logging.info(f"Präferenzen: {preferences}")
+            logging.info(f"Tagesgewichte: {day_weights}")
+
+            # Lösche bestehende Auto-generierte Einträge für diese Woche
+            self._clear_auto_generated_entries(start_date)
+
+            if not all_learning_sets:
+                logging.warning("Keine Lernsets für Auto-Planung verfügbar")
+                return False
+
+            # Sammle alle Kategorien aus allen Lernsets
+            all_categories = set()
+            for lernset in all_learning_sets:
+                if not lernset or 'kategorien' not in lernset:
+                    continue
+                for kat_entry in lernset['kategorien']:
+                    cat = kat_entry['kategorie']
+                    for subcat in kat_entry.get('unterkategorien', []):
+                        all_categories.add((cat, subcat))
+
+            if not all_categories:
+                logging.warning("Keine Kategorien in Lernsets gefunden")
+                return False
+
+            # Berechne Scores für alle Kategorien mit angepassten Gewichten
+            category_scores = {}
+            for cat, subcat in all_categories:
+                score_result = self.category_scorer.calculate_score(cat, subcat, start_date)
+
+                # Passe Score basierend auf Prioritäten an
+                adjusted_score = self._adjust_score_by_preferences(
+                    score_result,
+                    cat,
+                    preferences
+                )
+
+                category_scores[(cat, subcat)] = {
+                    **score_result,
+                    'adjusted_score': adjusted_score
+                }
+
+            # Sortiere Kategorien nach angepasstem Score
+            sorted_categories = sorted(
+                category_scores.items(),
+                key=lambda x: x[1]['adjusted_score'],
+                reverse=True
+            )
+
+            # Intelligente Verteilung über die Woche mit Tagesgewichten
+            used_categories_per_day = {i: set() for i in range(7)}
+            sessions_per_day = {i: [] for i in range(7)}
+            cards_per_day = {i: 0 for i in range(7)}
+
+            # Berechne Ziel-Karten pro Tag basierend auf Gewichten
+            total_cards = preferences['total_cards']
+            target_cards_per_day = [total_cards * (w / 7.0) for w in day_weights]
+
+            # Verteile High-Priority Kategorien zuerst
+            for (cat, subcat), score_data in sorted_categories:
+                # Finde besten Tag für diese Kategorie basierend auf Gewichten und aktueller Auslastung
+                best_day = self._find_best_day_with_weights(
+                    cat,
+                    used_categories_per_day,
+                    cards_per_day,
+                    target_cards_per_day,
+                    score_data,
+                    preferences
+                )
+
+                if best_day is not None:
+                    used_categories_per_day[best_day].add(cat)
+
+                    # Berechne erwartete Karten intelligent
+                    due_cards = score_data['details']['fällige_karten']
+                    overdue_cards = score_data['details']['überfällige_karten']
+
+                    # Berechne maximale Karten für diesen Tag basierend auf verbleibendem Budget
+                    remaining_budget = target_cards_per_day[best_day] - cards_per_day[best_day]
+                    expected_cards = min(
+                        due_cards + overdue_cards,
+                        int(remaining_budget),
+                        50  # Maximale Session-Größe
+                    )
+
+                    if expected_cards < 5:
+                        expected_cards = 5  # Mindestens 5 Karten
+
+                    cards_per_day[best_day] += expected_cards
+
+                    # Bestimme Priorität
+                    if score_data['adjusted_score'] >= 75:
+                        prioritaet = 'hoch'
+                    elif score_data['adjusted_score'] >= 50:
+                        prioritaet = 'mittel'
+                    else:
+                        prioritaet = 'niedrig'
+
+                    session = {
+                        'kategorie': cat,
+                        'unterkategorie': subcat,
+                        'erwartete_karten': expected_cards,
+                        'prioritaet': prioritaet,
+                        'score': score_data['adjusted_score']
+                    }
+
+                    sessions_per_day[best_day].append(session)
+
+            # Speichere Sessions
+            for day_offset, day_sessions in sessions_per_day.items():
+                date = start_date + datetime.timedelta(days=day_offset)
+
+                for session in day_sessions:
+                    self.data_manager.add_plan_entry(
+                        date=date,
+                        kategorie=session['kategorie'],
+                        unterkategorie=session['unterkategorie'],
+                        aktion='lernen',
+                        erwartete_karten=session['erwartete_karten'],
+                        prioritaet=session['prioritaet'],
+                        auto_generiert=True
+                    )
+
+                    logging.info(
+                        f"Session geplant: {session['kategorie']}/{session['unterkategorie']} "
+                        f"am {date} (Score: {session['score']:.1f}, Karten: {session['erwartete_karten']})"
+                    )
+
+            logging.info("Intelligente Auto-Planung mit Präferenzen erfolgreich abgeschlossen.")
+            return True
+
+        except Exception as e:
+            logging.error(f"Fehler bei Auto-Planung mit Präferenzen: {e}", exc_info=True)
+            return False
+
+    def _adjust_score_by_preferences(self, score_result: Dict, category: str, preferences: Dict) -> float:
+        """
+        Passt den Score einer Kategorie basierend auf Nutzerpräferenzen an.
+
+        Args:
+            score_result: Ursprünglicher Score-Result
+            category: Kategorie-Name
+            preferences: Nutzerpräferenzen
+
+        Returns:
+            float: Angepasster Score
+        """
+        base_score = score_result['total_score']
+        priorities = preferences['priorities']
+        priority_category = preferences.get('priority_category')
+
+        # Gewichte für verschiedene Komponenten
+        weights = {
+            'success_rate': 0.3 if priorities.get('success_rate', True) else 0.1,
+            'due_date': 0.5 if priorities.get('due_date', True) else 0.2,
+            'even_distribution': 0.2 if priorities.get('even_distribution', True) else 0.1
+        }
+
+        # Normalisiere Gewichte
+        total_weight = sum(weights.values())
+        weights = {k: v / total_weight for k, v in weights.items()}
+
+        # Berechne gewichteten Score
+        success_component = score_result['details'].get('erfolgsquote', 50)
+        due_component = min(100, (score_result['details'].get('fällige_karten', 0) +
+                                  score_result['details'].get('überfällige_karten', 0)) * 2)
+
+        adjusted_score = (
+            success_component * weights['success_rate'] +
+            due_component * weights['due_date'] +
+            base_score * weights['even_distribution']
+        )
+
+        # Bonus für priorisierte Kategorie
+        if priority_category and category == priority_category:
+            adjusted_score *= 1.5  # 50% Bonus
+
+        return adjusted_score
+
+    def _find_best_day_with_weights(self, category: str, used_categories_per_day: Dict,
+                                   cards_per_day: Dict, target_cards_per_day: List[float],
+                                   score_data: Dict, preferences: Dict) -> Optional[int]:
+        """
+        Findet den besten Tag für eine Kategorie basierend auf Tagesgewichten.
+
+        Args:
+            category: Kategorie-Name
+            used_categories_per_day: Dict mit bereits geplanten Kategorien pro Tag
+            cards_per_day: Dict mit bereits geplanten Karten pro Tag
+            target_cards_per_day: Liste mit Ziel-Karten pro Tag
+            score_data: Score-Daten der Kategorie
+            preferences: Nutzerpräferenzen
+
+        Returns:
+            int: Tag-Index (0-6) oder None wenn Woche voll
+        """
+        # Berechne "Last" pro Tag
+        day_loads = []
+        for day in range(7):
+            # Bevorzuge Tage ohne diese Kategorie
+            if category in used_categories_per_day[day]:
+                penalty = 1000  # Sehr hohe Strafe
+            else:
+                penalty = 0
+
+            # Bevorzuge Tage, die noch unter ihrem Ziel sind
+            remaining_capacity = target_cards_per_day[day] - cards_per_day[day]
+            if remaining_capacity < 5:
+                capacity_penalty = 500  # Hohe Strafe für volle Tage
+            else:
+                capacity_penalty = 0
+
+            # Bevorzuge gleichmäßige Verteilung
+            distribution_score = abs(cards_per_day[day] - target_cards_per_day[day])
+
+            # Gesamt-Last
+            load = penalty + capacity_penalty + distribution_score
+
+            day_loads.append((day, load))
+
+        # Sortiere nach Last (aufsteigend)
+        day_loads.sort(key=lambda x: x[1])
+
+        # Prüfe ob bester Tag akzeptabel ist
+        best_day, best_load = day_loads[0]
+
+        # Maximal 5 Sessions pro Tag
+        if len(used_categories_per_day[best_day]) >= 5:
+            return None
+
+        # Prüfe ob Tag noch Kapazität hat
+        if best_load >= 1000:
+            return None
+
+        return best_day
