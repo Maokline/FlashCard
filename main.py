@@ -48,6 +48,7 @@ from data_manager import DataManager, ThemeManager, StatisticsManager, Flashcard
 
 from custom_widgets import ModernButton, ModernCombobox
 from export_import import export_flashcards_to_csv, import_flashcards_from_csv
+from calendar_ui import WeeklyCalendarView
 
 sns.set_style("whitegrid")
 sns.set_palette("husl")
@@ -620,6 +621,7 @@ class FlashcardApp:
         button_configs = [
             {"name": "Home", "style": "Primary.TButton"},
             {"name": "Lernsession", "style": "Secondary.TButton"},
+            {"name": "📅 Wochenplaner", "style": "Secondary.TButton"},
             {"name": "Kategorien", "style": "Secondary.TButton"},
             {"name": "Karten verwalten", "style": "Secondary.TButton"},
             {"name": "Tag-Suche", "style": "Secondary.TButton"},
@@ -649,6 +651,7 @@ class FlashcardApp:
         action = {
             "Home": self.create_main_menu,
             "Lernsession": self.show_learning_options,
+            "📅 Wochenplaner": self.show_weekly_calendar,
             "Kategorien": self.manage_categories,
             "Karten verwalten": self.show_card_management,
             "Tag-Suche": self.show_tag_search_interface,
@@ -10989,6 +10992,24 @@ Wie werden Karten einsortiert?
         # Setze den aktiven Button
         self.highlight_active_button('Statistik zurücksetzen')
 
+
+    # -----------------------------------------------------------------------------------
+    # WOCHENPLANER
+    # -----------------------------------------------------------------------------------
+    def show_weekly_calendar(self):
+        """Zeigt den Wochenkalender mit KI-gestützten Lernempfehlungen."""
+        self._clear_content_frame()
+
+        # Erstelle WeeklyCalendarView
+        self.calendar_view = WeeklyCalendarView(
+            self.content_frame,
+            self.data_manager,
+            self.leitner_system
+        )
+        self.calendar_view.pack(fill='both', expand=True)
+
+        self.highlight_active_button('📅 Wochenplaner')
+        logging.info("Wochenkalender geöffnet.")
 
     # -----------------------------------------------------------------------------------
     # MAINLOOP
