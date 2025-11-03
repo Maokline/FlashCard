@@ -946,16 +946,16 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         # Karten
         self._create_stat_card(stats_grid, 1, "🎴", "Karten", f"{completed_cards}/{total_cards}")
 
-        # Fortschritt
+        # Fortschritt (anklickbar)
         progress_text = f"{int(progress * 100)}%"
-        self._create_stat_card(stats_grid, 2, "📈", "Fortschritt", progress_text)
+        self._create_stat_card(stats_grid, 2, "📈", "Fortschritt", progress_text, on_click=self._show_progress_chart)
 
         # Wochenziel
         planner_stats = self.planner_manager.get_planner_statistics(self.planner_id)
         goal_text = f"{planner_stats['total_weekly_goal']}"
         self._create_stat_card(stats_grid, 3, "🎯", "Wochenziel", goal_text)
 
-    def _create_stat_card(self, parent, column: int, icon: str, label: str, value: str):
+    def _create_stat_card(self, parent, column: int, icon: str, label: str, value: str, on_click=None):
         """Erstellt eine moderne Statistik-Card mit verbessertem Design."""
         card = ctk.CTkFrame(
             parent,
@@ -966,29 +966,74 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         )
         card.grid(row=0, column=column, padx=8, sticky='ew')
 
+        # Wenn anklickbar, füge Hover-Effekt und Click-Handler hinzu
+        if on_click:
+            card.configure(cursor="hand2")
+            card.bind("<Button-1>", lambda e: on_click())
+            # Bind auch für alle Kinder
+            for child in card.winfo_children():
+                child.configure(cursor="hand2") if hasattr(child, 'configure') else None
+                child.bind("<Button-1>", lambda e: on_click())
+
         # Icon mit Hintergrund
         icon_frame = ctk.CTkFrame(card, fg_color=COLORS['card'], corner_radius=10)
         icon_frame.pack(pady=(15, 10))
 
-        ctk.CTkLabel(
+        icon_label = ctk.CTkLabel(
             icon_frame,
             text=icon,
             font=ctk.CTkFont(size=28)
-        ).pack(padx=15, pady=10)
+        )
+        icon_label.pack(padx=15, pady=10)
 
-        ctk.CTkLabel(
+        label_widget = ctk.CTkLabel(
             card,
             text=label,
             font=ctk.CTkFont(size=12),
             text_color=COLORS['text_secondary']
-        ).pack(pady=(0, 5))
+        )
+        label_widget.pack(pady=(0, 5))
 
-        ctk.CTkLabel(
+        value_widget = ctk.CTkLabel(
             card,
             text=value,
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color=COLORS['text']
-        ).pack(pady=(0, 15))
+        )
+        value_widget.pack(pady=(0, 15))
+
+        # Bind auch für Kinder wenn anklickbar
+        if on_click:
+            icon_frame.bind("<Button-1>", lambda e: on_click())
+            icon_label.bind("<Button-1>", lambda e: on_click())
+            label_widget.bind("<Button-1>", lambda e: on_click())
+            value_widget.bind("<Button-1>", lambda e: on_click())
+
+    def _show_progress_chart(self):
+        """Zeigt ein Liniendiagramm des Lernfortschritts pro Kategorie."""
+        # Verstecke den aktuellen Inhalt
+        for widget in self.winfo_children():
+            widget.pack_forget()
+
+        # Erstelle Chart-Panel
+        chart_panel = ProgressChartPanel(
+            self,
+            data_manager=self.data_manager,
+            planner_manager=self.planner_manager,
+            planner_id=self.planner_id,
+            on_close=self._close_progress_chart
+        )
+        chart_panel.pack(fill='both', expand=True)
+
+    def _close_progress_chart(self):
+        """Schließt das Fortschritts-Diagramm und kehrt zur Kalenderansicht zurück."""
+        # Alle Widgets entfernen
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # UI neu erstellen
+        self._create_ui()
+        self._load_data()
 
     # Event Handler
     def _previous_period(self):
@@ -1334,6 +1379,22 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             corner_radius=10
         ).pack(side='left', padx=5)
 
+    def _mark_reminder_complete(self, entry: Dict):
+        """Markiert einen Kategorie-Erweiterungs-Reminder als erledigt."""
+        try:
+            self.data_manager.update_plan_entry(
+                entry['id'],
+                {
+                    'status': 'erledigt',
+                    'erledigt_am': datetime.datetime.now().isoformat()
+                }
+            )
+            messagebox.showinfo("✓ Erledigt", "Reminder wurde als erledigt markiert!")
+            self._load_data()
+        except Exception as e:
+            logging.error(f"Fehler beim Markieren des Reminders: {e}", exc_info=True)
+            messagebox.showerror("Fehler", f"Fehler beim Markieren:\n{e}")
+
     def _start_session(self, entry: Dict):
         """Startet eine Lern-Session - Navigiert zur Leitner-Kartenauswahl mit voreingestellten Filtern."""
         if not self.app:
@@ -1397,18 +1458,31 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 for kat_entry in lernset['kategorien']:
                     all_categories.add(kat_entry['kategorie'])
 
-        # Öffne Präferenzen-Dialog
-        dialog = PlannerPreferencesDialog(
-            self,
+        # Zeige Präferenzen direkt in der App
+        self._show_preferences_panel(
             categories=sorted(list(all_categories)),
-            total_daily_goal=total_daily_goal if total_daily_goal > 0 else 20
+            total_daily_goal=total_daily_goal if total_daily_goal > 0 else 20,
+            lernsets=lernsets
         )
-        preferences = dialog.get_result()
 
-        if not preferences:
-            # Nutzer hat abgebrochen
-            return
+    def _show_preferences_panel(self, categories: List[str], total_daily_goal: int, lernsets: List[Dict]):
+        """Zeigt das Präferenzen-Panel direkt in der App an."""
+        # Verstecke den aktuellen Inhalt
+        for widget in self.winfo_children():
+            widget.pack_forget()
 
+        # Erstelle Präferenzen-Panel
+        self.preferences_panel = PlannerPreferencesPanel(
+            self,
+            categories=categories,
+            total_daily_goal=total_daily_goal,
+            on_confirm=lambda prefs: self._apply_preferences(prefs, lernsets),
+            on_cancel=self._cancel_preferences
+        )
+        self.preferences_panel.pack(fill='both', expand=True)
+
+    def _apply_preferences(self, preferences: Dict, lernsets: List[Dict]):
+        """Wendet die Präferenzen an und erstellt den Wochenplan."""
         # Berechne Tagesgewichte basierend auf der Verteilung
         day_weights = self._calculate_day_weights(preferences['daily_distribution'])
 
@@ -1420,15 +1494,25 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             day_weights=day_weights
         )
 
+        # Entferne Präferenzen-Panel und zeige Kalender wieder
+        self.preferences_panel.destroy()
+        self._create_ui()
+        self._load_data()
+
         if success:
             messagebox.showinfo(
                 "✓ Erfolg",
                 "Woche wurde intelligent geplant!\n\n"
                 "Du kannst die Sessions jetzt individuell anpassen."
             )
-            self._load_week_data()
         else:
             messagebox.showerror("Fehler", "Fehler bei der automatischen Planung.")
+
+    def _cancel_preferences(self):
+        """Bricht die Präferenz-Auswahl ab und kehrt zur Kalenderansicht zurück."""
+        self.preferences_panel.destroy()
+        self._create_ui()
+        self._load_data()
 
     def _calculate_day_weights(self, daily_distribution: Dict[str, str]) -> List[float]:
         """
@@ -1540,6 +1624,15 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 info_frame = ctk.CTkFrame(header, fg_color="transparent")
                 info_frame.pack(side='left', fill='x', expand=True)
 
+                # Unterscheide zwischen Aktionstypen
+                aktion = entry.get('aktion', 'lernen')
+                if aktion == 'kategorie_erweitern':
+                    aktion_text = "📝 Neue Karten erstellen"
+                    aktion_icon = "📚"
+                else:
+                    aktion_text = "Lern-Session"
+                    aktion_icon = "🎴"
+
                 ctk.CTkLabel(
                     info_frame,
                     text=f"{entry['kategorie']} • {entry['unterkategorie']}",
@@ -1548,9 +1641,15 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                     anchor='w'
                 ).pack(fill='x')
 
+                # Details abhängig von Aktion
+                if aktion == 'kategorie_erweitern':
+                    detail_text = f"{aktion_icon} {aktion_text} • Priorität: {entry.get('prioritaet', 'mittel').capitalize()}"
+                else:
+                    detail_text = f"{aktion_icon} {entry.get('erwartete_karten', 0)} Karten • Priorität: {entry.get('prioritaet', 'mittel').capitalize()}"
+
                 ctk.CTkLabel(
                     info_frame,
-                    text=f"🎴 {entry.get('erwartete_karten', 0)} Karten • Priorität: {entry.get('prioritaet', 'mittel').capitalize()}",
+                    text=detail_text,
                     font=ctk.CTkFont(size=13),
                     text_color=COLORS['text_secondary'],
                     anchor='w'
@@ -1574,16 +1673,29 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 btn_frame.pack(fill='x', padx=20, pady=(0, 15))
 
                 if status == 'offen':
-                    ctk.CTkButton(
-                        btn_frame,
-                        text="▶ Lernen starten",
-                        font=ctk.CTkFont(size=13, weight="bold"),
-                        fg_color=COLORS['primary'],
-                        hover_color=COLORS['primary_hover'],
-                        command=lambda e=entry: self._start_session(e),
-                        height=40,
-                        corner_radius=10
-                    ).pack(side='left', fill='x', expand=True, padx=(0, 10))
+                    # Unterschiedliche Buttons je nach Aktion
+                    if aktion == 'kategorie_erweitern':
+                        ctk.CTkButton(
+                            btn_frame,
+                            text="✓ Als erledigt markieren",
+                            font=ctk.CTkFont(size=13, weight="bold"),
+                            fg_color=COLORS['success'],
+                            hover_color='#059669',
+                            command=lambda e=entry: self._mark_reminder_complete(e),
+                            height=40,
+                            corner_radius=10
+                        ).pack(side='left', fill='x', expand=True, padx=(0, 10))
+                    else:
+                        ctk.CTkButton(
+                            btn_frame,
+                            text="▶ Lernen starten",
+                            font=ctk.CTkFont(size=13, weight="bold"),
+                            fg_color=COLORS['primary'],
+                            hover_color=COLORS['primary_hover'],
+                            command=lambda e=entry: self._start_session(e),
+                            height=40,
+                            corner_radius=10
+                        ).pack(side='left', fill='x', expand=True, padx=(0, 10))
 
                 ctk.CTkButton(
                     btn_frame,
@@ -1881,13 +1993,46 @@ class SessionEditorFrame(ctk.CTkFrame):
         self.category_var.trace_add('write', update_subcategories)
         update_subcategories()
 
-        # Erwartete Karten
+        # Aktion
         ctk.CTkLabel(
+            inner_content,
+            text="Aktion:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        def update_action_fields(*args):
+            """Zeigt/versteckt Felder basierend auf der Aktion."""
+            aktion = self.action_var.get()
+            if aktion == "Kategorie erweitern (neue Karten erstellen)":
+                self.cards_label.configure(text="Erwartete Karten (optional):")
+            else:
+                self.cards_label.configure(text="Erwartete Karten:")
+
+        self.action_var = ctk.StringVar(
+            value="Lernen" if not self.entry or self.entry.get('aktion', 'lernen') == 'lernen'
+            else "Kategorie erweitern (neue Karten erstellen)"
+        )
+        action_combo = ctk.CTkComboBox(
+            inner_content,
+            values=["Lernen", "Kategorie erweitern (neue Karten erstellen)"],
+            variable=self.action_var,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            border_color=COLORS['border'],
+            command=update_action_fields
+        )
+        action_combo.pack(fill='x', pady=(0, 15))
+
+        # Erwartete Karten
+        self.cards_label = ctk.CTkLabel(
             inner_content,
             text="Erwartete Karten:",
             font=ctk.CTkFont(size=13),
             text_color=COLORS['text_secondary']
-        ).pack(anchor='w', pady=(10, 5))
+        )
+        self.cards_label.pack(anchor='w', pady=(10, 5))
 
         self.cards_entry = ctk.CTkEntry(
             inner_content,
@@ -1898,6 +2043,9 @@ class SessionEditorFrame(ctk.CTkFrame):
         )
         self.cards_entry.insert(0, str(self.entry.get('erwartete_karten', 20)) if self.entry else "20")
         self.cards_entry.pack(fill='x', pady=(0, 15))
+
+        # Initialisiere Aktion-Felder
+        update_action_fields()
 
         # Priorität
         ctk.CTkLabel(
@@ -1985,7 +2133,18 @@ class SessionEditorFrame(ctk.CTkFrame):
         try:
             kategorie = self.category_var.get()
             unterkategorie = self.subcategory_var.get()
-            erwartete_karten = int(self.cards_entry.get().strip())
+            aktion_text = self.action_var.get()
+
+            # Konvertiere Aktion-Text zu internem Wert
+            aktion = 'kategorie_erweitern' if aktion_text == "Kategorie erweitern (neue Karten erstellen)" else 'lernen'
+
+            # Erwartete Karten ist optional bei kategorie_erweitern
+            cards_input = self.cards_entry.get().strip()
+            if cards_input:
+                erwartete_karten = int(cards_input)
+            else:
+                erwartete_karten = 0 if aktion == 'kategorie_erweitern' else 20
+
             prioritaet = self.priority_var.get()
             notizen = self.notes_textbox.get('1.0', 'end').strip()
 
@@ -1993,7 +2152,7 @@ class SessionEditorFrame(ctk.CTkFrame):
                 messagebox.showwarning("Fehler", "Bitte wähle Kategorie und Unterkategorie.")
                 return
 
-            if erwartete_karten <= 0:
+            if aktion == 'lernen' and erwartete_karten <= 0:
                 messagebox.showwarning("Fehler", "Erwartete Karten muss größer als 0 sein.")
                 return
 
@@ -2004,6 +2163,7 @@ class SessionEditorFrame(ctk.CTkFrame):
                     {
                         'kategorie': kategorie,
                         'unterkategorie': unterkategorie,
+                        'aktion': aktion,
                         'erwartete_karten': erwartete_karten,
                         'prioritaet': prioritaet,
                         'notizen': notizen
@@ -2015,7 +2175,7 @@ class SessionEditorFrame(ctk.CTkFrame):
                     date=self.date,
                     kategorie=kategorie,
                     unterkategorie=unterkategorie,
-                    aktion='lernen',
+                    aktion=aktion,
                     erwartete_karten=erwartete_karten,
                     prioritaet=prioritaet,
                     notizen=notizen,
@@ -2798,6 +2958,481 @@ class CreatePlannerFrame(ctk.CTkFrame):
         """Bricht die Planer-Erstellung/-Bearbeitung ab."""
         if self.on_close_callback:
             self.on_close_callback(False)
+
+
+class ProgressChartPanel(ctk.CTkFrame):
+    """Panel für die Anzeige von Fortschritts-Liniendiagrammen."""
+
+    def __init__(self, parent, data_manager, planner_manager, planner_id: str, on_close=None):
+        super().__init__(parent, fg_color=COLORS['background'])
+
+        self.data_manager = data_manager
+        self.planner_manager = planner_manager
+        self.planner_id = planner_id
+        self.on_close = on_close
+
+        # Importiere matplotlib
+        try:
+            import matplotlib.pyplot as plt
+            from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+            from matplotlib.figure import Figure
+            self.plt = plt
+            self.FigureCanvasTkAgg = FigureCanvasTkAgg
+            self.Figure = Figure
+        except ImportError:
+            messagebox.showerror("Fehler", "Matplotlib ist nicht installiert. Bitte installiere es mit: pip install matplotlib")
+            if self.on_close:
+                self.on_close()
+            return
+
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt das UI mit Liniendiagramm."""
+        # Header
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill='x', padx=40, pady=(30, 20))
+
+        # Zurück-Button
+        back_btn = ctk.CTkButton(
+            header_frame,
+            text="← Zurück",
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=self.on_close if self.on_close else None,
+            width=100,
+            height=35,
+            corner_radius=8
+        )
+        back_btn.pack(side='left')
+
+        # Titel
+        ctk.CTkLabel(
+            header_frame,
+            text="📊 Fortschritts-Analyse",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(side='left', padx=20)
+
+        # Filter-Frame
+        filter_frame = ctk.CTkFrame(self, fg_color=COLORS['surface'], corner_radius=15)
+        filter_frame.pack(fill='x', padx=40, pady=(0, 20))
+
+        ctk.CTkLabel(
+            filter_frame,
+            text="Ansicht:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(side='left', padx=(20, 10))
+
+        self.view_var = tk.StringVar(value="Gelernte Karten")
+        view_selector = ctk.CTkSegmentedButton(
+            filter_frame,
+            values=["Gelernte Karten", "Erfolgsquote"],
+            variable=self.view_var,
+            command=self._update_chart,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['card'],
+            selected_color=COLORS['primary'],
+            selected_hover_color=COLORS['primary_hover']
+        )
+        view_selector.pack(side='left', padx=10, pady=15)
+
+        # Chart-Container
+        self.chart_container = ctk.CTkFrame(self, fg_color=COLORS['surface'], corner_radius=15)
+        self.chart_container.pack(fill='both', expand=True, padx=40, pady=(0, 40))
+
+        # Erstelle initialen Chart
+        self._update_chart()
+
+    def _update_chart(self, *args):
+        """Aktualisiert das Diagramm basierend auf der Auswahl."""
+        # Lösche alten Chart
+        for widget in self.chart_container.winfo_children():
+            widget.destroy()
+
+        view_type = self.view_var.get()
+
+        # Sammle Daten
+        data = self._collect_data(view_type)
+
+        if not data:
+            ctk.CTkLabel(
+                self.chart_container,
+                text="Keine Daten verfügbar",
+                font=ctk.CTkFont(size=16),
+                text_color=COLORS['text_secondary']
+            ).pack(expand=True)
+            return
+
+        # Erstelle Matplotlib Figure
+        fig = self.Figure(figsize=(12, 6), facecolor=COLORS['surface'])
+        ax = fig.add_subplot(111)
+
+        # Hole Planer-Kategorien
+        categories = self.planner_manager.get_planner_categories(self.planner_id)
+        category_names = [f"{cat}" for cat, subcat in categories]
+        unique_categories = sorted(set(category_names))
+
+        # Farben für Kategorien
+        colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#ec4899', '#14b8a6']
+
+        # Plotte Daten für jede Kategorie
+        for idx, category in enumerate(unique_categories):
+            if category in data:
+                dates = sorted(data[category].keys())
+                values = [data[category][date] for date in dates]
+
+                # Konvertiere Datums-Strings zu Objekten für bessere Darstellung
+                date_objects = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in dates]
+
+                ax.plot(
+                    date_objects,
+                    values,
+                    marker='o',
+                    linewidth=2,
+                    markersize=6,
+                    label=category,
+                    color=colors[idx % len(colors)]
+                )
+
+        # Styling
+        ax.set_xlabel('Datum', fontsize=12, color=COLORS['text'])
+        if view_type == "Gelernte Karten":
+            ax.set_ylabel('Anzahl Karten', fontsize=12, color=COLORS['text'])
+            ax.set_title('Gelernte Karten pro Kategorie über Zeit', fontsize=14, fontweight='bold', color=COLORS['text'])
+        else:
+            ax.set_ylabel('Erfolgsquote (%)', fontsize=12, color=COLORS['text'])
+            ax.set_title('Erfolgsquote pro Kategorie über Zeit', fontsize=14, fontweight='bold', color=COLORS['text'])
+
+        ax.legend(loc='upper left', framealpha=0.9)
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(colors=COLORS['text'])
+        fig.autofmt_xdate()  # Rotiere Datum-Labels für bessere Lesbarkeit
+
+        # Setze Hintergrundfarbe
+        ax.set_facecolor(COLORS['card'])
+        for spine in ax.spines.values():
+            spine.set_color(COLORS['border'])
+
+        # Erstelle Canvas und bette in Tkinter ein
+        canvas = self.FigureCanvasTkAgg(fig, master=self.chart_container)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill='both', expand=True, padx=20, pady=20)
+
+    def _collect_data(self, view_type: str) -> Dict:
+        """
+        Sammelt Daten für das Diagramm.
+
+        Args:
+            view_type: "Gelernte Karten" oder "Erfolgsquote"
+
+        Returns:
+            Dict mit Struktur: {kategorie: {datum: wert}}
+        """
+        data = {}
+
+        # Hole alle Sessions aus dem weekly_plan
+        for date_str, entries in self.data_manager.weekly_plan.items():
+            date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            # Filtere nur erledigte Sessions
+            for entry in entries:
+                if entry.get('status') != 'erledigt':
+                    continue
+
+                kategorie = entry.get('kategorie', 'Unbekannt')
+
+                if kategorie not in data:
+                    data[kategorie] = {}
+
+                if view_type == "Gelernte Karten":
+                    # Summiere Karten pro Tag und Kategorie
+                    cards = entry.get('tatsaechliche_karten', 0)
+                    if date_str not in data[kategorie]:
+                        data[kategorie][date_str] = 0
+                    data[kategorie][date_str] += cards
+
+                elif view_type == "Erfolgsquote":
+                    # Berechne Erfolgsquote pro Kategorie und Datum
+                    # Nutze Statistiken aus data_manager
+                    stats = self.data_manager.get_category_stats(kategorie)
+                    success_rate = stats.get('success_rate', 0)
+                    data[kategorie][date_str] = success_rate
+
+        return data
+
+
+class PlannerPreferencesPanel(ctk.CTkFrame):
+    """Panel für individuelle Präferenzen beim intelligenten Planner (direkt in der App)."""
+
+    def __init__(self, parent, categories: List[str], total_daily_goal: int, on_confirm=None, on_cancel=None):
+        super().__init__(parent, fg_color=COLORS['background'])
+
+        self.categories = categories
+        self.total_daily_goal = total_daily_goal
+        self.on_confirm = on_confirm
+        self.on_cancel = on_cancel
+
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt das UI für die Präferenzen-Eingabe."""
+        # Haupt-Container mit Scrollbar
+        main_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        main_frame.pack(fill='both', expand=True, padx=40, pady=40)
+
+        # Titel
+        ctk.CTkLabel(
+            main_frame,
+            text="🧠 Intelligente Wochenplanung",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            main_frame,
+            text="Passe die automatische Planung an deine individuellen Bedürfnisse an.",
+            font=ctk.CTkFont(size=14),
+            text_color=COLORS['text_secondary']
+        ).pack(pady=(0, 30))
+
+        # Sektion 1: Priorisierung
+        self._create_priority_section(main_frame)
+
+        # Sektion 2: Anzahl Karten
+        self._create_cards_section(main_frame)
+
+        # Sektion 3: Priorisierte Kategorie
+        self._create_category_section(main_frame)
+
+        # Sektion 4: Tagesverteilung
+        self._create_daily_distribution_section(main_frame)
+
+        # Buttons
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(pady=30, fill='x')
+
+        ctk.CTkButton(
+            button_frame,
+            text="Abbrechen",
+            command=self._cancel,
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            text_color=COLORS['text'],
+            width=150,
+            height=45,
+            font=ctk.CTkFont(size=14),
+            corner_radius=10
+        ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="🚀 Woche planen",
+            command=self._confirm,
+            fg_color=COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            width=200,
+            height=45,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            corner_radius=10
+        ).pack(side='right', padx=5)
+
+    def _create_priority_section(self, parent):
+        """Erstellt die Sektion für die Priorisierung."""
+        frame = ctk.CTkFrame(parent, fg_color=COLORS['surface'], corner_radius=15)
+        frame.pack(fill='x', pady=15)
+
+        ctk.CTkLabel(
+            frame,
+            text="Was soll priorisiert werden?",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', padx=20, pady=(20, 10))
+
+        self.priority_vars = {}
+        priorities = [
+            ("success_rate", "Erfolgsquote (bevorzuge Karten mit geringer Erfolgsquote)",
+             "Fokussiert auf Karten, die du noch nicht so gut beherrschst"),
+            ("due_date", "Fälligkeit (bevorzuge überfällige Karten)",
+             "Konzentriert sich auf Karten, die wiederholt werden müssen"),
+            ("even_distribution", "Gleichmäßige Verteilung (verteile Sessions gleichmäßig)",
+             "Sorgt für eine ausgewogene Lernbelastung über die Woche")
+        ]
+
+        for key, label, description in priorities:
+            var = tk.BooleanVar(value=True)
+            self.priority_vars[key] = var
+
+            checkbox_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            checkbox_frame.pack(anchor='w', padx=20, pady=8, fill='x')
+
+            ctk.CTkCheckBox(
+                checkbox_frame,
+                text=label,
+                variable=var,
+                font=ctk.CTkFont(size=14),
+                text_color=COLORS['text']
+            ).pack(anchor='w')
+
+            ctk.CTkLabel(
+                checkbox_frame,
+                text=f"  → {description}",
+                font=ctk.CTkFont(size=12),
+                text_color=COLORS['text_secondary']
+            ).pack(anchor='w', padx=(30, 0))
+
+        # Abstand am Ende
+        ctk.CTkLabel(frame, text="", height=10).pack()
+
+    def _create_cards_section(self, parent):
+        """Erstellt die Sektion für die Anzahl der Karten."""
+        frame = ctk.CTkFrame(parent, fg_color=COLORS['surface'], corner_radius=15)
+        frame.pack(fill='x', pady=15)
+
+        ctk.CTkLabel(
+            frame,
+            text="Wie viele Karten möchtest du insgesamt lernen?",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', padx=20, pady=(20, 5))
+
+        ctk.CTkLabel(
+            frame,
+            text=f"Empfohlen basierend auf täglichem Ziel: {self.total_daily_goal * 7} Karten/Woche",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', padx=20, pady=(0, 15))
+
+        cards_input_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        cards_input_frame.pack(fill='x', padx=20, pady=(0, 20))
+
+        ctk.CTkLabel(
+            cards_input_frame,
+            text="Gesamt-Karten:",
+            font=ctk.CTkFont(size=14),
+            text_color=COLORS['text']
+        ).pack(side='left', padx=5)
+
+        self.total_cards_var = tk.StringVar(value=str(self.total_daily_goal * 7))
+        ctk.CTkEntry(
+            cards_input_frame,
+            textvariable=self.total_cards_var,
+            width=120,
+            height=40,
+            font=ctk.CTkFont(size=14),
+            corner_radius=8
+        ).pack(side='left', padx=5)
+
+    def _create_category_section(self, parent):
+        """Erstellt die Sektion für die priorisierte Kategorie."""
+        frame = ctk.CTkFrame(parent, fg_color=COLORS['surface'], corner_radius=15)
+        frame.pack(fill='x', pady=15)
+
+        ctk.CTkLabel(
+            frame,
+            text="Gibt es eine priorisierte Kategorie?",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', padx=20, pady=(20, 10))
+
+        cat_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        cat_frame.pack(fill='x', padx=20, pady=(0, 20))
+
+        self.priority_category_var = tk.StringVar(value="Keine")
+        category_options = ["Keine"] + self.categories
+
+        ctk.CTkOptionMenu(
+            cat_frame,
+            variable=self.priority_category_var,
+            values=category_options,
+            width=300,
+            height=40,
+            font=ctk.CTkFont(size=14),
+            corner_radius=8
+        ).pack(side='left', padx=5)
+
+    def _create_daily_distribution_section(self, parent):
+        """Erstellt die Sektion für die Tagesverteilung."""
+        frame = ctk.CTkFrame(parent, fg_color=COLORS['surface'], corner_radius=15)
+        frame.pack(fill='x', pady=15)
+
+        ctk.CTkLabel(
+            frame,
+            text="Tagesverteilung (Belastung pro Tag)",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', padx=20, pady=(20, 5))
+
+        ctk.CTkLabel(
+            frame,
+            text="Hoch = viele Karten, Mittel = durchschnittlich, Gering = wenige Karten",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', padx=20, pady=(0, 15))
+
+        days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+        self.day_distribution = {}
+
+        for day in days:
+            day_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            day_frame.pack(fill='x', padx=20, pady=5)
+
+            ctk.CTkLabel(
+                day_frame,
+                text=f"{day}:",
+                font=ctk.CTkFont(size=14),
+                width=120,
+                anchor='w',
+                text_color=COLORS['text']
+            ).pack(side='left', padx=5)
+
+            var = tk.StringVar(value="Mittel")
+            self.day_distribution[day] = var
+
+            ctk.CTkOptionMenu(
+                day_frame,
+                variable=var,
+                values=["Hoch", "Mittel", "Gering"],
+                width=140,
+                height=35,
+                font=ctk.CTkFont(size=13),
+                corner_radius=8
+            ).pack(side='left', padx=5)
+
+        # Abstand am Ende
+        ctk.CTkLabel(frame, text="", height=15).pack()
+
+    def _confirm(self):
+        """Bestätigt die Eingaben."""
+        try:
+            total_cards = int(self.total_cards_var.get())
+            if total_cards <= 0:
+                messagebox.showwarning("Fehler", "Anzahl der Karten muss größer als 0 sein.")
+                return
+        except ValueError:
+            messagebox.showwarning("Fehler", "Bitte gib eine gültige Zahl für die Karten ein.")
+            return
+
+        result = {
+            'priorities': {
+                key: var.get() for key, var in self.priority_vars.items()
+            },
+            'total_cards': total_cards,
+            'priority_category': self.priority_category_var.get() if self.priority_category_var.get() != "Keine" else None,
+            'daily_distribution': {
+                day: var.get() for day, var in self.day_distribution.items()
+            }
+        }
+
+        if self.on_confirm:
+            self.on_confirm(result)
+
+    def _cancel(self):
+        """Bricht die Eingabe ab."""
+        if self.on_cancel:
+            self.on_cancel()
 
 
 class PlannerPreferencesDialog(ctk.CTkToplevel):

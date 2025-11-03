@@ -768,7 +768,11 @@ class WeeklyPlanner:
         weights = {k: v / total_weight for k, v in weights.items()}
 
         # Berechne gewichteten Score
-        success_component = score_result['details'].get('erfolgsquote', 50)
+        # Invertiere Erfolgsquote, um Karten mit geringer Erfolgsquote zu bevorzugen
+        # Je niedriger die Erfolgsquote, desto höher der Score
+        raw_success_rate = score_result['details'].get('erfolgsquote', 50)
+        success_component = 100 - raw_success_rate  # Invertierung
+
         due_component = min(100, (score_result['details'].get('fällige_karten', 0) +
                                   score_result['details'].get('überfällige_karten', 0)) * 2)
 
