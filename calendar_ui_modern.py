@@ -16,22 +16,22 @@ from learning_sets import LearningSetManager
 from planner_manager import PlannerManager, get_default_planner_icons
 
 
-# Moderne Farbpalette mit verbesserter Lesbarkeit
+# Helles, modernes Farbschema für bessere Lesbarkeit
 COLORS = {
-    'primary': '#60a5fa',      # Helleres Blau für bessere Lesbarkeit
-    'primary_hover': '#3b82f6',
-    'secondary': '#a78bfa',    # Helleres Lila
-    'success': '#34d399',      # Helleres Grün
-    'warning': '#fbbf24',      # Helleres Orange
-    'danger': '#f87171',       # Helleres Rot
-    'background': '#1e293b',   # Aufgehelltes Dunkelblau
-    'surface': '#334155',      # Hellere Surface
-    'card': '#475569',         # Hellere Card Background für besseren Kontrast
-    'text': '#f8fafc',         # Sehr heller Text
-    'text_secondary': '#cbd5e1', # Hellerer sekundärer Text
-    'border': '#475569',       # Hellerer Border
-    'accent': '#38bdf8',       # Akzentfarbe
-    'card_hover': '#64748b',   # Hover-State für Cards
+    'primary': '#3b82f6',      # Kräftiges Blau
+    'primary_hover': '#2563eb',
+    'secondary': '#8b5cf6',    # Lila
+    'success': '#10b981',      # Grün
+    'warning': '#f59e0b',      # Orange
+    'danger': '#ef4444',       # Rot
+    'background': '#f8fafc',   # Sehr heller Hintergrund
+    'surface': '#ffffff',      # Weiße Surface
+    'card': '#f1f5f9',         # Sehr helle Card Background
+    'text': '#1e293b',         # Dunkler Text
+    'text_secondary': '#64748b', # Grauer Text
+    'border': '#e2e8f0',       # Heller Border
+    'accent': '#0ea5e9',       # Sky Blue Akzent
+    'card_hover': '#e2e8f0',   # Hover-State für Cards
 }
 
 
@@ -421,10 +421,14 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         # Aktuelles Datum
         self.current_date = datetime.date.today()
         self.week_start = self._get_week_start(self.current_date)
+        self.month_start = datetime.date(self.current_date.year, self.current_date.month, 1)
+
+        # Aktuelle Ansicht
+        self.current_view = 'week'  # 'day', 'week', 'month'
 
         # UI erstellen
         self._create_ui()
-        self._load_week_data()
+        self._load_data()
 
         logging.info(f"ModernWeeklyCalendarView für Planer '{self.planner['name']}' initialisiert.")
 
@@ -484,24 +488,68 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         )
         title.pack(side='left')
 
+        # View Toggle (Mitte-Rechts)
+        view_frame = ctk.CTkFrame(header_frame, fg_color=COLORS['card'], corner_radius=8)
+        view_frame.pack(side='right', padx=(0, 20))
+
+        # View Buttons
+        self.day_view_btn = ctk.CTkButton(
+            view_frame,
+            text="Tag",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color=COLORS['surface'] if self.current_view != 'day' else COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            command=lambda: self._switch_view('day'),
+            width=70,
+            height=35,
+            corner_radius=6
+        )
+        self.day_view_btn.pack(side='left', padx=3, pady=3)
+
+        self.week_view_btn = ctk.CTkButton(
+            view_frame,
+            text="Woche",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color=COLORS['surface'] if self.current_view != 'week' else COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            command=lambda: self._switch_view('week'),
+            width=70,
+            height=35,
+            corner_radius=6
+        )
+        self.week_view_btn.pack(side='left', padx=3, pady=3)
+
+        self.month_view_btn = ctk.CTkButton(
+            view_frame,
+            text="Monat",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color=COLORS['surface'] if self.current_view != 'month' else COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            command=lambda: self._switch_view('month'),
+            width=70,
+            height=35,
+            corner_radius=6
+        )
+        self.month_view_btn.pack(side='left', padx=3, pady=3)
+
         # Navigation (rechts)
         nav_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
         nav_frame.pack(side='right')
 
-        prev_btn = ctk.CTkButton(
+        self.prev_btn = ctk.CTkButton(
             nav_frame,
             text="◄",
             font=ctk.CTkFont(size=16),
             fg_color=COLORS['surface'],
             hover_color=COLORS['border'],
-            command=self._previous_week,
+            command=self._previous_period,
             width=40,
             height=40,
             corner_radius=8
         )
-        prev_btn.pack(side='left', padx=5)
+        self.prev_btn.pack(side='left', padx=5)
 
-        today_btn = ctk.CTkButton(
+        self.today_btn = ctk.CTkButton(
             nav_frame,
             text="Heute",
             font=ctk.CTkFont(size=13, weight="bold"),
@@ -511,20 +559,20 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             height=40,
             corner_radius=8
         )
-        today_btn.pack(side='left', padx=5)
+        self.today_btn.pack(side='left', padx=5)
 
-        next_btn = ctk.CTkButton(
+        self.next_btn = ctk.CTkButton(
             nav_frame,
             text="►",
             font=ctk.CTkFont(size=16),
             fg_color=COLORS['surface'],
             hover_color=COLORS['border'],
-            command=self._next_week,
+            command=self._next_period,
             width=40,
             height=40,
             corner_radius=8
         )
-        next_btn.pack(side='left', padx=5)
+        self.next_btn.pack(side='left', padx=5)
 
         # Kalenderwoche
         week_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -810,10 +858,28 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             anchor='w'
         ).pack(side='left')
 
+        # Buttons Frame
+        buttons_frame = ctk.CTkFrame(session_frame, fg_color="transparent")
+        buttons_frame.pack(fill='x', padx=10, pady=(5, 10))
+
+        # Bearbeiten Button (immer sichtbar)
+        edit_btn = ctk.CTkButton(
+            buttons_frame,
+            text="✏️",
+            font=ctk.CTkFont(size=14),
+            fg_color=COLORS['card'],
+            hover_color=COLORS['card_hover'],
+            command=lambda: self._edit_session(entry, date),
+            width=40,
+            height=32,
+            corner_radius=8
+        )
+        edit_btn.pack(side='right', padx=(5, 0))
+
         if status == 'offen':
             # Lernen Button mit modernem Design
             learn_btn = ctk.CTkButton(
-                session_frame,
+                buttons_frame,
                 text="▶ Lernen starten",
                 font=ctk.CTkFont(size=11, weight="bold"),
                 fg_color=COLORS['primary'],
@@ -822,7 +888,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 height=32,
                 corner_radius=8
             )
-            learn_btn.pack(padx=10, pady=(5, 10), fill='x')
+            learn_btn.pack(side='left', fill='x', expand=True, padx=(0, 5))
 
     def _count_due_cards_for_date(self, date: datetime.date) -> int:
         """Zählt fällige Karten für ein Datum."""
@@ -924,21 +990,64 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         ).pack(pady=(0, 15))
 
     # Event Handler
-    def _previous_week(self):
-        """Navigiert zur vorherigen Woche."""
-        self.week_start -= datetime.timedelta(days=7)
-        self._load_week_data()
+    def _previous_period(self):
+        """Navigiert zur vorherigen Periode (Tag/Woche/Monat)."""
+        if self.current_view == 'day':
+            self.current_date -= datetime.timedelta(days=1)
+        elif self.current_view == 'week':
+            self.week_start -= datetime.timedelta(days=7)
+        else:  # month
+            # Vorheriger Monat
+            if self.month_start.month == 1:
+                self.month_start = datetime.date(self.month_start.year - 1, 12, 1)
+            else:
+                self.month_start = datetime.date(self.month_start.year, self.month_start.month - 1, 1)
+        self._load_data()
 
-    def _next_week(self):
-        """Navigiert zur nächsten Woche."""
-        self.week_start += datetime.timedelta(days=7)
-        self._load_week_data()
+    def _next_period(self):
+        """Navigiert zur nächsten Periode (Tag/Woche/Monat)."""
+        if self.current_view == 'day':
+            self.current_date += datetime.timedelta(days=1)
+        elif self.current_view == 'week':
+            self.week_start += datetime.timedelta(days=7)
+        else:  # month
+            # Nächster Monat
+            if self.month_start.month == 12:
+                self.month_start = datetime.date(self.month_start.year + 1, 1, 1)
+            else:
+                self.month_start = datetime.date(self.month_start.year, self.month_start.month + 1, 1)
+        self._load_data()
 
     def _go_to_today(self):
-        """Navigiert zur aktuellen Woche."""
+        """Navigiert zu heute."""
         self.current_date = datetime.date.today()
         self.week_start = self._get_week_start(self.current_date)
-        self._load_week_data()
+        self.month_start = datetime.date(self.current_date.year, self.current_date.month, 1)
+        self._load_data()
+
+    def _switch_view(self, view: str):
+        """Wechselt die Ansicht."""
+        if view == self.current_view:
+            return
+
+        self.current_view = view
+
+        # Update Button-Farben
+        self.day_view_btn.configure(fg_color=COLORS['primary'] if view == 'day' else COLORS['surface'])
+        self.week_view_btn.configure(fg_color=COLORS['primary'] if view == 'week' else COLORS['surface'])
+        self.month_view_btn.configure(fg_color=COLORS['primary'] if view == 'month' else COLORS['surface'])
+
+        # Neu laden
+        self._load_data()
+
+    def _load_data(self):
+        """Lädt Daten basierend auf aktueller Ansicht."""
+        if self.current_view == 'day':
+            self._load_day_data()
+        elif self.current_view == 'week':
+            self._load_week_data()
+        else:  # month
+            self._load_month_data()
 
     def _go_back(self):
         """Geht zurück zur Planer-Auswahl."""
@@ -954,7 +1063,249 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
 
     def _add_session(self, day_index: int):
         """Öffnet Dialog zum Hinzufügen einer Session."""
-        messagebox.showinfo("Info", "Session hinzufügen wird implementiert...")
+        date = self.week_start + datetime.timedelta(days=day_index)
+        self._show_session_dialog(date, entry=None)
+
+    def _edit_session(self, entry: Dict, date: datetime.date):
+        """Öffnet Dialog zum Bearbeiten einer Session."""
+        self._show_session_dialog(date, entry=entry)
+
+    def _show_session_dialog(self, date: datetime.date, entry: Optional[Dict] = None):
+        """Zeigt Dialog zum Erstellen/Bearbeiten einer Session."""
+        dialog = ctk.CTkToplevel(self)
+        dialog.title("Session bearbeiten" if entry else "Session hinzufügen")
+        dialog.geometry("600x700")
+        dialog.transient(self)
+        dialog.grab_set()
+
+        # Hole Planer-Kategorien
+        planner_categories = self.planner_manager.get_planner_categories(self.planner_id)
+        category_dict = {}
+        for cat, subcat in planner_categories:
+            if cat not in category_dict:
+                category_dict[cat] = []
+            category_dict[cat].append(subcat)
+
+        # Header
+        header = ctk.CTkLabel(
+            dialog,
+            text="✏️ Session bearbeiten" if entry else "➕ Neue Session",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=COLORS['text']
+        )
+        header.pack(pady=(30, 20))
+
+        # Content Frame
+        content = ctk.CTkFrame(dialog, fg_color="transparent")
+        content.pack(fill='both', expand=True, padx=30, pady=(0, 20))
+
+        # Datum
+        ctk.CTkLabel(
+            content,
+            text=f"📅 Datum: {date.strftime('%d.%m.%Y')}",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(anchor='w', pady=(0, 15))
+
+        # Kategorie
+        ctk.CTkLabel(
+            content,
+            text="Kategorie:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        category_var = ctk.StringVar(value=entry['kategorie'] if entry else list(category_dict.keys())[0] if category_dict else "")
+        category_combo = ctk.CTkComboBox(
+            content,
+            values=list(category_dict.keys()) if category_dict else ["Keine Kategorien"],
+            variable=category_var,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            border_color=COLORS['border']
+        )
+        category_combo.pack(fill='x', pady=(0, 15))
+
+        # Unterkategorie
+        ctk.CTkLabel(
+            content,
+            text="Unterkategorie:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        def update_subcategories(*args):
+            cat = category_var.get()
+            subcats = category_dict.get(cat, [])
+            subcategory_combo.configure(values=subcats if subcats else ["Keine"])
+            if subcats and not entry:
+                subcategory_var.set(subcats[0])
+
+        subcategory_var = ctk.StringVar(value=entry['unterkategorie'] if entry else "")
+        subcategory_combo = ctk.CTkComboBox(
+            content,
+            variable=subcategory_var,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            border_color=COLORS['border']
+        )
+        subcategory_combo.pack(fill='x', pady=(0, 15))
+
+        # Update Subcategories bei Kategorie-Wechsel
+        category_var.trace_add('write', update_subcategories)
+        update_subcategories()
+
+        # Erwartete Karten
+        ctk.CTkLabel(
+            content,
+            text="Erwartete Karten:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        cards_entry = ctk.CTkEntry(
+            content,
+            height=40,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            border_color=COLORS['border']
+        )
+        cards_entry.insert(0, str(entry.get('erwartete_karten', 20)) if entry else "20")
+        cards_entry.pack(fill='x', pady=(0, 15))
+
+        # Priorität
+        ctk.CTkLabel(
+            content,
+            text="Priorität:",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        priority_var = ctk.StringVar(value=entry.get('prioritaet', 'mittel') if entry else 'mittel')
+        priority_frame = ctk.CTkFrame(content, fg_color="transparent")
+        priority_frame.pack(fill='x', pady=(0, 15))
+
+        for prio in ['niedrig', 'mittel', 'hoch']:
+            ctk.CTkRadioButton(
+                priority_frame,
+                text=prio.capitalize(),
+                variable=priority_var,
+                value=prio,
+                font=ctk.CTkFont(size=13)
+            ).pack(side='left', padx=10)
+
+        # Notizen
+        ctk.CTkLabel(
+            content,
+            text="Notizen (optional):",
+            font=ctk.CTkFont(size=13),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(10, 5))
+
+        notes_textbox = ctk.CTkTextbox(
+            content,
+            height=100,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            border_color=COLORS['border']
+        )
+        if entry and entry.get('notizen'):
+            notes_textbox.insert('1.0', entry['notizen'])
+        notes_textbox.pack(fill='x', pady=(0, 20))
+
+        # Buttons
+        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_frame.pack(pady=(0, 30))
+
+        def save_session():
+            try:
+                kategorie = category_var.get()
+                unterkategorie = subcategory_var.get()
+                erwartete_karten = int(cards_entry.get().strip())
+                prioritaet = priority_var.get()
+                notizen = notes_textbox.get('1.0', 'end').strip()
+
+                if not kategorie or not unterkategorie:
+                    messagebox.showwarning("Fehler", "Bitte wähle Kategorie und Unterkategorie.")
+                    return
+
+                if erwartete_karten <= 0:
+                    messagebox.showwarning("Fehler", "Erwartete Karten muss größer als 0 sein.")
+                    return
+
+                if entry:
+                    # Bearbeite bestehende Session
+                    self.data_manager.update_plan_entry(
+                        entry['id'],
+                        kategorie=kategorie,
+                        unterkategorie=unterkategorie,
+                        erwartete_karten=erwartete_karten,
+                        prioritaet=prioritaet,
+                        notizen=notizen
+                    )
+                else:
+                    # Neue Session
+                    self.data_manager.add_plan_entry(
+                        date=date,
+                        kategorie=kategorie,
+                        unterkategorie=unterkategorie,
+                        aktion='lernen',
+                        erwartete_karten=erwartete_karten,
+                        prioritaet=prioritaet,
+                        notizen=notizen,
+                        auto_generiert=False
+                    )
+
+                dialog.destroy()
+                self._load_week_data()
+
+            except ValueError:
+                messagebox.showwarning("Fehler", "Erwartete Karten muss eine Zahl sein.")
+
+        def delete_session():
+            if entry and messagebox.askyesno("Löschen", "Session wirklich löschen?"):
+                self.data_manager.delete_plan_entry(entry['id'])
+                dialog.destroy()
+                self._load_week_data()
+
+        ctk.CTkButton(
+            button_frame,
+            text="✓ Speichern",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=COLORS['success'],
+            hover_color='#059669',
+            command=save_session,
+            width=140,
+            height=40,
+            corner_radius=10
+        ).pack(side='left', padx=5)
+
+        if entry:
+            ctk.CTkButton(
+                button_frame,
+                text="🗑 Löschen",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color=COLORS['danger'],
+                hover_color='#dc2626',
+                command=delete_session,
+                width=140,
+                height=40,
+                corner_radius=10
+            ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="✗ Abbrechen",
+            font=ctk.CTkFont(size=14),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=dialog.destroy,
+            width=140,
+            height=40,
+            corner_radius=10
+        ).pack(side='left', padx=5)
 
     def _start_session(self, entry: Dict):
         """Startet eine Lern-Session."""
@@ -974,7 +1325,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             messagebox.showerror("Fehler", f"Fehler beim Starten:\n{e}")
 
     def _auto_plan_week(self):
-        """Startet die automatische Wochenplanung."""
+        """Startet die intelligente automatische Wochenplanung."""
         # Hole alle Lernsets des Planers
         lernsets = self.planner_manager.get_planner_lernsets(self.planner_id)
 
@@ -982,30 +1333,337 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             messagebox.showwarning("Keine Lernsets", "Dieser Planer hat keine Lernsets.")
             return
 
-        # Kombiniere Ziele aller Lernsets
+        # Berechne Statistiken
         total_daily_goal = sum(ls.get('taegliches_ziel', 0) for ls in lernsets)
+        total_categories = len(self.planner_manager.get_planner_categories(self.planner_id))
 
         if messagebox.askyesno(
-            "Automatische Planung",
-            f"Möchtest du die Woche automatisch planen?\n\n"
+            "Intelligente Automatische Planung",
+            f"Möchtest du die Woche intelligent planen?\n\n"
             f"Planer: {self.planner['name']}\n"
-            f"Tägliches Ziel: {total_daily_goal} Karten\n\n"
-            f"Bestehende automatisch generierte Sessions werden überschrieben."
+            f"Lernsets: {len(lernsets)}\n"
+            f"Kategorien: {total_categories}\n"
+            f"Tägliches Ziel (gesamt): {total_daily_goal} Karten\n\n"
+            f"Der intelligente Planer berücksichtigt:\n"
+            f"• Dringlichkeit (fällige Karten)\n"
+            f"• Lernrhythmus und Erfolgsquoten\n"
+            f"• Gleichmäßige Verteilung über die Woche\n"
+            f"• Deine individuellen Lernziele\n\n"
+            f"Bestehende automatisch generierte Sessions werden überschrieben.\n"
+            f"Manuell erstellte Sessions bleiben erhalten."
         ):
-            # Verwende erstes Lernset als Basis (kann erweitert werden)
-            active_set = lernsets[0] if lernsets else None
-
             success = self.weekly_planner.auto_plan_week(
                 start_date=self.week_start,
-                active_learning_set=active_set,
-                daily_target=total_daily_goal // 7  # Verteile auf Woche
+                daily_target=total_daily_goal // 7 if total_daily_goal > 0 else 20,
+                all_learning_sets=lernsets  # Übergebe alle Lernsets
             )
 
             if success:
-                messagebox.showinfo("Erfolg", "Woche wurde automatisch geplant!")
+                messagebox.showinfo(
+                    "✓ Erfolg",
+                    "Woche wurde intelligent geplant!\n\n"
+                    "Du kannst die Sessions jetzt individuell anpassen."
+                )
                 self._load_week_data()
             else:
                 messagebox.showerror("Fehler", "Fehler bei der automatischen Planung.")
+
+    def _load_day_data(self):
+        """Lädt Daten für die Tagesansicht."""
+        # Aktualisiere Label
+        self.week_label.configure(
+            text=f"📅 {self.current_date.strftime('%A, %d. %B %Y')}"
+        )
+
+        # Lösche Grid und zeige Tagesdetails
+        for widget in self.scroll_frame.winfo_children():
+            widget.destroy()
+
+        # Detaillierte Tagesansicht
+        day_container = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+        day_container.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Fällige Karten Header
+        due_count = self._count_due_cards_for_date(self.current_date)
+        due_frame = ctk.CTkFrame(day_container, fg_color=COLORS['card'], corner_radius=15)
+        due_frame.pack(fill='x', pady=(0, 20))
+
+        ctk.CTkLabel(
+            due_frame,
+            text=f"📊 {due_count} Karten fällig heute",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(pady=20)
+
+        # Sessions
+        sessions_header = ctk.CTkFrame(day_container, fg_color="transparent")
+        sessions_header.pack(fill='x', pady=(10, 15))
+
+        ctk.CTkLabel(
+            sessions_header,
+            text="📝 Geplante Sessions",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(side='left')
+
+        add_btn = ctk.CTkButton(
+            sessions_header,
+            text="➕ Session hinzufügen",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=COLORS['primary'],
+            hover_color=COLORS['primary_hover'],
+            command=lambda: self._add_session(0),
+            height=35,
+            corner_radius=8
+        )
+        add_btn.pack(side='right')
+
+        # Sessions Liste
+        entries = self.data_manager.get_plan_for_date(self.current_date)
+        if not entries:
+            ctk.CTkLabel(
+                day_container,
+                text="Noch keine Sessions für heute geplant.\nKlicke auf 'Session hinzufügen' um zu starten!",
+                font=ctk.CTkFont(size=14),
+                text_color=COLORS['text_secondary'],
+                justify='center'
+            ).pack(pady=40)
+        else:
+            for entry in entries:
+                session_card = ctk.CTkFrame(day_container, fg_color=COLORS['surface'], corner_radius=15, border_width=2, border_color=COLORS['border'])
+                session_card.pack(fill='x', pady=10)
+
+                # Header
+                header = ctk.CTkFrame(session_card, fg_color="transparent")
+                header.pack(fill='x', padx=20, pady=(15, 10))
+
+                status = entry.get('status', 'offen')
+                status_icons = {'offen': '⏳', 'erledigt': '✓', 'übersprungen': '✗'}
+                status_colors = {'offen': COLORS['accent'], 'erledigt': COLORS['success'], 'übersprungen': COLORS['warning']}
+
+                ctk.CTkLabel(
+                    header,
+                    text=status_icons.get(status, '⏳'),
+                    font=ctk.CTkFont(size=24),
+                    text_color=status_colors.get(status, COLORS['accent'])
+                ).pack(side='left', padx=(0, 15))
+
+                info_frame = ctk.CTkFrame(header, fg_color="transparent")
+                info_frame.pack(side='left', fill='x', expand=True)
+
+                ctk.CTkLabel(
+                    info_frame,
+                    text=f"{entry['kategorie']} • {entry['unterkategorie']}",
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color=COLORS['text'],
+                    anchor='w'
+                ).pack(fill='x')
+
+                ctk.CTkLabel(
+                    info_frame,
+                    text=f"🎴 {entry.get('erwartete_karten', 0)} Karten • Priorität: {entry.get('prioritaet', 'mittel').capitalize()}",
+                    font=ctk.CTkFont(size=13),
+                    text_color=COLORS['text_secondary'],
+                    anchor='w'
+                ).pack(fill='x')
+
+                # Notizen
+                if entry.get('notizen'):
+                    notes_frame = ctk.CTkFrame(session_card, fg_color=COLORS['card'], corner_radius=10)
+                    notes_frame.pack(fill='x', padx=20, pady=(0, 10))
+                    ctk.CTkLabel(
+                        notes_frame,
+                        text=f"📌 {entry['notizen']}",
+                        font=ctk.CTkFont(size=12),
+                        text_color=COLORS['text_secondary'],
+                        wraplength=600,
+                        justify='left'
+                    ).pack(padx=15, pady=10, anchor='w')
+
+                # Buttons
+                btn_frame = ctk.CTkFrame(session_card, fg_color="transparent")
+                btn_frame.pack(fill='x', padx=20, pady=(0, 15))
+
+                if status == 'offen':
+                    ctk.CTkButton(
+                        btn_frame,
+                        text="▶ Lernen starten",
+                        font=ctk.CTkFont(size=13, weight="bold"),
+                        fg_color=COLORS['primary'],
+                        hover_color=COLORS['primary_hover'],
+                        command=lambda e=entry: self._start_session(e),
+                        height=40,
+                        corner_radius=10
+                    ).pack(side='left', fill='x', expand=True, padx=(0, 10))
+
+                ctk.CTkButton(
+                    btn_frame,
+                    text="✏️ Bearbeiten",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    fg_color=COLORS['surface'],
+                    hover_color=COLORS['border'],
+                    command=lambda e=entry: self._edit_session(e, self.current_date),
+                    height=40,
+                    corner_radius=10
+                ).pack(side='left', padx=(0, 10))
+
+        # Update Statistik
+        self._update_week_statistics()
+
+    def _load_month_data(self):
+        """Lädt Daten für die Monatsansicht."""
+        # Aktualisiere Label
+        month_name = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                     'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'][self.month_start.month - 1]
+        self.week_label.configure(
+            text=f"📅 {month_name} {self.month_start.year}"
+        )
+
+        # Lösche Grid
+        for widget in self.scroll_frame.winfo_children():
+            widget.destroy()
+
+        # Monats-Grid
+        month_grid = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+        month_grid.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Wochentag-Header
+        day_names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+        for i, day_name in enumerate(day_names):
+            header = ctk.CTkLabel(
+                month_grid,
+                text=day_name,
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color=COLORS['text']
+            )
+            header.grid(row=0, column=i, padx=5, pady=10, sticky='ew')
+            month_grid.grid_columnconfigure(i, weight=1, minsize=150)
+
+        # Berechne Tage im Monat
+        import calendar
+        cal = calendar.monthcalendar(self.month_start.year, self.month_start.month)
+
+        row = 1
+        for week in cal:
+            for col, day in enumerate(week):
+                if day == 0:
+                    # Leerer Tag
+                    empty_frame = ctk.CTkFrame(month_grid, fg_color="transparent")
+                    empty_frame.grid(row=row, column=col, padx=5, pady=5, sticky='nsew')
+                else:
+                    # Tag mit Daten
+                    date = datetime.date(self.month_start.year, self.month_start.month, day)
+                    day_frame = self._create_month_day_cell(month_grid, date)
+                    day_frame.grid(row=row, column=col, padx=5, pady=5, sticky='nsew')
+            row += 1
+
+        # Update Statistik (für den ganzen Monat)
+        self._update_month_statistics()
+
+    def _create_month_day_cell(self, parent, date: datetime.date) -> ctk.CTkFrame:
+        """Erstellt eine Zelle für einen Tag in der Monatsansicht."""
+        is_today = date == datetime.date.today()
+
+        cell = ctk.CTkFrame(
+            parent,
+            fg_color=COLORS['surface'],
+            corner_radius=10,
+            border_width=2 if is_today else 1,
+            border_color=COLORS['primary'] if is_today else COLORS['border']
+        )
+
+        # Datum
+        date_label = ctk.CTkLabel(
+            cell,
+            text=str(date.day),
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=COLORS['primary'] if is_today else COLORS['text']
+        )
+        date_label.pack(pady=(10, 5))
+
+        # Sessions Count
+        entries = self.data_manager.get_plan_for_date(date)
+        if entries:
+            count_label = ctk.CTkLabel(
+                cell,
+                text=f"📝 {len(entries)} Session(s)",
+                font=ctk.CTkFont(size=10),
+                text_color=COLORS['text_secondary']
+            )
+            count_label.pack(pady=2)
+
+            # Status Summary
+            completed = sum(1 for e in entries if e.get('status') == 'erledigt')
+            if completed > 0:
+                status_label = ctk.CTkLabel(
+                    cell,
+                    text=f"✓ {completed}",
+                    font=ctk.CTkFont(size=10),
+                    text_color=COLORS['success']
+                )
+                status_label.pack(pady=2)
+
+        # Fällige Karten
+        due_count = self._count_due_cards_for_date(date)
+        if due_count > 0:
+            due_label = ctk.CTkLabel(
+                cell,
+                text=f"🔔 {due_count}",
+                font=ctk.CTkFont(size=10),
+                text_color=COLORS['warning'] if due_count >= 20 else COLORS['text_secondary']
+            )
+            due_label.pack(pady=(2, 10))
+        else:
+            # Spacer
+            ctk.CTkLabel(cell, text="", height=15).pack()
+
+        # Click handler um zum Tag zu springen
+        def goto_day():
+            self.current_date = date
+            self._switch_view('day')
+
+        cell.bind("<Button-1>", lambda e: goto_day())
+        date_label.bind("<Button-1>", lambda e: goto_day())
+
+        return cell
+
+    def _update_month_statistics(self):
+        """Aktualisiert Statistiken für Monatsansicht."""
+        # Lösche alte Widgets
+        for widget in self.stats_container.winfo_children():
+            widget.destroy()
+
+        # Berechne Monatsstatistiken
+        import calendar
+        days_in_month = calendar.monthrange(self.month_start.year, self.month_start.month)[1]
+
+        total_sessions = 0
+        completed_sessions = 0
+        total_cards = 0
+
+        for day in range(1, days_in_month + 1):
+            date = datetime.date(self.month_start.year, self.month_start.month, day)
+            entries = self.data_manager.get_plan_for_date(date)
+            for entry in entries:
+                total_sessions += 1
+                if entry['status'] == 'erledigt':
+                    completed_sessions += 1
+                    total_cards += entry.get('tatsaechliche_karten', 0)
+
+        # Stats-Grid
+        stats_grid = ctk.CTkFrame(self.stats_container, fg_color="transparent")
+        stats_grid.pack(fill='x')
+        stats_grid.grid_columnconfigure((0, 1, 2), weight=1)
+
+        # Sessions
+        self._create_stat_card(stats_grid, 0, "📋", "Sessions", f"{completed_sessions}/{total_sessions}")
+
+        # Karten
+        self._create_stat_card(stats_grid, 1, "🎴", "Gelernte Karten", f"{total_cards}")
+
+        # Fortschritt
+        progress = (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
+        self._create_stat_card(stats_grid, 2, "📈", "Fortschritt", f"{int(progress)}%")
 
     def _export_week_plan(self):
         """Exportiert den Wochenplan."""
@@ -1091,6 +1749,66 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             border_color=COLORS['border']
         )
         self.name_entry.pack(fill='x', pady=(0, 15), padx=15)
+
+        # Ziel-Einstellungen
+        goals_frame = ctk.CTkFrame(content_frame, fg_color=COLORS['surface'], corner_radius=12)
+        goals_frame.pack(fill='x', pady=(0, 15))
+
+        ctk.CTkLabel(
+            goals_frame,
+            text="🎯 Lernziele festlegen:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=COLORS['text']
+        ).pack(pady=(15, 10), padx=15, anchor='w')
+
+        # Grid für Ziele
+        goals_grid = ctk.CTkFrame(goals_frame, fg_color="transparent")
+        goals_grid.pack(fill='x', padx=15, pady=(0, 15))
+        goals_grid.grid_columnconfigure((0, 1), weight=1)
+
+        # Tägliches Ziel
+        daily_frame = ctk.CTkFrame(goals_grid, fg_color="transparent")
+        daily_frame.grid(row=0, column=0, padx=(0, 10), sticky='ew')
+
+        ctk.CTkLabel(
+            daily_frame,
+            text="Tägliches Ziel (Karten):",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(0, 5))
+
+        self.daily_goal_entry = ctk.CTkEntry(
+            daily_frame,
+            height=40,
+            font=ctk.CTkFont(size=14),
+            placeholder_text="z.B. 20",
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        self.daily_goal_entry.insert(0, "20")  # Standardwert
+        self.daily_goal_entry.pack(fill='x')
+
+        # Wöchentliches Ziel
+        weekly_frame = ctk.CTkFrame(goals_grid, fg_color="transparent")
+        weekly_frame.grid(row=0, column=1, padx=(10, 0), sticky='ew')
+
+        ctk.CTkLabel(
+            weekly_frame,
+            text="Wöchentliches Ziel (Karten):",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS['text_secondary']
+        ).pack(anchor='w', pady=(0, 5))
+
+        self.weekly_goal_entry = ctk.CTkEntry(
+            weekly_frame,
+            height=40,
+            font=ctk.CTkFont(size=14),
+            placeholder_text="z.B. 100",
+            fg_color=COLORS['card'],
+            border_color=COLORS['border']
+        )
+        self.weekly_goal_entry.insert(0, "100")  # Standardwert
+        self.weekly_goal_entry.pack(fill='x')
 
         # Kategorien-Auswahl mit Dropdown
         cat_header = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -1316,6 +2034,23 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             messagebox.showwarning("Fehler", "Bitte wähle mindestens eine Kategorie aus.")
             return
 
+        # Hole Ziele
+        try:
+            daily_goal = int(self.daily_goal_entry.get().strip())
+            if daily_goal <= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showwarning("Fehler", "Tägliches Ziel muss eine positive Zahl sein.")
+            return
+
+        try:
+            weekly_goal = int(self.weekly_goal_entry.get().strip())
+            if weekly_goal <= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showwarning("Fehler", "Wöchentliches Ziel muss eine positive Zahl sein.")
+            return
+
         # Konvertiere selected_categories (Dict) in das richtige Format
         kategorien_list = [
             {'kategorie': cat, 'unterkategorien': subcats}
@@ -1325,12 +2060,12 @@ class CreateLearningSetFrame(ctk.CTkFrame):
         # Zähle Gesamtzahl der Unterkategorien
         total_subcats = sum(len(subcats) for subcats in self.selected_categories.values())
 
-        # Erstelle Set mit Standardzielen
+        # Erstelle Set mit benutzerdefinierten Zielen
         set_id = self.learning_set_manager.create_set(
             name=name,
             kategorien=kategorien_list,
-            taegliches_ziel=20,
-            woechentliches_ziel=100
+            taegliches_ziel=daily_goal,
+            woechentliches_ziel=weekly_goal
         )
 
         if set_id:
@@ -1339,7 +2074,8 @@ class CreateLearningSetFrame(ctk.CTkFrame):
                 f"Lernset '{name}' wurde erstellt!\n\n"
                 f"📁 {len(self.selected_categories)} Kategorien\n"
                 f"📂 {total_subcats} Unterkategorien (automatisch ausgewählt)\n"
-                f"🎯 Tägliches Ziel: 20 Karten"
+                f"🎯 Tägliches Ziel: {daily_goal} Karten\n"
+                f"📅 Wöchentliches Ziel: {weekly_goal} Karten"
             )
             if self.on_close_callback:
                 self.on_close_callback(set_id)
