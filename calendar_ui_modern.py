@@ -353,16 +353,34 @@ class PlannerSelectionView(ctk.CTkFrame):
             calendar_view.pack(fill='both', expand=True)
 
     def _create_new_planner(self):
-        """Öffnet Dialog zum Erstellen eines neuen Planers."""
-        dialog = CreatePlannerDialog(self, self.data_manager)
-        dialog.wait_window()
-        self._load_planners()
+        """Zeigt Planer-Erstellungsformular inline."""
+        self._show_planner_form(planner_id=None)
 
     def _edit_planner(self, planner_id: str):
-        """Öffnet Dialog zum Bearbeiten eines Planers."""
-        dialog = EditPlannerDialog(self, self.data_manager, planner_id)
-        dialog.wait_window()
-        self._load_planners()
+        """Zeigt Planer-Bearbeitungsformular inline."""
+        self._show_planner_form(planner_id=planner_id)
+
+    def _show_planner_form(self, planner_id: Optional[str] = None):
+        """Zeigt das Planer-Formular inline."""
+        # Lösche aktuelle Ansicht
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # Zeige CreatePlannerFrame
+        planner_frame = CreatePlannerFrame(
+            self,
+            self.data_manager,
+            planner_id=planner_id,
+            on_close_callback=self._on_planner_form_closed
+        )
+        planner_frame.pack(fill='both', expand=True)
+
+    def _on_planner_form_closed(self, created: bool):
+        """Callback wenn Planer-Formular geschlossen wird."""
+        # Baue normale Ansicht wieder auf
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._create_ui()
 
     def _delete_planner(self, planner_id: str):
         """Löscht einen Planer nach Bestätigung."""
@@ -1013,6 +1031,24 @@ class CreateLearningSetFrame(ctk.CTkFrame):
         header_frame = ctk.CTkFrame(self, fg_color=COLORS['surface'], corner_radius=15)
         header_frame.pack(fill='x', padx=20, pady=20)
 
+        # Zurück-Button (nur wenn Callback vorhanden)
+        if self.on_close_callback:
+            back_btn_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
+            back_btn_frame.pack(fill='x', padx=20, pady=(15, 0))
+
+            back_btn = ctk.CTkButton(
+                back_btn_frame,
+                text="← Zurück",
+                font=ctk.CTkFont(size=13),
+                fg_color=COLORS['card'],
+                hover_color=COLORS['card_hover'],
+                command=self._cancel,
+                width=100,
+                height=35,
+                corner_radius=8
+            )
+            back_btn.pack(side='left')
+
         header = ctk.CTkLabel(
             header_frame,
             text="📚  Neues Lernset erstellen",
@@ -1316,25 +1352,26 @@ class CreateLearningSetFrame(ctk.CTkFrame):
             self.on_close_callback(None)
 
 
-class CreatePlannerDialog(ctk.CTkToplevel):
-    """Dialog zum Erstellen eines neuen Planers."""
+class CreatePlannerFrame(ctk.CTkFrame):
+    """Inline Frame zum Erstellen/Bearbeiten eines Planers."""
 
-    def __init__(self, parent, data_manager):
-        super().__init__(parent)
+    def __init__(self, parent, data_manager, planner_id: Optional[str] = None, on_close_callback=None):
+        super().__init__(parent, fg_color="transparent")
         self.data_manager = data_manager
         self.planner_manager = PlannerManager(data_manager)
         self.learning_set_manager = LearningSetManager(data_manager)
-
-        self.title("Neuer Planer")
-        self.geometry("600x750")
-        self.resizable(False, False)
-
-        # Zentriere Fenster
-        self.transient(parent)
-        self.grab_set()
+        self.planner_id = planner_id
+        self.on_close_callback = on_close_callback
 
         self.selected_lernsets = []
         self.showing_lernset_creator = False
+
+        # Wenn wir einen Planer bearbeiten, lade dessen Daten
+        if planner_id:
+            planner = self.planner_manager.get_planner(planner_id)
+            if planner:
+                self.selected_lernsets = planner.get('lernset_ids', []).copy()
+
         self._create_ui()
 
     def _create_ui(self):
@@ -1351,18 +1388,43 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         for widget in self.main_container.winfo_children():
             widget.destroy()
 
+        # Header mit Zurück-Button
+        header_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        header_frame.pack(fill='x', padx=40, pady=(30, 0))
+
+        back_btn = ctk.CTkButton(
+            header_frame,
+            text="← Zurück",
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS['surface'],
+            hover_color=COLORS['border'],
+            command=lambda: self._cancel_planner(),
+            width=100,
+            height=35,
+            corner_radius=8
+        )
+        back_btn.pack(side='left')
+
         # Header
+        title_text = "Planer bearbeiten" if self.planner_id else "Neuer Wochenplaner"
         header = ctk.CTkLabel(
             self.main_container,
-            text="Neuer Wochenplaner",
+            text=title_text,
             font=ctk.CTkFont(size=24, weight="bold")
         )
-        header.pack(pady=30)
+        header.pack(pady=(20, 30))
+
+        # Lade Planer-Daten wenn wir bearbeiten
+        planner = None
+        if self.planner_id:
+            planner = self.planner_manager.get_planner(self.planner_id)
 
         # Name
         ctk.CTkLabel(self.main_container, text="Name:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
         self.name_entry = ctk.CTkEntry(self.main_container, width=400, height=40, font=ctk.CTkFont(size=14))
         self.name_entry.pack(pady=(0, 20))
+        if planner:
+            self.name_entry.insert(0, planner['name'])
 
         # Icon
         ctk.CTkLabel(self.main_container, text="Icon:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
@@ -1370,7 +1432,7 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         icon_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         icon_frame.pack()
 
-        self.icon_var = ctk.StringVar(value="📅")
+        self.icon_var = ctk.StringVar(value=planner.get('icon', '📅') if planner else "📅")
         icons = get_default_planner_icons()
 
         for i, icon in enumerate(icons[:8]):
@@ -1419,13 +1481,14 @@ class CreatePlannerDialog(ctk.CTkToplevel):
         button_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         button_frame.pack(pady=20)
 
+        button_text = "Speichern" if self.planner_id else "Erstellen"
         ctk.CTkButton(
             button_frame,
-            text="Erstellen",
+            text=button_text,
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=COLORS['primary'],
             hover_color=COLORS['primary_hover'],
-            command=self._create,
+            command=self._create_planner,
             width=150,
             height=40
         ).pack(side='left', padx=10)
@@ -1436,7 +1499,7 @@ class CreatePlannerDialog(ctk.CTkToplevel):
             font=ctk.CTkFont(size=14),
             fg_color=COLORS['surface'],
             hover_color=COLORS['border'],
-            command=self.destroy,
+            command=self._cancel_planner,
             width=150,
             height=40
         ).pack(side='left', padx=10)
@@ -1501,8 +1564,8 @@ class CreatePlannerDialog(ctk.CTkToplevel):
             if set_id in self.selected_lernsets:
                 self.selected_lernsets.remove(set_id)
 
-    def _create(self):
-        """Erstellt den Planer."""
+    def _create_planner(self):
+        """Erstellt oder aktualisiert den Planer."""
         name = self.name_entry.get().strip()
 
         if not name:
@@ -1513,159 +1576,37 @@ class CreatePlannerDialog(ctk.CTkToplevel):
             messagebox.showwarning("Fehler", "Bitte wähle mindestens ein Lernset aus.")
             return
 
-        planner_id = self.planner_manager.create_planner(
-            name=name,
-            lernset_ids=self.selected_lernsets,
-            icon=self.icon_var.get()
-        )
-
-        if planner_id:
-            messagebox.showinfo("Erfolg", f"Planer '{name}' wurde erstellt!")
-            self.destroy()
-        else:
-            messagebox.showerror("Fehler", "Fehler beim Erstellen des Planers.")
-
-
-class EditPlannerDialog(CreatePlannerDialog):
-    """Dialog zum Bearbeiten eines Planers."""
-
-    def __init__(self, parent, data_manager, planner_id: str):
-        self.planner_id = planner_id
-        super().__init__(parent, data_manager)
-        self.title("Planer bearbeiten")
-
-    def _show_planner_form(self):
-        """Überschreibt um den Titel anzupassen."""
-        # Lösche bestehenden Inhalt
-        for widget in self.main_container.winfo_children():
-            widget.destroy()
-
-        # Lade Planer-Daten
-        planner = self.planner_manager.get_planner(self.planner_id)
-
-        # Header
-        header = ctk.CTkLabel(
-            self.main_container,
-            text="Planer bearbeiten",
-            font=ctk.CTkFont(size=24, weight="bold")
-        )
-        header.pack(pady=30)
-
-        # Name
-        ctk.CTkLabel(self.main_container, text="Name:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
-        self.name_entry = ctk.CTkEntry(self.main_container, width=400, height=40, font=ctk.CTkFont(size=14))
-        self.name_entry.pack(pady=(0, 20))
-        if planner:
-            self.name_entry.insert(0, planner['name'])
-
-        # Icon
-        ctk.CTkLabel(self.main_container, text="Icon:", font=ctk.CTkFont(size=14)).pack(pady=(10, 5))
-
-        icon_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
-        icon_frame.pack()
-
-        self.icon_var = ctk.StringVar(value=planner.get('icon', '📅') if planner else "📅")
-        icons = get_default_planner_icons()
-
-        for i, icon in enumerate(icons[:8]):
-            btn = ctk.CTkRadioButton(
-                icon_frame,
-                text=icon,
-                variable=self.icon_var,
-                value=icon,
-                font=ctk.CTkFont(size=20),
-                radiobutton_width=15,
-                radiobutton_height=15
+        if self.planner_id:
+            # Planer aktualisieren
+            success = self.planner_manager.update_planner(
+                self.planner_id,
+                name=name,
+                lernset_ids=self.selected_lernsets,
+                icon=self.icon_var.get()
             )
-            btn.grid(row=0, column=i, padx=5, pady=10)
 
-        # Lernsets Header mit Button
-        lernset_header = ctk.CTkFrame(self.main_container, fg_color="transparent")
-        lernset_header.pack(fill='x', padx=40, pady=(20, 10))
-
-        ctk.CTkLabel(
-            lernset_header,
-            text="Lernsets auswählen:",
-            font=ctk.CTkFont(size=14)
-        ).pack(side='left')
-
-        ctk.CTkButton(
-            lernset_header,
-            text="+ Neues Lernset",
-            font=ctk.CTkFont(size=12),
-            fg_color=COLORS['secondary'],
-            hover_color='#7c3aed',
-            command=self._show_lernset_creator,
-            width=130,
-            height=30
-        ).pack(side='right')
-
-        # Liste
-        list_frame = ctk.CTkFrame(self.main_container, fg_color=COLORS['surface'])
-        list_frame.pack(fill='both', expand=True, padx=40, pady=(0, 20))
-
-        self.lernsets_scroll = ctk.CTkScrollableFrame(list_frame, fg_color="transparent")
-        self.lernsets_scroll.pack(fill='both', expand=True, padx=10, pady=10)
-
-        self._load_lernsets()
-
-        # Buttons
-        button_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
-        button_frame.pack(pady=20)
-
-        ctk.CTkButton(
-            button_frame,
-            text="Speichern",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color=COLORS['primary'],
-            hover_color=COLORS['primary_hover'],
-            command=self._create,
-            width=150,
-            height=40
-        ).pack(side='left', padx=10)
-
-        ctk.CTkButton(
-            button_frame,
-            text="Abbrechen",
-            font=ctk.CTkFont(size=14),
-            fg_color=COLORS['surface'],
-            hover_color=COLORS['border'],
-            command=self.destroy,
-            width=150,
-            height=40
-        ).pack(side='left', padx=10)
-
-    def _create_ui(self):
-        """Überschreibt _create_ui um Daten zu laden."""
-        # Lade Planer-Daten ZUERST
-        planner = self.planner_manager.get_planner(self.planner_id)
-        if planner:
-            self.selected_lernsets = planner.get('lernset_ids', []).copy()
-
-        # Erstelle UI
-        super()._create_ui()
-
-    def _create(self):
-        """Aktualisiert den Planer statt neu zu erstellen."""
-        name = self.name_entry.get().strip()
-
-        if not name:
-            messagebox.showwarning("Fehler", "Bitte gib einen Namen ein.")
-            return
-
-        if not self.selected_lernsets:
-            messagebox.showwarning("Fehler", "Bitte wähle mindestens ein Lernset aus.")
-            return
-
-        success = self.planner_manager.update_planner(
-            self.planner_id,
-            name=name,
-            lernset_ids=self.selected_lernsets,
-            icon=self.icon_var.get()
-        )
-
-        if success:
-            messagebox.showinfo("Erfolg", f"Planer '{name}' wurde aktualisiert!")
-            self.destroy()
+            if success:
+                messagebox.showinfo("✓ Erfolg", f"Planer '{name}' wurde aktualisiert!")
+                if self.on_close_callback:
+                    self.on_close_callback(True)
+            else:
+                messagebox.showerror("Fehler", "Fehler beim Aktualisieren des Planers.")
         else:
-            messagebox.showerror("Fehler", "Fehler beim Aktualisieren des Planers.")
+            # Neuen Planer erstellen
+            planner_id = self.planner_manager.create_planner(
+                name=name,
+                lernset_ids=self.selected_lernsets,
+                icon=self.icon_var.get()
+            )
+
+            if planner_id:
+                messagebox.showinfo("✓ Erfolg", f"Planer '{name}' wurde erstellt!")
+                if self.on_close_callback:
+                    self.on_close_callback(True)
+            else:
+                messagebox.showerror("Fehler", "Fehler beim Erstellen des Planers.")
+
+    def _cancel_planner(self):
+        """Bricht die Planer-Erstellung/-Bearbeitung ab."""
+        if self.on_close_callback:
+            self.on_close_callback(False)
