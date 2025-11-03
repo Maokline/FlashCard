@@ -20,7 +20,7 @@ class WeeklyCalendarView(ttk.Frame):
     Hauptansicht des Wochenkalenders mit 7-Tage-Grid und Empfehlungen.
     """
 
-    def __init__(self, master, data_manager, leitner_system):
+    def __init__(self, master, data_manager, leitner_system, app=None):
         """
         Initialisiert die Wochenkalender-Ansicht.
 
@@ -28,10 +28,12 @@ class WeeklyCalendarView(ttk.Frame):
             master: Parent-Widget
             data_manager: DataManager-Instanz
             leitner_system: LeitnerSystem-Instanz
+            app: Referenz auf FlashcardApp für Session-Start
         """
         super().__init__(master)
         self.data_manager = data_manager
         self.leitner_system = leitner_system
+        self.app = app
 
         # Initialisiere Systeme
         self.category_scorer = CategoryScorer(data_manager, leitner_system)
@@ -45,6 +47,9 @@ class WeeklyCalendarView(ttk.Frame):
         # UI erstellen
         self._create_ui()
         self._load_week_data()
+
+        # Zeige Benachrichtigung für heute fällige Sessions
+        self.after(500, self._check_todays_sessions)
 
         logging.info("WeeklyCalendarView initialisiert.")
 
@@ -252,6 +257,22 @@ class WeeklyCalendarView(ttk.Frame):
             text="⚙️ Algorithmus anpassen",
             command=self._configure_algorithm,
             style='Secondary.TButton',
+            width=25
+        ).pack(side='left', padx=5)
+
+        ModernButton(
+            button_frame,
+            text="📥 Wochenplan exportieren",
+            command=self._export_week_plan,
+            style='Secondary.TButton',
+            width=25
+        ).pack(side='left', padx=5)
+
+        ModernButton(
+            button_frame,
+            text="📋 Heute-Ansicht",
+            command=self._show_today_view,
+            style='Primary.TButton',
             width=25
         ).pack(side='left', padx=5)
 
@@ -514,12 +535,27 @@ class WeeklyCalendarView(ttk.Frame):
 
     def _start_session(self, entry: Dict):
         """Startet eine Lern-Session."""
-        # TODO: Integration mit Leitner-Session
-        messagebox.showinfo(
-            "Session starten",
-            f"Session wird gestartet:\n{entry['kategorie']} - {entry['unterkategorie']}\n\n"
-            f"Diese Funktion wird in Phase 6 implementiert."
-        )
+        if not self.app:
+            messagebox.showerror(
+                "Fehler",
+                "App-Referenz fehlt. Session kann nicht gestartet werden."
+            )
+            return
+
+        # Starte Leitner-Session mit vordefinierten Parametern
+        try:
+            self.app.start_leitner_session_from_plan(
+                category=entry['kategorie'],
+                subcategory=entry['unterkategorie'],
+                plan_id=entry['id'],
+                cards_limit=30  # Standard-Limit
+            )
+        except Exception as e:
+            logging.error(f"Fehler beim Starten der Session: {e}", exc_info=True)
+            messagebox.showerror(
+                "Fehler",
+                f"Fehler beim Starten der Session:\n{e}"
+            )
 
     def _mark_completed(self, plan_id: str):
         """Markiert eine Session als erledigt."""
@@ -587,6 +623,146 @@ class WeeklyCalendarView(ttk.Frame):
         """Öffnet den Algorithmus-Konfigurations-Dialog."""
         dialog = AlgorithmConfigDialog(self, self.data_manager)
         self.wait_window(dialog)
+
+    def _show_today_view(self):
+        """Öffnet die dedizierte Heute-Ansicht."""
+        dialog = TodayViewDialog(self, self.data_manager, self.leitner_system, self.app)
+        self.wait_window(dialog)
+        # Refresh nach Dialog
+        self._load_week_data()
+
+    def _check_todays_sessions(self):
+        """Prüft ob heute Sessions geplant sind und zeigt Benachrichtigung."""
+        today = datetime.date.today()
+        entries = self.data_manager.get_plan_for_date(today)
+
+        if not entries:
+            return  # Keine Sessions heute
+
+        # Zähle offene Sessions
+        open_sessions = [e for e in entries if e['status'] == 'offen']
+
+        if not open_sessions:
+            return  # Alle bereits erledigt
+
+        # Zähle fällige Karten
+        total_due_cards = sum(e.get('erwartete_karten', 0) for e in open_sessions)
+
+        # Erstelle Benachrichtigung
+        if len(open_sessions) == 1:
+            session = open_sessions[0]
+            message = (
+                f"📌 Du hast heute 1 geplante Lernsession:\n\n"
+                f"• {session['kategorie']} - {session['unterkategorie']}\n"
+                f"  {session.get('erwartete_karten', 0)} Karten\n\n"
+                f"Möchtest du jetzt starten?"
+            )
+        else:
+            message = (
+                f"📌 Du hast heute {len(open_sessions)} geplante Lernsessions:\n\n"
+            )
+            for session in open_sessions[:3]:  # Zeige max 3
+                message += f"• {session['kategorie']} - {session['unterkategorie']}\n"
+            if len(open_sessions) > 3:
+                message += f"  ... und {len(open_sessions) - 3} weitere\n"
+            message += f"\nInsgesamt {total_due_cards} Karten zu lernen."
+
+        # Zeige Benachrichtigung
+        result = messagebox.askquestion(
+            "Heutige Lernsessions",
+            message,
+            icon='info'
+        )
+
+        # Wenn User "Ja" klickt, starte erste Session
+        if result == 'yes' and len(open_sessions) == 1 and self.app:
+            self._start_session(open_sessions[0])
+
+    def _export_week_plan(self):
+        """Exportiert den aktuellen Wochenplan als CSV."""
+        try:
+            from tkinter import filedialog
+            import csv
+
+            # Hole Wochenplan
+            week_plan = self.data_manager.get_plan_for_week(self.week_start)
+
+            # Erstelle CSV-Daten
+            csv_data = []
+            csv_data.append(['Datum', 'Wochentag', 'Kategorie', 'Unterkategorie', 'Aktion',
+                           'Erwartete Karten', 'Geplante Dauer (Min)', 'Priorität', 'Status',
+                           'Tatsächliche Karten', 'Erledigt am'])
+
+            # Sortiere nach Datum
+            for date_str in sorted(week_plan.keys()):
+                date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                weekday_names = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag',
+                               'Freitag', 'Samstag', 'Sonntag']
+                weekday = weekday_names[date.weekday()]
+
+                entries = week_plan[date_str]
+                if not entries:
+                    # Leerer Tag
+                    csv_data.append([
+                        date.strftime('%d.%m.%Y'),
+                        weekday,
+                        '-', '-', '-', '-', '-', '-', '-', '-', '-'
+                    ])
+                else:
+                    for entry in entries:
+                        erledigt_am = ''
+                        if entry.get('erledigt_am'):
+                            try:
+                                dt = datetime.datetime.fromisoformat(entry['erledigt_am'])
+                                erledigt_am = dt.strftime('%d.%m.%Y %H:%M')
+                            except:
+                                erledigt_am = entry['erledigt_am']
+
+                        csv_data.append([
+                            date.strftime('%d.%m.%Y'),
+                            weekday,
+                            entry['kategorie'],
+                            entry['unterkategorie'],
+                            entry['aktion'].capitalize(),
+                            entry.get('erwartete_karten', 0),
+                            entry.get('geplante_dauer', '-'),
+                            entry.get('prioritaet', 'mittel').capitalize(),
+                            entry['status'].capitalize(),
+                            entry.get('tatsaechliche_karten', '-'),
+                            erledigt_am
+                        ])
+
+            # Datei speichern Dialog
+            week_num = self.week_start.isocalendar()[1]
+            default_filename = f"Wochenplan_KW{week_num}_{self.week_start.strftime('%Y-%m-%d')}.csv"
+
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[("CSV-Dateien", "*.csv"), ("Alle Dateien", "*.*")],
+                initialfile=default_filename,
+                title="Wochenplan exportieren"
+            )
+
+            if not file_path:
+                return  # User hat abgebrochen
+
+            # Schreibe CSV
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f, delimiter=';')
+                writer.writerows(csv_data)
+
+            messagebox.showinfo(
+                "Export erfolgreich",
+                f"Wochenplan wurde erfolgreich exportiert:\n{file_path}"
+            )
+            logging.info(f"Wochenplan exportiert nach: {file_path}")
+
+        except Exception as e:
+            logging.error(f"Fehler beim Exportieren des Wochenplans: {e}", exc_info=True)
+            messagebox.showerror(
+                "Fehler",
+                f"Fehler beim Exportieren:\n{e}"
+            )
 
 
 class DayPlanningDialog(tk.Toplevel):
@@ -1387,3 +1563,280 @@ class AlgorithmConfigDialog(tk.Toplevel):
             self.destroy()
         else:
             messagebox.showerror("Fehler", "Fehler beim Speichern der Gewichtungen.")
+
+
+class TodayViewDialog(tk.Toplevel):
+    """Dialog für die Heute-Ansicht mit Quick Access zu heutigen Sessions."""
+
+    def __init__(self, parent, data_manager, leitner_system, app):
+        super().__init__(parent)
+        self.data_manager = data_manager
+        self.leitner_system = leitner_system
+        self.app = app
+
+        self.title(f"Heute: {datetime.date.today().strftime('%A, %d.%m.%Y')}")
+        self.geometry("700x600")
+
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt die Dialog-UI."""
+        # Header
+        header_frame = ttk.Frame(self)
+        header_frame.pack(fill='x', padx=20, pady=15)
+
+        ttk.Label(
+            header_frame,
+            text=f"📅 Heute: {datetime.date.today().strftime('%A, %d.%m.%Y')}",
+            font=('Segoe UI', 16, 'bold')
+        ).pack()
+
+        # Statistik-Frame
+        stats_frame = ttk.LabelFrame(self, text="📊 Tagesübersicht", padding=10)
+        stats_frame.pack(fill='x', padx=20, pady=10)
+
+        # Berechne Statistiken
+        today = datetime.date.today()
+        entries = self.data_manager.get_plan_for_date(today)
+
+        total_sessions = len(entries)
+        open_sessions = [e for e in entries if e['status'] == 'offen']
+        completed_sessions = [e for e in entries if e['status'] == 'erledigt']
+
+        total_cards = sum(e.get('erwartete_karten', 0) for e in entries)
+        completed_cards = sum(e.get('tatsaechliche_karten', 0) for e in completed_sessions)
+
+        # Fällige Karten insgesamt (aus Leitner-System)
+        due_cards_total = sum(
+            1 for card in self.leitner_system.cards.values()
+            if card.next_review_date <= datetime.datetime.now()
+        )
+
+        # Statistik-Grid
+        stats_grid = ttk.Frame(stats_frame)
+        stats_grid.pack(fill='x')
+        stats_grid.columnconfigure((0, 1, 2), weight=1)
+
+        # Stat 1: Sessions
+        self._create_stat_widget(
+            stats_grid, 0,
+            "Geplante Sessions",
+            f"{len(completed_sessions)}/{total_sessions}",
+            "green" if len(completed_sessions) == total_sessions else "blue"
+        )
+
+        # Stat 2: Karten
+        self._create_stat_widget(
+            stats_grid, 1,
+            "Karten",
+            f"{completed_cards}/{total_cards}",
+            "green" if completed_cards >= total_cards else "orange"
+        )
+
+        # Stat 3: Fällig insgesamt
+        self._create_stat_widget(
+            stats_grid, 2,
+            "Insgesamt fällig",
+            str(due_cards_total),
+            "red" if due_cards_total > 50 else ("orange" if due_cards_total > 20 else "green")
+        )
+
+        # Fortschrittsbalken
+        if total_sessions > 0:
+            progress = len(completed_sessions) / total_sessions
+            progress_frame = ttk.Frame(stats_frame)
+            progress_frame.pack(fill='x', pady=10)
+
+            ttk.Label(progress_frame, text="Fortschritt:").pack(anchor='w')
+
+            bar_length = 40
+            filled = int(bar_length * progress)
+            bar = '█' * filled + '░' * (bar_length - filled)
+
+            ttk.Label(
+                progress_frame,
+                text=f"{bar} {int(progress * 100)}%",
+                font=('Courier', 10)
+            ).pack(anchor='w')
+
+        # Sessions-Liste
+        sessions_frame = ttk.LabelFrame(self, text="🎯 Geplante Sessions", padding=10)
+        sessions_frame.pack(fill='both', expand=True, padx=20, pady=10)
+
+        # Scrollable Container
+        canvas = tk.Canvas(sessions_frame, bg='white', highlightthickness=0)
+        scrollbar = ttk.Scrollbar(sessions_frame, orient='vertical', command=canvas.yview)
+        scrollable_container = ttk.Frame(canvas)
+
+        scrollable_container.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_container, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
+
+        # Zeige Sessions
+        if not entries:
+            ttk.Label(
+                scrollable_container,
+                text="Keine Sessions für heute geplant.",
+                foreground='gray'
+            ).pack(pady=20)
+        else:
+            for entry in entries:
+                self._create_session_widget(scrollable_container, entry)
+
+        # Buttons
+        button_frame = ttk.Frame(self)
+        button_frame.pack(pady=15)
+
+        ModernButton(
+            button_frame,
+            text="+ Neue Session hinzufügen",
+            command=self._add_new_session,
+            style='Primary.TButton'
+        ).pack(side='left', padx=5)
+
+        ModernButton(
+            button_frame,
+            text="Schließen",
+            command=self.destroy,
+            style='Secondary.TButton'
+        ).pack(side='left', padx=5)
+
+    def _create_stat_widget(self, parent, column: int, label: str, value: str, color: str):
+        """Erstellt ein Statistik-Widget."""
+        frame = ttk.Frame(parent, relief='solid', borderwidth=1)
+        frame.grid(row=0, column=column, padx=5, pady=5, sticky='nsew')
+
+        ttk.Label(
+            frame,
+            text=label,
+            font=('Segoe UI', 9),
+            foreground='gray'
+        ).pack(pady=(5, 0))
+
+        ttk.Label(
+            frame,
+            text=value,
+            font=('Segoe UI', 18, 'bold'),
+            foreground=color
+        ).pack(pady=(0, 5))
+
+    def _create_session_widget(self, parent, entry: Dict):
+        """Erstellt ein Widget für eine Session."""
+        frame = ttk.Frame(parent, relief='solid', borderwidth=1)
+        frame.pack(fill='x', pady=5, padx=5)
+
+        # Status-Icon
+        status = entry['status']
+        if status == 'erledigt':
+            icon = '✓'
+            color = 'green'
+        else:
+            icon = '⏳'
+            color = 'blue'
+
+        # Info-Frame
+        info_frame = ttk.Frame(frame)
+        info_frame.pack(side='left', fill='x', expand=True, padx=10, pady=8)
+
+        # Kategorie
+        kategorie_text = f"{icon} {entry['kategorie']} - {entry['unterkategorie']}"
+        ttk.Label(
+            info_frame,
+            text=kategorie_text,
+            font=('Segoe UI', 11, 'bold'),
+            foreground=color
+        ).pack(anchor='w')
+
+        # Details
+        details_text = f"{entry.get('erwartete_karten', 0)} Karten"
+        if entry.get('geplante_dauer'):
+            details_text += f" • {entry['geplante_dauer']} Min."
+        if entry.get('prioritaet'):
+            prioritaet_map = {'hoch': '🔴', 'mittel': '🟡', 'niedrig': '🟢'}
+            details_text += f" • {prioritaet_map.get(entry['prioritaet'], '')} {entry['prioritaet'].capitalize()}"
+
+        ttk.Label(
+            info_frame,
+            text=details_text,
+            font=('Segoe UI', 9),
+            foreground='gray'
+        ).pack(anchor='w')
+
+        # Button-Frame
+        button_frame = ttk.Frame(frame)
+        button_frame.pack(side='right', padx=10, pady=8)
+
+        if status == 'offen':
+            ModernButton(
+                button_frame,
+                text="Jetzt lernen",
+                command=lambda: self._start_session(entry),
+                style='Primary.TButton'
+            ).pack(side='left', padx=2)
+
+            ModernButton(
+                button_frame,
+                text="✓ Erledigt",
+                command=lambda: self._mark_completed(entry['id']),
+                style='Success.TButton'
+            ).pack(side='left', padx=2)
+        else:
+            # Zeige Statistik für erledigte Session
+            if entry.get('tatsaechliche_karten'):
+                ttk.Label(
+                    button_frame,
+                    text=f"✓ {entry['tatsaechliche_karten']} Karten",
+                    font=('Segoe UI', 10, 'bold'),
+                    foreground='green'
+                ).pack()
+
+    def _start_session(self, entry: Dict):
+        """Startet eine Session."""
+        if not self.app:
+            messagebox.showerror("Fehler", "App-Referenz fehlt.")
+            return
+
+        try:
+            self.app.start_leitner_session_from_plan(
+                category=entry['kategorie'],
+                subcategory=entry['unterkategorie'],
+                plan_id=entry['id'],
+                cards_limit=30
+            )
+            self.destroy()
+        except Exception as e:
+            logging.error(f"Fehler beim Starten der Session: {e}", exc_info=True)
+            messagebox.showerror("Fehler", f"Fehler beim Starten:\n{e}")
+
+    def _mark_completed(self, plan_id: str):
+        """Markiert Session als erledigt."""
+        entry = self.data_manager.get_plan_entry(plan_id)
+        if entry:
+            updates = {
+                'status': 'erledigt',
+                'erledigt_am': datetime.datetime.now().isoformat(),
+                'tatsaechliche_karten': entry.get('erwartete_karten', 0)
+            }
+            self.data_manager.update_plan_entry(plan_id, updates)
+            # Refresh UI
+            self.destroy()
+            self.__init__(self.master, self.data_manager, self.leitner_system, self.app)
+
+    def _add_new_session(self):
+        """Öffnet Dialog zum Hinzufügen einer neuen Session."""
+        from calendar_ui import DayPlanningDialog
+        today = datetime.date.today()
+        dialog = DayPlanningDialog(self, self.data_manager, self.leitner_system,
+                                   CategoryScorer(self.data_manager, self.leitner_system),
+                                   today)
+        self.wait_window(dialog)
+        # Refresh
+        self.destroy()
+        self.__init__(self.master, self.data_manager, self.leitner_system, self.app)
