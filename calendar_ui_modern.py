@@ -8,6 +8,7 @@ Nutzt CustomTkinter für ein modernes, ansprechendes Design.
 
 import customtkinter as ctk
 from tkinter import messagebox
+import tkinter as tk
 import datetime
 import logging
 from typing import Optional, Dict, List
@@ -1334,24 +1335,51 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         ).pack(side='left', padx=5)
 
     def _start_session(self, entry: Dict):
-        """Startet eine Lern-Session."""
+        """Startet eine Lern-Session - Navigiert zur Leitner-Kartenauswahl mit voreingestellten Filtern."""
         if not self.app:
             messagebox.showerror("Fehler", "App-Referenz fehlt.")
             return
 
         try:
-            self.app.start_leitner_session_from_plan(
-                category=entry['kategorie'],
-                subcategory=entry['unterkategorie'],
-                plan_id=entry['id'],
-                cards_limit=30
-            )
+            # Navigiere zur Leitner-Kartenauswahl-Seite
+            self.app.show_leitner_options()
+
+            # Setze die Filter entsprechend der geplanten Session
+            kategorie = entry.get('kategorie', 'Alle')
+            unterkategorie = entry.get('unterkategorie', 'Alle')
+            erwartete_karten = entry.get('erwartete_karten', 20)
+
+            # Setze Kategorie
+            if kategorie and kategorie != 'Alle':
+                self.app.category_var.set(kategorie)
+                self.app.update_leitner_subcategories()
+
+            # Setze Unterkategorie
+            if unterkategorie and unterkategorie != 'Alle':
+                self.app.subcategory_var.set(unterkategorie)
+
+            # Setze Session-Größe
+            cards_str = str(erwartete_karten)
+            available_cards = ["10", "20", "30", "40", "50", "100"]
+            if cards_str in available_cards:
+                self.app.cards_per_session_var.set(cards_str)
+            else:
+                # Finde den nächstgelegenen Wert
+                cards_int = int(erwartete_karten)
+                closest = min(available_cards, key=lambda x: abs(int(x) - cards_int))
+                self.app.cards_per_session_var.set(closest)
+
+            # Aktualisiere die Kartenvorschau mit den neuen Filtern
+            self.app.preview_leitner_cards()
+
+            logging.info(f"Navigiert zur Leitner-Kartenauswahl mit Filtern: {kategorie}/{unterkategorie}, {erwartete_karten} Karten")
+
         except Exception as e:
-            logging.error(f"Fehler beim Starten der Session: {e}", exc_info=True)
-            messagebox.showerror("Fehler", f"Fehler beim Starten:\n{e}")
+            logging.error(f"Fehler beim Navigieren zur Leitner-Auswahl: {e}", exc_info=True)
+            messagebox.showerror("Fehler", f"Fehler beim Öffnen der Kartenauswahl:\n{e}")
 
     def _auto_plan_week(self):
-        """Startet die intelligente automatische Wochenplanung."""
+        """Startet die intelligente automatische Wochenplanung mit individuellen Präferenzen."""
         # Hole alle Lernsets des Planers
         lernsets = self.planner_manager.get_planner_lernsets(self.planner_id)
 
@@ -1361,38 +1389,73 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
 
         # Berechne Statistiken
         total_daily_goal = sum(ls.get('taegliches_ziel', 0) for ls in lernsets)
-        total_categories = len(self.planner_manager.get_planner_categories(self.planner_id))
 
-        if messagebox.askyesno(
-            "Intelligente Automatische Planung",
-            f"Möchtest du die Woche intelligent planen?\n\n"
-            f"Planer: {self.planner['name']}\n"
-            f"Lernsets: {len(lernsets)}\n"
-            f"Kategorien: {total_categories}\n"
-            f"Tägliches Ziel (gesamt): {total_daily_goal} Karten\n\n"
-            f"Der intelligente Planer berücksichtigt:\n"
-            f"• Dringlichkeit (fällige Karten)\n"
-            f"• Lernrhythmus und Erfolgsquoten\n"
-            f"• Gleichmäßige Verteilung über die Woche\n"
-            f"• Deine individuellen Lernziele\n\n"
-            f"Bestehende automatisch generierte Sessions werden überschrieben.\n"
-            f"Manuell erstellte Sessions bleiben erhalten."
-        ):
-            success = self.weekly_planner.auto_plan_week(
-                start_date=self.week_start,
-                daily_target=total_daily_goal // 7 if total_daily_goal > 0 else 20,
-                all_learning_sets=lernsets  # Übergebe alle Lernsets
+        # Sammle alle Kategorien aus den Lernsets
+        all_categories = set()
+        for lernset in lernsets:
+            if 'kategorien' in lernset:
+                for kat_entry in lernset['kategorien']:
+                    all_categories.add(kat_entry['kategorie'])
+
+        # Öffne Präferenzen-Dialog
+        dialog = PlannerPreferencesDialog(
+            self.root,
+            categories=sorted(list(all_categories)),
+            total_daily_goal=total_daily_goal if total_daily_goal > 0 else 20
+        )
+        preferences = dialog.get_result()
+
+        if not preferences:
+            # Nutzer hat abgebrochen
+            return
+
+        # Berechne Tagesgewichte basierend auf der Verteilung
+        day_weights = self._calculate_day_weights(preferences['daily_distribution'])
+
+        # Rufe die erweiterte auto_plan_week Methode mit Präferenzen auf
+        success = self.weekly_planner.auto_plan_week_with_preferences(
+            start_date=self.week_start,
+            all_learning_sets=lernsets,
+            preferences=preferences,
+            day_weights=day_weights
+        )
+
+        if success:
+            messagebox.showinfo(
+                "✓ Erfolg",
+                "Woche wurde intelligent geplant!\n\n"
+                "Du kannst die Sessions jetzt individuell anpassen."
             )
+            self._load_week_data()
+        else:
+            messagebox.showerror("Fehler", "Fehler bei der automatischen Planung.")
 
-            if success:
-                messagebox.showinfo(
-                    "✓ Erfolg",
-                    "Woche wurde intelligent geplant!\n\n"
-                    "Du kannst die Sessions jetzt individuell anpassen."
-                )
-                self._load_week_data()
-            else:
-                messagebox.showerror("Fehler", "Fehler bei der automatischen Planung.")
+    def _calculate_day_weights(self, daily_distribution: Dict[str, str]) -> List[float]:
+        """
+        Berechnet Gewichte für jeden Tag basierend auf der gewählten Belastung.
+
+        Args:
+            daily_distribution: Dict mit Tag-Namen und Belastung (Hoch/Mittel/Gering)
+
+        Returns:
+            Liste von 7 Gewichten (Montag-Sonntag), normalisiert auf Summe 7.0
+        """
+        # Mapping von Belastung zu Gewicht
+        weight_map = {
+            "Hoch": 1.5,
+            "Mittel": 1.0,
+            "Gering": 0.5
+        }
+
+        days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+        weights = [weight_map.get(daily_distribution.get(day, "Mittel"), 1.0) for day in days]
+
+        # Normalisiere, damit die Summe 7.0 ist (durchschnittlich 1.0 pro Tag)
+        total_weight = sum(weights)
+        if total_weight > 0:
+            weights = [w * 7.0 / total_weight for w in weights]
+
+        return weights
 
     def _load_day_data(self):
         """Lädt Daten für die Tagesansicht."""
@@ -1938,11 +2001,13 @@ class SessionEditorFrame(ctk.CTkFrame):
                 # Bearbeite bestehende Session
                 self.data_manager.update_plan_entry(
                     self.entry['id'],
-                    kategorie=kategorie,
-                    unterkategorie=unterkategorie,
-                    erwartete_karten=erwartete_karten,
-                    prioritaet=prioritaet,
-                    notizen=notizen
+                    {
+                        'kategorie': kategorie,
+                        'unterkategorie': unterkategorie,
+                        'erwartete_karten': erwartete_karten,
+                        'prioritaet': prioritaet,
+                        'notizen': notizen
+                    }
                 )
             else:
                 # Neue Session
@@ -2733,3 +2798,243 @@ class CreatePlannerFrame(ctk.CTkFrame):
         """Bricht die Planer-Erstellung/-Bearbeitung ab."""
         if self.on_close_callback:
             self.on_close_callback(False)
+
+
+class PlannerPreferencesDialog(ctk.CTkToplevel):
+    """Dialog für individuelle Präferenzen beim intelligenten Planner."""
+
+    def __init__(self, parent, categories: List[str], total_daily_goal: int):
+        super().__init__(parent)
+
+        self.title("Intelligente Wochenplanung - Präferenzen")
+        self.geometry("700x800")
+        self.resizable(False, False)
+
+        # Zentriere das Fenster
+        self.transient(parent)
+        self.grab_set()
+
+        self.result = None
+        self.categories = categories
+        self.total_daily_goal = total_daily_goal
+
+        self._create_ui()
+
+    def _create_ui(self):
+        """Erstellt das UI für die Präferenzen-Eingabe."""
+        # Haupt-Container mit Scrollbar
+        main_frame = ctk.CTkScrollableFrame(self)
+        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Titel
+        ctk.CTkLabel(
+            main_frame,
+            text="Intelligente Wochenplanung",
+            font=ctk.CTkFont(size=24, weight="bold")
+        ).pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            main_frame,
+            text="Passe die automatische Planung an deine individuellen Bedürfnisse an.",
+            font=ctk.CTkFont(size=13),
+            text_color="gray"
+        ).pack(pady=(0, 20))
+
+        # Sektion 1: Priorisierung
+        self._create_priority_section(main_frame)
+
+        # Sektion 2: Anzahl Karten
+        self._create_cards_section(main_frame)
+
+        # Sektion 3: Priorisierte Kategorie
+        self._create_category_section(main_frame)
+
+        # Sektion 4: Tagesverteilung
+        self._create_daily_distribution_section(main_frame)
+
+        # Buttons
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.pack(pady=20, fill='x')
+
+        ctk.CTkButton(
+            button_frame,
+            text="Abbrechen",
+            command=self._cancel,
+            fg_color="gray",
+            hover_color="darkgray",
+            width=150,
+            height=40
+        ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
+            text="Woche planen",
+            command=self._confirm,
+            width=150,
+            height=40
+        ).pack(side='right', padx=5)
+
+    def _create_priority_section(self, parent):
+        """Erstellt die Sektion für die Priorisierung."""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill='x', pady=10)
+
+        ctk.CTkLabel(
+            frame,
+            text="Was soll priorisiert werden?",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(anchor='w', padx=10, pady=(10, 5))
+
+        self.priority_vars = {}
+        priorities = [
+            ("success_rate", "Erfolgsquote (bevorzuge gut gelernte Kategorien)"),
+            ("due_date", "Fälligkeit (bevorzuge überfällige Karten)"),
+            ("even_distribution", "Gleichmäßige Verteilung (verteile Sessions gleichmäßig)")
+        ]
+
+        for key, label in priorities:
+            var = tk.BooleanVar(value=True)
+            self.priority_vars[key] = var
+            ctk.CTkCheckBox(
+                frame,
+                text=label,
+                variable=var,
+                font=ctk.CTkFont(size=13)
+            ).pack(anchor='w', padx=20, pady=5)
+
+    def _create_cards_section(self, parent):
+        """Erstellt die Sektion für die Anzahl der Karten."""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill='x', pady=10)
+
+        ctk.CTkLabel(
+            frame,
+            text="Wie viele Karten möchtest du insgesamt lernen?",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(anchor='w', padx=10, pady=(10, 5))
+
+        ctk.CTkLabel(
+            frame,
+            text=f"(Empfohlen basierend auf täglichem Ziel: {self.total_daily_goal * 7} Karten/Woche)",
+            font=ctk.CTkFont(size=12),
+            text_color="gray"
+        ).pack(anchor='w', padx=10, pady=(0, 10))
+
+        cards_input_frame = ctk.CTkFrame(frame)
+        cards_input_frame.pack(fill='x', padx=10, pady=5)
+
+        ctk.CTkLabel(
+            cards_input_frame,
+            text="Gesamt-Karten:",
+            font=ctk.CTkFont(size=13)
+        ).pack(side='left', padx=5)
+
+        self.total_cards_var = tk.StringVar(value=str(self.total_daily_goal * 7))
+        ctk.CTkEntry(
+            cards_input_frame,
+            textvariable=self.total_cards_var,
+            width=100,
+            font=ctk.CTkFont(size=13)
+        ).pack(side='left', padx=5)
+
+    def _create_category_section(self, parent):
+        """Erstellt die Sektion für die priorisierte Kategorie."""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill='x', pady=10)
+
+        ctk.CTkLabel(
+            frame,
+            text="Gibt es eine priorisierte Kategorie?",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(anchor='w', padx=10, pady=(10, 5))
+
+        cat_frame = ctk.CTkFrame(frame)
+        cat_frame.pack(fill='x', padx=10, pady=5)
+
+        self.priority_category_var = tk.StringVar(value="Keine")
+        category_options = ["Keine"] + self.categories
+
+        ctk.CTkOptionMenu(
+            cat_frame,
+            variable=self.priority_category_var,
+            values=category_options,
+            width=300,
+            font=ctk.CTkFont(size=13)
+        ).pack(side='left', padx=5)
+
+    def _create_daily_distribution_section(self, parent):
+        """Erstellt die Sektion für die Tagesverteilung."""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill='x', pady=10)
+
+        ctk.CTkLabel(
+            frame,
+            text="Tagesverteilung (Belastung pro Tag)",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(anchor='w', padx=10, pady=(10, 5))
+
+        ctk.CTkLabel(
+            frame,
+            text="Hoch = viele Karten, Mittel = durchschnittlich, Gering = wenige Karten",
+            font=ctk.CTkFont(size=12),
+            text_color="gray"
+        ).pack(anchor='w', padx=10, pady=(0, 10))
+
+        days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+        self.day_distribution = {}
+
+        for day in days:
+            day_frame = ctk.CTkFrame(frame)
+            day_frame.pack(fill='x', padx=10, pady=3)
+
+            ctk.CTkLabel(
+                day_frame,
+                text=f"{day}:",
+                font=ctk.CTkFont(size=13),
+                width=100
+            ).pack(side='left', padx=5)
+
+            var = tk.StringVar(value="Mittel")
+            self.day_distribution[day] = var
+
+            ctk.CTkOptionMenu(
+                day_frame,
+                variable=var,
+                values=["Hoch", "Mittel", "Gering"],
+                width=120,
+                font=ctk.CTkFont(size=13)
+            ).pack(side='left', padx=5)
+
+    def _confirm(self):
+        """Bestätigt die Eingaben und schließt den Dialog."""
+        try:
+            total_cards = int(self.total_cards_var.get())
+            if total_cards <= 0:
+                messagebox.showwarning("Fehler", "Anzahl der Karten muss größer als 0 sein.")
+                return
+        except ValueError:
+            messagebox.showwarning("Fehler", "Bitte gib eine gültige Zahl für die Karten ein.")
+            return
+
+        self.result = {
+            'priorities': {
+                key: var.get() for key, var in self.priority_vars.items()
+            },
+            'total_cards': total_cards,
+            'priority_category': self.priority_category_var.get() if self.priority_category_var.get() != "Keine" else None,
+            'daily_distribution': {
+                day: var.get() for day, var in self.day_distribution.items()
+            }
+        }
+
+        self.destroy()
+
+    def _cancel(self):
+        """Bricht den Dialog ab."""
+        self.result = None
+        self.destroy()
+
+    def get_result(self):
+        """Wartet auf die Eingabe und gibt das Ergebnis zurück."""
+        self.wait_window()
+        return self.result
