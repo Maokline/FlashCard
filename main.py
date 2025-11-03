@@ -49,6 +49,7 @@ from data_manager import DataManager, ThemeManager, StatisticsManager, Flashcard
 from custom_widgets import ModernButton, ModernCombobox
 from export_import import export_flashcards_to_csv, import_flashcards_from_csv
 from calendar_ui import WeeklyCalendarView
+from calendar_ui_modern import PlannerSelectionView, ModernWeeklyCalendarView
 
 sns.set_style("whitegrid")
 sns.set_palette("husl")
@@ -11094,21 +11095,36 @@ Wie werden Karten einsortiert?
     # -----------------------------------------------------------------------------------
     # WOCHENPLANER
     # -----------------------------------------------------------------------------------
-    def show_weekly_calendar(self):
+    def show_weekly_calendar(self, planner_id=None):
         """Zeigt den Wochenkalender mit KI-gestützten Lernempfehlungen."""
         self._clear_content_frame()
 
-        # Erstelle WeeklyCalendarView mit App-Referenz
-        self.calendar_view = WeeklyCalendarView(
-            self.content_frame,
-            self.data_manager,
-            self.leitner_system,
-            app=self  # Übergebe Referenz für Session-Start
-        )
-        self.calendar_view.pack(fill='both', expand=True)
+        if planner_id:
+            # Direkter Aufruf mit Planer-ID -> Zeige Wochenansicht
+            self.calendar_view = ModernWeeklyCalendarView(
+                self.content_frame,
+                self.data_manager,
+                self.leitner_system,
+                planner_id,
+                app=self
+            )
+            self.calendar_view.pack(fill='both', expand=True)
+        else:
+            # Zeige Planer-Auswahl
+            self.planner_selection = PlannerSelectionView(
+                self.content_frame,
+                self.data_manager,
+                self.leitner_system,
+                app=self
+            )
+            self.planner_selection.pack(fill='both', expand=True)
+
+            # Ermögliche Navigation zurück zur Auswahl
+            self.planner_selection.master.show_weekly_calendar = self.show_weekly_calendar
+            self.planner_selection.master.show_planner_selection = lambda: self.show_weekly_calendar()
 
         self.highlight_active_button('📅 Wochenplaner')
-        logging.info("Wochenkalender geöffnet.")
+        logging.info("Wochenplaner geöffnet.")
 
     # -----------------------------------------------------------------------------------
     # MAINLOOP
