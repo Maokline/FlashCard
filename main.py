@@ -460,30 +460,30 @@ SRS_SETTINGS = {
 }
 SESSION_LIMIT = 5
 COLORS = {
-    "hover": "#d0e1f9",  # Subtilere Hover-Farbe für Buttons
-    "active": "#1abc9c",  # Aktive Farbe für Primary Buttons
-    "active_secondary": "#34495e",  # Aktive Farbe für Secondary Buttons
-    "active_danger": "#c0392b"  # Aktive Farbe für Danger Buttons
+    "hover": "#B8D4E8",  # Hellere Hover-Farbe passend zum neuen Design
+    "active": "#4A90E2",  # Moderne blaue Aktiv-Farbe
+    "active_secondary": "#5CA0F2",  # Hellere aktive Farbe für Secondary Buttons
+    "active_danger": "#E57373"  # Hellere aktive Farbe für Danger Buttons
 }
 BUTTON_STYLES = {
     'primary': {
-        'bg': '#4a90e2',
+        'bg': '#4A90E2',  # Modernes Blau
         'fg': '#ffffff',
         'font': ("Segoe UI", 10, "bold"),
         'padx': 10,
         'pady': 5,
-        'borderwidth': 0  # Borderwidth explizit definieren
+        'borderwidth': 0
     },
     'secondary': {
-        'bg': '#95a5a6',
+        'bg': '#6EB0FF',  # Helleres Blau für Secondary Buttons
         'fg': '#ffffff',
         'font': ("Segoe UI", 10),
         'padx': 10,
         'pady': 5,
-        'borderwidth': 0  # Borderwidth explizit definieren
+        'borderwidth': 0
     },
     'danger': {
-        'bg': '#e74c3c',
+        'bg': '#EF5350',  # Helleres Rot
         'fg': '#ffffff',
         'font': ("Segoe UI", 10, "bold"),
         'padx': 10,
@@ -518,15 +518,15 @@ SRS_SETTINGS = {
 SESSION_LIMIT = 5
 DEFAULT_BG_COLOR = "#ffffff"
 COLORS = {
-    "hover": "#d0e1f9",
-    "active": "#1abc9c",
-    "active_secondary": "#34495e",
-    "active_danger": "#c0392b"
+    "hover": "#B8D4E8",  # Hellere Hover-Farbe passend zum neuen Design
+    "active": "#4A90E2",  # Moderne blaue Aktiv-Farbe
+    "active_secondary": "#5CA0F2",  # Hellere aktive Farbe für Secondary Buttons
+    "active_danger": "#E57373"  # Hellere aktive Farbe für Danger Buttons
 }
 BUTTON_STYLES = {
-    'primary': {'bg': '#4a90e2', 'fg': '#ffffff', 'font': ("Segoe UI", 10, "bold"), 'padx': 10, 'pady': 5, 'borderwidth': 0},
-    'secondary': {'bg': '#95a5a6', 'fg': '#ffffff', 'font': ("Segoe UI", 10), 'padx': 10, 'pady': 5, 'borderwidth': 0},
-    'danger': {'bg': '#e74c3c', 'fg': '#ffffff', 'font': ("Segoe UI", 10, "bold"), 'padx': 10, 'pady': 5, 'borderwidth': 0}
+    'primary': {'bg': '#4A90E2', 'fg': '#ffffff', 'font': ("Segoe UI", 10, "bold"), 'padx': 10, 'pady': 5, 'borderwidth': 0},
+    'secondary': {'bg': '#6EB0FF', 'fg': '#ffffff', 'font': ("Segoe UI", 10), 'padx': 10, 'pady': 5, 'borderwidth': 0},
+    'danger': {'bg': '#EF5350', 'fg': '#ffffff', 'font': ("Segoe UI", 10, "bold"), 'padx': 10, 'pady': 5, 'borderwidth': 0}
 }
 
 # ------------------------------------------------------------------------------
@@ -550,9 +550,65 @@ class FlashcardApp:
         self.sidebar_width = 200
         self.sidebar_collapsed_width = 50
 
-        self.sidebar_frame = tk.Frame(self.master, bg="#2c3e50", width=self.sidebar_width)
+        # Moderne Sidebar mit hellerem Design
+        self.sidebar_frame = tk.Frame(self.master, bg="#E8F4F8", width=self.sidebar_width)
         self.sidebar_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self.sidebar_frame.pack_propagate(False)
+
+        # Erstelle einen Canvas für den Gradient-Effekt
+        self.sidebar_canvas = tk.Canvas(
+            self.sidebar_frame,
+            bg="#E8F4F8",
+            highlightthickness=0,
+            width=self.sidebar_width
+        )
+        self.sidebar_canvas.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Zeichne einen subtilen Gradient
+        def draw_sidebar_gradient():
+            height = self.sidebar_canvas.winfo_height()
+            if height <= 1:
+                height = 700
+            colors = [
+                "#E8F4F8",  # Hell-Cyanblau
+                "#D5E8F0",  # Mittleres Cyanblau
+                "#C2DCE8",  # Dunkleres Cyanblau
+            ]
+            steps = len(colors) - 1
+            for i in range(steps):
+                start_color = colors[i]
+                end_color = colors[i + 1]
+                segment_height = height // steps
+                for j in range(segment_height):
+                    ratio = j / segment_height
+                    # Interpoliere zwischen den Farben
+                    r1, g1, b1 = int(start_color[1:3], 16), int(start_color[3:5], 16), int(start_color[5:7], 16)
+                    r2, g2, b2 = int(end_color[1:3], 16), int(end_color[3:5], 16), int(end_color[5:7], 16)
+                    r = int(r1 + (r2 - r1) * ratio)
+                    g = int(g1 + (g2 - g1) * ratio)
+                    b = int(b1 + (b2 - b1) * ratio)
+                    color = f"#{r:02x}{g:02x}{b:02x}"
+                    y = i * segment_height + j
+                    self.sidebar_canvas.create_line(0, y, self.sidebar_width, y, fill=color)
+
+        self.master.after(100, draw_sidebar_gradient)
+
+        # Logo-Bereich am oberen Rand
+        logo_frame = tk.Frame(self.sidebar_frame, bg="#E8F4F8")
+        logo_frame.pack(pady=(15, 5), padx=10, fill='x')
+
+        logo_label = tk.Label(
+            logo_frame,
+            text="📚 FlashCards",
+            font=("Segoe UI", 16, "bold"),
+            bg="#E8F4F8",
+            fg="#2C3E50"
+        )
+        logo_label.pack()
+
+        # Trennlinie
+        separator = tk.Frame(self.sidebar_frame, bg="#4A90E2", height=2)
+        separator.pack(fill='x', padx=10, pady=10)
 
         self.toggle_button = ModernButton(
             self.sidebar_frame,
@@ -5210,54 +5266,164 @@ class FlashcardApp:
     # -----------------------------------------------------------------------------------
     def create_main_menu(self):
         self._clear_content_frame()
-        
-        # Header Frame
-        header_frame = tk.Frame(self.content_frame, bg=self.appearance_settings.text_bg_color)
+
+        # Modernes Design mit Canvas und animierten Kreisen im Hintergrund
+        # Canvas für animierte Kreise
+        canvas = tk.Canvas(
+            self.content_frame,
+            bg='#f0f4f8',  # Helles Blaugrau
+            highlightthickness=0
+        )
+        canvas.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Initialisiere Kreise für Animation
+        if not hasattr(self, 'home_circles'):
+            self.home_circles = []
+            circle_count = 8
+            colors = ['#4A90E2', '#5CA0F2', '#6EB0FF', '#80C0FF', '#92D0FF']  # Verschiedene Blautöne
+
+            for i in range(circle_count):
+                size = random.randint(80, 200)
+                x = random.randint(0, 800)
+                y = random.randint(0, 600)
+                vx = random.uniform(-1, 1)
+                vy = random.uniform(-1, 1)
+                color = random.choice(colors)
+
+                # Erstelle Kreis mit Transparenz-Effekt
+                circle = canvas.create_oval(
+                    x, y, x + size, y + size,
+                    fill=color, outline='', stipple='gray25'  # stipple für Transparenz-Effekt
+                )
+
+                self.home_circles.append({
+                    'id': circle,
+                    'x': x,
+                    'y': y,
+                    'size': size,
+                    'vx': vx,
+                    'vy': vy,
+                    'canvas': canvas
+                })
+
+        # Animiere Kreise
+        def animate_circles():
+            if not hasattr(self, 'home_circles') or not self.home_circles:
+                return
+
+            for circle in self.home_circles:
+                # Update Position
+                circle['x'] += circle['vx']
+                circle['y'] += circle['vy']
+
+                # Bounce an Rändern
+                canvas_width = canvas.winfo_width() if canvas.winfo_width() > 1 else 800
+                canvas_height = canvas.winfo_height() if canvas.winfo_height() > 1 else 600
+
+                if circle['x'] <= 0 or circle['x'] + circle['size'] >= canvas_width:
+                    circle['vx'] *= -1
+                if circle['y'] <= 0 or circle['y'] + circle['size'] >= canvas_height:
+                    circle['vy'] *= -1
+
+                # Update Canvas Position
+                try:
+                    circle['canvas'].coords(
+                        circle['id'],
+                        circle['x'], circle['y'],
+                        circle['x'] + circle['size'], circle['y'] + circle['size']
+                    )
+                except:
+                    pass
+
+            # Nächster Frame
+            if hasattr(self, 'animation_id'):
+                self.master.after_cancel(self.animation_id)
+            self.animation_id = self.master.after(50, animate_circles)
+
+        # Starte Animation
+        animate_circles()
+
+        # Container Frame über dem Canvas
+        container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#ffffff',  # Weißer Hintergrund
+            corner_radius=20,
+            border_width=2,
+            border_color='#4A90E2'
+        )
+        container.place(relx=0.5, rely=0.5, anchor='center', relwidth=0.85, relheight=0.85)
+
+        # Header
+        header_frame = ctk.CTkFrame(container, fg_color='transparent')
         header_frame.pack(fill='x', pady=(30, 20))
-        header_label = tk.Label(
+
+        header_label = ctk.CTkLabel(
             header_frame,
-            text="Hauptkategorien",
-            font=(self.appearance_settings.font_family, 24, "bold"),
-            bg=self.appearance_settings.text_bg_color,
-            fg=self.appearance_settings.text_fg_color
+            text="🎓 Hauptkategorien",
+            font=ctk.CTkFont(size=32, weight="bold"),
+            text_color='#2C3E50'
         )
         header_label.pack()
 
+        subtitle = ctk.CTkLabel(
+            header_frame,
+            text="Wähle eine Kategorie zum Lernen",
+            font=ctk.CTkFont(size=14),
+            text_color='#7F8C8D'
+        )
+        subtitle.pack(pady=(5, 0))
+
         # Kategorien laden und sortieren
         categories = sorted(self.data_manager.categories.keys()) if hasattr(self.data_manager, 'categories') else []
-        
+
         if not categories:
-            add_category_btn = ModernButton(
-                self.content_frame,
+            add_category_btn = ctk.CTkButton(
+                container,
                 text="Kategorie hinzufügen",
                 command=self.manage_categories,
-                width=20,
-                style=ButtonStyle.SECONDARY.value
+                width=200,
+                height=45,
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color='#4A90E2',
+                hover_color='#357ABD',
+                corner_radius=10
             )
             add_category_btn.pack(pady=20)
-            self.sidebar_buttons["add_category_main"] = add_category_btn
         else:
-            grid_frame = tk.Frame(self.content_frame, bg=self.appearance_settings.text_bg_color)
-            grid_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
-            columns = 3  # Mehr Spalten für bessere Übersicht
+            # Scrollbarer Frame für Kategorien
+            scroll_frame = ctk.CTkScrollableFrame(
+                container,
+                fg_color='transparent'
+            )
+            scroll_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=30)
 
+            # Grid für Kategorien
+            columns = 3
             for idx, category in enumerate(categories):
                 row = idx // columns
                 col = idx % columns
-                button = ModernButton(
-                    grid_frame,
+
+                # Moderne Kategorie-Karte
+                button = ctk.CTkButton(
+                    scroll_frame,
                     text=category,
-                    command=lambda c=category: self.select_cards_with_category(c),  # Verwenden Sie navigate_to
-                    width=25,
-                    style=ButtonStyle.PRIMARY.value
+                    command=lambda c=category: self.select_cards_with_category(c),
+                    width=200,
+                    height=80,
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    fg_color='#4A90E2',
+                    hover_color='#357ABD',
+                    corner_radius=15,
+                    border_width=2,
+                    border_color='#2980B9'
                 )
                 button.grid(row=row, column=col, padx=15, pady=15, sticky="ew")
-            
-            for col in range(columns):
-                grid_frame.grid_columnconfigure(col, weight=1)
 
-        # Setze den aktiven Button auf 'main' MenÃƒÂ¼
-        self.highlight_active_button('main')
+            for col in range(columns):
+                scroll_frame.grid_columnconfigure(col, weight=1)
+
+        # Setze den aktiven Button auf 'Home'
+        self.highlight_active_button('Home')
     def select_cards_with_category(self, category):
         """
         Ãƒâ€“ffnet die Kartenauswahl mit vorausgewÃƒÂ¤hlter Kategorie
@@ -5382,7 +5548,7 @@ class FlashcardApp:
     def show_learning_options(self):
         """Zeigt die verschiedenen Lernmethoden zur Auswahl an."""
         self._clear_content_frame()
-        
+
         # Header
         header = ctk.CTkLabel(
             self.content_frame,
@@ -5395,95 +5561,49 @@ class FlashcardApp:
         methods_frame = ctk.CTkFrame(self.content_frame)
         methods_frame.pack(fill='both', expand=True, padx=20, pady=10)
 
-        # 1. Klassisches Lernen
-        classic_frame = ctk.CTkFrame(methods_frame)
-        classic_frame.pack(fill='x', pady=10, padx=10)
-        
-        ctk.CTkLabel(
-            classic_frame,
-            text="Klassisches Lernen",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=5)
-        
-        ctk.CTkLabel(
-            classic_frame,
-            text="Lineare Abfrage der ausgewÃƒÂ¤hlten Karten",
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5)
-        
-        ctk.CTkButton(
-            classic_frame,
-            text="Starten",
-            command=self.select_cards_submenu,  # klassisches Lernen mit Freiauswahl
-            height=35
-        ).pack(pady=10)
-
-        # 2. Intelligentes Lernen (SRS)
+        # 1. Intelligentes Lernen (SRS)
         srs_frame = ctk.CTkFrame(methods_frame)
         srs_frame.pack(fill='x', pady=10, padx=10)
-        
+
         ctk.CTkLabel(
             srs_frame,
             text="Intelligentes Lernen (SRS)",
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(pady=5)
-        
+
         ctk.CTkLabel(
             srs_frame,
             text="Optimierte Wiederholungen basierend auf deiner Lernleistung (lineare Variante)",
             font=ctk.CTkFont(size=12)
         ).pack(pady=5)
-        
+
         ctk.CTkButton(
             srs_frame,
             text="Starten",
-            command=self.show_srs_learning_options,  # Altes SRS-MenÃƒÂ¼
+            command=self.show_srs_learning_options,
             height=35
         ).pack(pady=10)
 
-        # 3. Leitner System (optional)
+        # 2. Leitner System
         leitner_frame = ctk.CTkFrame(methods_frame)
         leitner_frame.pack(fill='x', pady=10, padx=10)
-        
+
         ctk.CTkLabel(
             leitner_frame,
             text="Leitner System",
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(pady=5)
-        
+
         ctk.CTkLabel(
             leitner_frame,
             text="Systematisches Lernen mit Box-System",
             font=ctk.CTkFont(size=12)
         ).pack(pady=5)
-        
+
         ctk.CTkButton(
             leitner_frame,
             text="Starten",
-            command=self.show_leitner_options,  # ggf. noch nicht implementiert
-            height=35
-        ).pack(pady=10)
-
-        # 4. Gemischtes Lernen (optional)
-        mixed_frame = ctk.CTkFrame(methods_frame)
-        mixed_frame.pack(fill='x', pady=10, padx=10)
-        
-        ctk.CTkLabel(
-            mixed_frame,
-            text="Gemischtes Lernen",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=5)
-        
-        ctk.CTkLabel(
-            mixed_frame,
-            text="Verschachtelte Übungen aus verschiedenen Kategorien",
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5)
-        
-        ctk.CTkButton(
-            mixed_frame,
-            text="Starten",
-            command=self.show_mixed_learning_options,  # ggf. noch nicht implementiert
+            command=self.show_leitner_options,
             height=35
         ).pack(pady=10)
 
@@ -5497,7 +5617,7 @@ class FlashcardApp:
             hover_color="darkgray"
         )
         back_btn.pack(pady=20)
-        
+
         # Setze aktiven Button (für optische Markierung in Sidebar)
         self.highlight_active_button('Lernsession')
 
@@ -9481,15 +9601,15 @@ class FlashcardApp:
         self.theme_menu_items.append(sep)  # Separator in Liste aufnehmen
 
         # Header mit SchlieÃƒÅ¸en-Button
-        header_frame = tk.Frame(self.sidebar_frame, bg="#2c3e50")
+        header_frame = tk.Frame(self.sidebar_frame, bg="#E8F4F8")
         header_frame.pack(fill='x', pady=5)
         self.theme_menu_items.append(header_frame)
 
         themes_label = ttk.Label(
             header_frame,
             text="Themes",
-            foreground="#ecf0f1",
-            background="#2c3e50",
+            foreground="#2C3E50",
+            background="#E8F4F8",
             font=("Segoe UI", 12, "bold")
         )
         themes_label.pack(side='left', padx=5)
