@@ -1527,6 +1527,47 @@ class FlashcardApp:
         """Zeigt detaillierte Kartenübersicht mit Bearbeitungsmöglichkeiten UND SUCHE."""
         self._clear_content_frame()
 
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#3b82f6',
+            corner_radius=0,
+            height=110
+        )
+        header_container.pack(fill='x', pady=(0, 20))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="📚",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Karten Management",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Verwalte, bearbeite und organisiere alle deine Lernkarten",
+            font=ctk.CTkFont(size=13),
+            text_color='#dbeafe'
+        ).pack(anchor='w')
+
         # Container für den gesamten Inhalt dieser Ansicht
         # Verwende grid für bessere Kontrolle über die Zeilenaufteilung
         manager_container = ctk.CTkFrame(self.content_frame, fg_color="transparent")
@@ -1536,66 +1577,126 @@ class FlashcardApp:
         manager_container.grid_rowconfigure(1, weight=1) # Karten-Zeile (expandiert)
         manager_container.grid_rowconfigure(2, weight=0) # Paginierungs-Zeile
 
-        # === Oberer Frame für alle Filter (Kategorie, Subkategorie, Suche) ===
-        top_filter_frame = ctk.CTkFrame(manager_container)
-        top_filter_frame.grid(row=0, column=0, sticky='ew', padx=20, pady=(10, 5))
+        # === Moderner Filter-Bereich ===
+        filter_container = ctk.CTkFrame(
+            manager_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#3b82f6'
+        )
+        filter_container.grid(row=0, column=0, sticky='ew', padx=20, pady=(0, 15))
+
+        top_filter_frame = ctk.CTkFrame(filter_container, fg_color='transparent')
+        top_filter_frame.pack(fill='x', padx=20, pady=15)
+
+        # Icon für Filter
+        ctk.CTkLabel(
+            top_filter_frame,
+            text="🔍",
+            font=ctk.CTkFont(size=20)
+        ).pack(side='left', padx=(0, 15))
 
         # --- Kategorie & Subkategorie (links) ---
-        cat_subcat_frame = ctk.CTkFrame(top_filter_frame)
+        cat_subcat_frame = ctk.CTkFrame(top_filter_frame, fg_color='transparent')
         cat_subcat_frame.pack(side='left', padx=(0, 20))
 
         # Kategorie Filter
-        cat_row = ctk.CTkFrame(cat_subcat_frame)
-        cat_row.pack(fill='x', pady=2)
-        ctk.CTkLabel(cat_row, text="Kategorie:", width=10).pack(side='left', padx=5)
-        self.category_var = tk.StringVar(value=getattr(self, 'last_category', "Alle")) # Standard "Alle"
+        cat_row = ctk.CTkFrame(cat_subcat_frame, fg_color='transparent')
+        cat_row.pack(fill='x', pady=4)
+
+        ctk.CTkLabel(
+            cat_row,
+            text="Kategorie:",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color='#374151',
+            width=100
+        ).pack(side='left', padx=(0, 8))
+
+        self.category_var = tk.StringVar(value=getattr(self, 'last_category', "Alle"))
         categories = ["Alle"] + sorted(self.data_manager.categories.keys())
         self.category_menu = ctk.CTkOptionMenu(
             cat_row,
             variable=self.category_var,
             values=categories,
             width=180,
-            command=lambda *args: (update_subcategories(), self.apply_card_management_filters()) # Update + Filter
+            height=36,
+            corner_radius=10,
+            fg_color='#3b82f6',
+            button_color='#2563eb',
+            button_hover_color='#1d4ed8',
+            font=ctk.CTkFont(size=12),
+            command=lambda *args: (update_subcategories(), self.apply_card_management_filters())
         )
-        self.category_menu.pack(side='left', padx=5)
+        self.category_menu.pack(side='left')
 
         # Subkategorie Filter
-        subcat_row = ctk.CTkFrame(cat_subcat_frame)
-        subcat_row.pack(fill='x', pady=2)
-        ctk.CTkLabel(subcat_row, text="Subkategorie:", width=10).pack(side='left', padx=5)
-        self.subcategory_var = tk.StringVar(value=getattr(self, 'last_subcategory', "Alle")) # Standard "Alle"
+        subcat_row = ctk.CTkFrame(cat_subcat_frame, fg_color='transparent')
+        subcat_row.pack(fill='x', pady=4)
+
+        ctk.CTkLabel(
+            subcat_row,
+            text="Unterkategorie:",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color='#374151',
+            width=100
+        ).pack(side='left', padx=(0, 8))
+
+        self.subcategory_var = tk.StringVar(value=getattr(self, 'last_subcategory', "Alle"))
         self.subcategory_menu = ctk.CTkOptionMenu(
             subcat_row,
             variable=self.subcategory_var,
-            values=["Alle"], # Wird dynamisch gefüllt
+            values=["Alle"],
             width=180,
-            state="disabled", # Initial deaktiviert
-            command=lambda *args: self.apply_card_management_filters() # Nur Filter bei Änderung
+            height=36,
+            corner_radius=10,
+            fg_color='#3b82f6',
+            button_color='#2563eb',
+            button_hover_color='#1d4ed8',
+            font=ctk.CTkFont(size=12),
+            state="disabled",
+            command=lambda *args: self.apply_card_management_filters()
         )
-        self.subcategory_menu.pack(side='left', padx=5)
+        self.subcategory_menu.pack(side='left')
 
-        # --- Suchfeld (rechts daneben) ---
-        search_frame = ctk.CTkFrame(top_filter_frame)
-        search_frame.pack(side='left', padx=(10, 0), fill='x', expand=True)
+        # --- Suchfeld (rechts) ---
+        search_frame = ctk.CTkFrame(top_filter_frame, fg_color='transparent')
+        search_frame.pack(side='left', padx=(20, 0), fill='x', expand=True)
 
-        ctk.CTkLabel(search_frame, text="Suche:").pack(side='left', padx=5)
-        self.search_var = tk.StringVar() # Variable für die Suche
+        ctk.CTkLabel(
+            search_frame,
+            text="Suche:",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color='#374151'
+        ).pack(side='left', padx=(0, 8))
+
+        self.search_var = tk.StringVar()
         search_entry = ctk.CTkEntry(
             search_frame,
             textvariable=self.search_var,
-            width=250, # Breite anpassen nach Bedarf
-            placeholder_text="Begriff in Frage oder Antwort..."
+            width=250,
+            height=36,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1d5db',
+            placeholder_text="Begriff in Frage oder Antwort...",
+            font=ctk.CTkFont(size=12)
         )
-        search_entry.pack(side='left', padx=5, fill='x', expand=True)
+        search_entry.pack(side='left', padx=(0, 10), fill='x', expand=True)
 
         # Such-Button
         search_button = ctk.CTkButton(
             search_frame,
-            text="Suchen",
+            text="🔍 Suchen",
             command=self.apply_card_management_filters,
-            width=80
+            width=100,
+            height=36,
+            corner_radius=10,
+            fg_color='#3b82f6',
+            hover_color='#2563eb',
+            font=ctk.CTkFont(size=12, weight="bold")
         )
-        search_button.pack(side='left', padx=5)
+        search_button.pack(side='left')
 
         # Enter-Taste im Suchfeld löst auch die Filterung aus
         search_entry.bind("<Return>", lambda event: self.apply_card_management_filters())
@@ -2562,44 +2663,117 @@ class FlashcardApp:
     def show_remove_cards(self):
         """Zeigt eine Übersicht aller Karten mit der Option zum Löschen."""
         self._clear_content_frame()
-        
+
         CARDS_PER_PAGE = 20  # Anzahl der Karten pro Seite
         current_page = {'value': 0}  # Als dict für Referenz in inneren Funktionen
-        
-        # Header
-        header_label = ctk.CTkLabel(
-            self.content_frame,
-            text="Karten entfernen",
-            font=ctk.CTkFont(size=24, weight="bold"),
-        )
-        header_label.pack(pady=20)
 
-        # Filter Frame
-        filter_frame = ctk.CTkFrame(self.content_frame)
-        filter_frame.pack(fill='x', padx=20, pady=(0, 10))
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#ef4444',
+            corner_radius=0,
+            height=110
+        )
+        header_container.pack(fill='x', pady=(0, 20))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="🗂️",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Karten entfernen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Wähle Karten aus, die du aus deiner Sammlung entfernen möchtest",
+            font=ctk.CTkFont(size=13),
+            text_color='#fee2e2'
+        ).pack(anchor='w')
+
+        # Filter Frame mit modernem Design
+        filter_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#ef4444'
+        )
+        filter_container.pack(fill='x', padx=20, pady=(0, 15))
+
+        filter_frame = ctk.CTkFrame(filter_container, fg_color='transparent')
+        filter_frame.pack(padx=20, pady=15)
+
+        # Icon
+        ctk.CTkLabel(
+            filter_frame,
+            text="🔍",
+            font=ctk.CTkFont(size=20)
+        ).pack(side='left', padx=(0, 15))
 
         # Kategoriefilter
-        ctk.CTkLabel(filter_frame, text="Kategorie:").pack(side='left', padx=5)
+        ctk.CTkLabel(
+            filter_frame,
+            text="Kategorie:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(side='left', padx=(0, 8))
+
         category_var = tk.StringVar(value="Alle")
         categories = ["Alle"] + sorted(self.data_manager.categories.keys())
         category_menu = ctk.CTkOptionMenu(
             filter_frame,
             variable=category_var,
             values=categories,
-            width=200
+            width=200,
+            height=36,
+            corner_radius=10,
+            fg_color='#ef4444',
+            button_color='#dc2626',
+            button_hover_color='#b91c1c',
+            font=ctk.CTkFont(size=13)
         )
-        category_menu.pack(side='left', padx=5)
+        category_menu.pack(side='left', padx=(0, 20))
 
         # Subkategoriefilter
-        ctk.CTkLabel(filter_frame, text="Unterkategorie:").pack(side='left', padx=5)
+        ctk.CTkLabel(
+            filter_frame,
+            text="Unterkategorie:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(side='left', padx=(0, 8))
+
         subcategory_var = tk.StringVar(value="Alle")
         subcategory_menu = ctk.CTkOptionMenu(
             filter_frame,
             variable=subcategory_var,
             values=["Alle"],
-            width=200
+            width=200,
+            height=36,
+            corner_radius=10,
+            fg_color='#ef4444',
+            button_color='#dc2626',
+            button_hover_color='#b91c1c',
+            font=ctk.CTkFont(size=13)
         )
-        subcategory_menu.pack(side='left', padx=5)
+        subcategory_menu.pack(side='left')
 
         # Scrollbarer Container für Karten
         cards_frame = ctk.CTkScrollableFrame(self.content_frame)
@@ -2668,55 +2842,123 @@ class FlashcardApp:
 
             # Zeige die Karten der aktuellen Seite
             for idx, card in enumerate(current_cards, start_idx + 1):
-                card_frame = ctk.CTkFrame(cards_frame)
-                card_frame.pack(fill='x', padx=5, pady=5)
+                card_frame = ctk.CTkFrame(
+                    cards_frame,
+                    fg_color='#ffffff',
+                    corner_radius=12,
+                    border_width=2,
+                    border_color='#fecaca'
+                )
+                card_frame.pack(fill='x', padx=5, pady=8)
 
-                info_frame = ctk.CTkFrame(card_frame)
-                info_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
+                # Linker Bereich mit Nummer
+                number_section = ctk.CTkFrame(
+                    card_frame,
+                    fg_color='#fee2e2',
+                    corner_radius=10,
+                    width=50
+                )
+                number_section.pack(side='left', fill='y', padx=10, pady=10)
+                number_section.pack_propagate(False)
 
                 ctk.CTkLabel(
-                    info_frame,
-                    text=f"Frage: {card.question}",
-                    font=ctk.CTkFont(size=12, weight="bold")
-                ).pack(anchor='w')
+                    number_section,
+                    text=str(idx),
+                    font=ctk.CTkFont(size=18, weight="bold"),
+                    text_color='#dc2626'
+                ).place(relx=0.5, rely=0.5, anchor='center')
 
+                # Info-Bereich
+                info_frame = ctk.CTkFrame(card_frame, fg_color='transparent')
+                info_frame.pack(side='left', fill='both', expand=True, padx=15, pady=12)
+
+                # Frage
+                question_label = ctk.CTkLabel(
+                    info_frame,
+                    text=f"❓ {card.question[:80]}{'...' if len(card.question) > 80 else ''}",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color='#111827',
+                    anchor='w'
+                )
+                question_label.pack(anchor='w', pady=(0, 6))
+
+                # Antwort
+                answer_text = card.answer[:60] + '...' if len(card.answer) > 60 else card.answer
                 ctk.CTkLabel(
                     info_frame,
-                    text=f"Antwort: {card.answer}",
-                    font=ctk.CTkFont(size=12)
-                ).pack(anchor='w')
+                    text=f"✓  {answer_text}",
+                    font=ctk.CTkFont(size=12),
+                    text_color='#6b7280',
+                    anchor='w'
+                ).pack(anchor='w', pady=(0, 6))
+
+                # Kategorie
+                category_frame = ctk.CTkFrame(info_frame, fg_color='transparent')
+                category_frame.pack(anchor='w', pady=(0, 4))
 
                 ctk.CTkLabel(
-                    info_frame,
-                    text=f"Kategorie: {card.category} > {card.subcategory}",
-                    font=ctk.CTkFont(size=12)
-                ).pack(anchor='w')
+                    category_frame,
+                    text="🏷️",
+                    font=ctk.CTkFont(size=11)
+                ).pack(side='left', padx=(0, 5))
 
+                ctk.CTkLabel(
+                    category_frame,
+                    text=f"{card.category} › {card.subcategory}",
+                    font=ctk.CTkFont(size=11),
+                    text_color='#9ca3af'
+                ).pack(side='left')
+
+                # Tags
                 if card.tags:
-                    ctk.CTkLabel(
-                        info_frame,
-                        text=f"Tags: {', '.join(card.tags)}",
-                        font=ctk.CTkFont(size=12)
-                    ).pack(anchor='w')
+                    tags_frame = ctk.CTkFrame(info_frame, fg_color='transparent')
+                    tags_frame.pack(anchor='w')
 
+                    for tag in card.tags[:3]:  # Maximal 3 Tags anzeigen
+                        tag_badge = ctk.CTkFrame(
+                            tags_frame,
+                            fg_color='#fee2e2',
+                            corner_radius=8,
+                            height=22
+                        )
+                        tag_badge.pack(side='left', padx=(0, 5))
+
+                        ctk.CTkLabel(
+                            tag_badge,
+                            text=tag,
+                            font=ctk.CTkFont(size=10),
+                            text_color='#dc2626'
+                        ).pack(padx=8, pady=2)
+
+                # Löschen-Button
                 delete_btn = ctk.CTkButton(
                     card_frame,
-                    text="Löschen",
+                    text="🗑️  Löschen",
                     command=lambda c=card: delete_card(c),
-                    fg_color="red",
-                    hover_color="darkred",
-                    width=100
+                    fg_color="#ef4444",
+                    hover_color="#dc2626",
+                    width=120,
+                    height=45,
+                    corner_radius=10,
+                    font=ctk.CTkFont(size=13, weight="bold")
                 )
-                delete_btn.pack(side='right', padx=5)
+                delete_btn.pack(side='right', padx=15)
 
             # "Mehr laden" Button anzeigen, wenn es weitere Karten gibt
             if end_idx < len(filtered_cards):
                 load_more_btn = ctk.CTkButton(
                     load_more_frame,
-                    text=f"Weitere Karten laden ({len(filtered_cards) - end_idx} ÃƒÂ¼brig)",
+                    text=f"↓  Weitere Karten laden ({len(filtered_cards) - end_idx} übrig)",
                     command=lambda: [current_page.update({'value': current_page['value'] + 1}), display_cards()],
-                    fg_color="gray",
-                    hover_color="darkgray"
+                    fg_color="#f3f4f6",
+                    hover_color="#e5e7eb",
+                    text_color='#374151',
+                    height=45,
+                    width=300,
+                    corner_radius=12,
+                    border_width=2,
+                    border_color='#d1d5db',
+                    font=ctk.CTkFont(size=14, weight="bold")
                 )
                 load_more_btn.pack(pady=10)
 
@@ -2727,15 +2969,25 @@ class FlashcardApp:
         # Initiale Anzeige
         display_cards()
 
-        # Zurück Button
+        # Moderner Zurück-Button
+        back_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        back_frame.pack(pady=15)
+
         back_btn = ctk.CTkButton(
-            self.content_frame,
-            text="Zurück",
+            back_frame,
+            text="←  Zurück zum Karten-Menü",
             command=self.show_card_management,
-            fg_color="gray",
-            hover_color="darkgray"
+            fg_color="#f3f4f6",
+            hover_color="#e5e7eb",
+            text_color='#374151',
+            height=45,
+            width=250,
+            corner_radius=12,
+            border_width=2,
+            border_color='#d1d5db',
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        back_btn.pack(pady=10)
+        back_btn.pack()
 
         # Setze den aktiven Button
         self.highlight_active_button('Karten entfernen')
@@ -3257,55 +3509,130 @@ class FlashcardApp:
     def add_card(self):
         """Optimierte Methode zum Hinzufügen neuer Karten mit mehrzeiligen Textfeldern und Bild-Support für Frage."""
         self._clear_content_frame()
-        
-        # Header
-        header_label = ctk.CTkLabel(
+
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
             self.content_frame,
-            text="Neue Karte hinzufügen",
-            font=ctk.CTkFont(size=24, weight="bold"),
+            fg_color='#10b981',
+            corner_radius=0,
+            height=120
         )
-        header_label.pack(pady=20)
+        header_container.pack(fill='x', pady=(0, 25))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="✨",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Neue Karte hinzufügen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Erstelle eine neue Lernkarte mit Frage, Antwort und Bildern",
+            font=ctk.CTkFont(size=13),
+            text_color='#d1fae5'
+        ).pack(anchor='w')
 
         # Hauptcontainer mit Scrollbar
         main_container = ctk.CTkScrollableFrame(self.content_frame)
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         # === FRAGE SEKTION ===
-        question_section = ctk.CTkFrame(main_container)
-        question_section.pack(fill='x', pady=(0, 20))
-        
-        ctk.CTkLabel(
-            question_section, 
-            text="FRAGE", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(anchor='w', pady=(10, 5), padx=10)
-        
-        # Frage-Text (mehrzeilig)
-        ctk.CTkLabel(question_section, text="Frage-Text:").pack(anchor='w', padx=10, pady=(5, 2))
-        question_textbox = ctk.CTkTextbox(
-            question_section, 
-            width=600, 
-            height=100,
-            wrap='word',
-            font=ctk.CTkFont(size=13)
+        question_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#10b981'
         )
-        question_textbox.pack(padx=10, pady=5, fill='x')
-        
+        question_section.pack(fill='x', pady=(0, 20))
+
+        # Header mit Icon
+        question_header = ctk.CTkFrame(question_section, fg_color='#ecfdf5', corner_radius=13)
+        question_header.pack(fill='x', pady=3, padx=3)
+
+        question_header_content = ctk.CTkFrame(question_header, fg_color='transparent')
+        question_header_content.pack(pady=12, padx=15, fill='x')
+
+        ctk.CTkLabel(
+            question_header_content,
+            text="❓",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            question_header_content,
+            text="FRAGE",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#047857'
+        ).pack(side='left')
+
+        # Frage-Text (mehrzeilig)
+        content_frame = ctk.CTkFrame(question_section, fg_color='transparent')
+        content_frame.pack(fill='x', padx=15, pady=15)
+
+        ctk.CTkLabel(
+            content_frame,
+            text="Frage-Text:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(anchor='w', pady=(0, 8))
+
+        question_textbox = ctk.CTkTextbox(
+            content_frame,
+            width=600,
+            height=110,
+            wrap='word',
+            font=ctk.CTkFont(size=14),
+            border_width=2,
+            border_color='#d1d5db',
+            corner_radius=10
+        )
+        question_textbox.pack(fill='x', pady=(0, 5))
+
         # Bild für Frage
-        ctk.CTkLabel(question_section, text="Bild zur Frage (optional):").pack(anchor='w', padx=10, pady=(10, 2))
+        ctk.CTkLabel(
+            content_frame,
+            text="Bild zur Frage (optional):",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(anchor='w', pady=(15, 8))
+
         self.question_image_path_var = tk.StringVar()
-        
-        question_image_frame = ctk.CTkFrame(question_section, fg_color="transparent")
-        question_image_frame.pack(fill='x', padx=10, pady=5)
-        
+
+        question_image_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        question_image_frame.pack(fill='x', pady=(0, 0))
+
         question_image_entry = ctk.CTkEntry(
             question_image_frame,
             textvariable=self.question_image_path_var,
             state='readonly',
-            width=400
+            height=40,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1d5db',
+            font=ctk.CTkFont(size=12)
         )
-        question_image_entry.pack(side='left', padx=(0, 10))
-        
+        question_image_entry.pack(side='left', fill='x', expand=True, padx=(0, 10))
+
         def choose_question_image():
             file_path = filedialog.askopenfilename(
                 title="Bild für Frage auswählen",
@@ -3316,59 +3643,110 @@ class FlashcardApp:
             )
             if file_path:
                 self.question_image_path_var.set(file_path)
-        
+
         ctk.CTkButton(
             question_image_frame,
-            text="Bild auswÃƒÂ¤hlen",
+            text="📁 Auswählen",
             command=choose_question_image,
-            width=120
-        ).pack(side='left', padx=5)
-        
+            width=130,
+            height=40,
+            corner_radius=10,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(side='left', padx=(0, 10))
+
         ctk.CTkButton(
             question_image_frame,
-            text="Entfernen",
+            text="✕",
             command=lambda: self.question_image_path_var.set(""),
-            width=100,
-            fg_color="gray",
-            hover_color="darkgray"
+            width=40,
+            height=40,
+            corner_radius=10,
+            fg_color="#ef4444",
+            hover_color="#dc2626",
+            font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left')
 
         # === ANTWORT SEKTION ===
-        answer_section = ctk.CTkFrame(main_container)
-        answer_section.pack(fill='x', pady=(0, 20))
-        
-        ctk.CTkLabel(
-            answer_section, 
-            text="ANTWORT", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(anchor='w', pady=(10, 5), padx=10)
-        
-        # Antwort-Text (mehrzeilig)
-        ctk.CTkLabel(answer_section, text="Antwort-Text:").pack(anchor='w', padx=10, pady=(5, 2))
-        answer_textbox = ctk.CTkTextbox(
-            answer_section, 
-            width=600, 
-            height=100,
-            wrap='word',
-            font=ctk.CTkFont(size=13)
+        answer_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#3b82f6'
         )
-        answer_textbox.pack(padx=10, pady=5, fill='x')
-        
+        answer_section.pack(fill='x', pady=(0, 20))
+
+        # Header mit Icon
+        answer_header = ctk.CTkFrame(answer_section, fg_color='#dbeafe', corner_radius=13)
+        answer_header.pack(fill='x', pady=3, padx=3)
+
+        answer_header_content = ctk.CTkFrame(answer_header, fg_color='transparent')
+        answer_header_content.pack(pady=12, padx=15, fill='x')
+
+        ctk.CTkLabel(
+            answer_header_content,
+            text="✓",
+            font=ctk.CTkFont(size=24),
+            text_color='#1e40af'
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            answer_header_content,
+            text="ANTWORT",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#1e40af'
+        ).pack(side='left')
+
+        # Antwort-Text (mehrzeilig)
+        answer_content_frame = ctk.CTkFrame(answer_section, fg_color='transparent')
+        answer_content_frame.pack(fill='x', padx=15, pady=15)
+
+        ctk.CTkLabel(
+            answer_content_frame,
+            text="Antwort-Text:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(anchor='w', pady=(0, 8))
+
+        answer_textbox = ctk.CTkTextbox(
+            answer_content_frame,
+            width=600,
+            height=110,
+            wrap='word',
+            font=ctk.CTkFont(size=14),
+            border_width=2,
+            border_color='#d1d5db',
+            corner_radius=10
+        )
+        answer_textbox.pack(fill='x', pady=(0, 5))
+
         # Bild für Antwort
-        ctk.CTkLabel(answer_section, text="Bild zur Antwort (optional):").pack(anchor='w', padx=10, pady=(10, 2))
+        ctk.CTkLabel(
+            answer_content_frame,
+            text="Bild zur Antwort (optional):",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151'
+        ).pack(anchor='w', pady=(15, 8))
+
         self.answer_image_path_var = tk.StringVar()
-        
-        answer_image_frame = ctk.CTkFrame(answer_section, fg_color="transparent")
-        answer_image_frame.pack(fill='x', padx=10, pady=5)
-        
+
+        answer_image_frame = ctk.CTkFrame(answer_content_frame, fg_color="transparent")
+        answer_image_frame.pack(fill='x', pady=(0, 0))
+
         answer_image_entry = ctk.CTkEntry(
             answer_image_frame,
             textvariable=self.answer_image_path_var,
             state='readonly',
-            width=400
+            height=40,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1d5db',
+            font=ctk.CTkFont(size=12)
         )
-        answer_image_entry.pack(side='left', padx=(0, 10))
-        
+        answer_image_entry.pack(side='left', fill='x', expand=True, padx=(0, 10))
+
         def choose_answer_image():
             file_path = filedialog.askopenfilename(
                 title="Bild für Antwort auswählen",
@@ -3379,59 +3757,117 @@ class FlashcardApp:
             )
             if file_path:
                 self.answer_image_path_var.set(file_path)
-        
+
         ctk.CTkButton(
             answer_image_frame,
-            text="Bild auswÃƒÂ¤hlen",
+            text="📁 Auswählen",
             command=choose_answer_image,
-            width=120
-        ).pack(side='left', padx=5)
-        
+            width=130,
+            height=40,
+            corner_radius=10,
+            fg_color='#3b82f6',
+            hover_color='#2563eb',
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(side='left', padx=(0, 10))
+
         ctk.CTkButton(
             answer_image_frame,
-            text="Entfernen",
+            text="✕",
             command=lambda: self.answer_image_path_var.set(""),
-            width=100,
-            fg_color="gray",
-            hover_color="darkgray"
+            width=40,
+            height=40,
+            corner_radius=10,
+            fg_color="#ef4444",
+            hover_color="#dc2626",
+            font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side='left')
 
         # === KATEGORIEN & TAGS SEKTION ===
-        meta_section = ctk.CTkFrame(main_container)
+        meta_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#f59e0b'
+        )
         meta_section.pack(fill='x', pady=(0, 20))
-        
+
+        # Header mit Icon
+        meta_header = ctk.CTkFrame(meta_section, fg_color='#fef3c7', corner_radius=13)
+        meta_header.pack(fill='x', pady=3, padx=3)
+
+        meta_header_content = ctk.CTkFrame(meta_header, fg_color='transparent')
+        meta_header_content.pack(pady=12, padx=15, fill='x')
+
         ctk.CTkLabel(
-            meta_section, 
-            text="KATEGORISIERUNG", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(anchor='w', pady=(10, 5), padx=10)
-        
+            meta_header_content,
+            text="🏷️",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            meta_header_content,
+            text="KATEGORISIERUNG",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#b45309'
+        ).pack(side='left')
+
+        # Content Frame
+        meta_content_frame = ctk.CTkFrame(meta_section, fg_color='transparent')
+        meta_content_frame.pack(fill='x', padx=15, pady=15)
+
         # Kategorie
-        cat_frame = ctk.CTkFrame(meta_section, fg_color="transparent")
-        cat_frame.pack(fill='x', padx=10, pady=5)
-        
-        ctk.CTkLabel(cat_frame, text="Kategorie:", width=120).pack(side='left')
+        cat_frame = ctk.CTkFrame(meta_content_frame, fg_color="transparent")
+        cat_frame.pack(fill='x', pady=(0, 12))
+
+        ctk.CTkLabel(
+            cat_frame,
+            text="Kategorie:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151',
+            width=140
+        ).pack(side='left')
+
         self.category_var = tk.StringVar()
         all_categories = sorted(self.data_manager.categories.keys()) if self.data_manager.categories else []
         category_menu = ctk.CTkOptionMenu(
             cat_frame,
             variable=self.category_var,
             values=all_categories if all_categories else ["Keine Kategorien"],
-            width=200
+            width=250,
+            height=38,
+            corner_radius=10,
+            fg_color='#f59e0b',
+            button_color='#d97706',
+            button_hover_color='#b45309',
+            font=ctk.CTkFont(size=13)
         )
         category_menu.pack(side='left', padx=10)
-        
+
         # Unterkategorie
-        subcat_frame = ctk.CTkFrame(meta_section, fg_color="transparent")
-        subcat_frame.pack(fill='x', padx=10, pady=5)
-        
-        ctk.CTkLabel(subcat_frame, text="Unterkategorie:", width=120).pack(side='left')
+        subcat_frame = ctk.CTkFrame(meta_content_frame, fg_color="transparent")
+        subcat_frame.pack(fill='x', pady=(0, 12))
+
+        ctk.CTkLabel(
+            subcat_frame,
+            text="Unterkategorie:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151',
+            width=140
+        ).pack(side='left')
+
         self.subcategory_var = tk.StringVar()
         subcategory_menu = ctk.CTkOptionMenu(
             subcat_frame,
             variable=self.subcategory_var,
             values=["Bitte Kategorie wählen"],
-            width=200
+            width=250,
+            height=38,
+            corner_radius=10,
+            fg_color='#f59e0b',
+            button_color='#d97706',
+            button_hover_color='#b45309',
+            font=ctk.CTkFont(size=13)
         )
         subcategory_menu.pack(side='left', padx=10)
         
@@ -3450,13 +3886,28 @@ class FlashcardApp:
         if all_categories:
             self.category_var.set(all_categories[0])
             update_subcategories()
-        
+
         # Tags
-        tags_frame = ctk.CTkFrame(meta_section, fg_color="transparent")
-        tags_frame.pack(fill='x', padx=10, pady=5)
-        
-        ctk.CTkLabel(tags_frame, text="Tags (kommagetrennt):", width=120).pack(side='left')
-        tags_entry = ctk.CTkEntry(tags_frame, width=300)
+        tags_frame = ctk.CTkFrame(meta_content_frame, fg_color="transparent")
+        tags_frame.pack(fill='x', pady=(0, 0))
+
+        ctk.CTkLabel(
+            tags_frame,
+            text="Tags (kommagetrennt):",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#374151',
+            width=140
+        ).pack(side='left')
+
+        tags_entry = ctk.CTkEntry(
+            tags_frame,
+            width=350,
+            height=38,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1d5db',
+            font=ctk.CTkFont(size=13)
+        )
         tags_entry.pack(side='left', padx=10)
 
         # === BUTTONS ===
@@ -3542,18 +3993,34 @@ class FlashcardApp:
                 logging.error(traceback.format_exc())
                 messagebox.showerror("Fehler", f"Beim Hinzufügen ist ein Fehler aufgetreten: {e}")
         
-        ctk.CTkButton(
+        # Moderner Button-Container
+        button_container = ctk.CTkFrame(
             button_frame,
-            text="Speichern",
+            fg_color='#f9fafb',
+            corner_radius=12,
+            border_width=1,
+            border_color='#e5e7eb'
+        )
+        button_container.pack(pady=10)
+
+        button_inner = ctk.CTkFrame(button_container, fg_color='transparent')
+        button_inner.pack(padx=20, pady=20)
+
+        ctk.CTkButton(
+            button_inner,
+            text="✓  Karte speichern",
             command=save_card,
-            width=150,
-            height=40,
-            font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(side='left', padx=10)
-        
+            width=180,
+            height=50,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            fg_color='#10b981',
+            hover_color='#059669',
+            corner_radius=12
+        ).pack(side='left', padx=8)
+
         ctk.CTkButton(
-            button_frame,
-            text="Felder leeren",
+            button_inner,
+            text="↻  Felder leeren",
             command=lambda: [
                 question_textbox.delete("1.0", "end"),
                 answer_textbox.delete("1.0", "end"),
@@ -3562,21 +4029,28 @@ class FlashcardApp:
                 self.answer_image_path_var.set(""),
                 question_textbox.focus()
             ],
-            width=150,
-            height=40,
-            fg_color="gray",
-            hover_color="darkgray"
-        ).pack(side='left', padx=10)
-        
+            width=180,
+            height=50,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            fg_color="#6b7280",
+            hover_color="#4b5563",
+            corner_radius=12
+        ).pack(side='left', padx=8)
+
         ctk.CTkButton(
-            button_frame,
-            text="Zurück zum Hauptmenü",
+            button_inner,
+            text="←  Zurück",
             command=self.create_main_menu,
-            width=150,
-            height=40,
-            fg_color="gray",
-            hover_color="darkgray"
-        ).pack(side='left', padx=10)
+            width=180,
+            height=50,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            fg_color="#f3f4f6",
+            hover_color="#e5e7eb",
+            text_color='#374151',
+            corner_radius=12,
+            border_width=2,
+            border_color='#d1d5db'
+        ).pack(side='left', padx=8)
 
     def _update_date_selection(self, *args):
         """Aktualisiert die Datumsauswahl basierend auf dem gewÃƒÂ¤hlten Zeitraum."""
