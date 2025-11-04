@@ -1203,164 +1203,325 @@ class FlashcardApp:
         )
         main_container.pack(fill='both', expand=True, padx=40, pady=30)
 
-        # Header
+        # Moderner Header mit Untertitel
+        header_frame = ctk.CTkFrame(main_container, fg_color='transparent')
+        header_frame.pack(pady=(0, 35))
+
         header = ctk.CTkLabel(
-            main_container,
+            header_frame,
             text="Karten verwalten",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="#2c3e50"
+            font=ctk.CTkFont(size=32, weight="bold"),
+            text_color="#111827"
         )
-        header.pack(pady=(0, 30))
+        header.pack()
+
+        subtitle = ctk.CTkLabel(
+            header_frame,
+            text="Organisiere und pflege deine Lernkartensammlung",
+            font=ctk.CTkFont(size=14),
+            text_color="#6b7280"
+        )
+        subtitle.pack(pady=(5, 0))
 
         # Container für die Optionen
         options_container = ctk.CTkFrame(main_container, fg_color='transparent')
         options_container.pack(fill='both', expand=True)
 
-        # 1. Neue Karte hinzufügen - Moderne Karte
+        # 1. Neue Karte hinzufügen - Ultramodernes Design
+        add_card_container = ctk.CTkFrame(
+            options_container,
+            fg_color='transparent'
+        )
+        add_card_container.pack(fill='x', pady=(0, 25))
+
         add_card = ctk.CTkFrame(
-            options_container,
+            add_card_container,
             fg_color='#ffffff',
-            corner_radius=15,
-            border_width=2,
-            border_color='#27ae60'
+            corner_radius=20,
+            border_width=0
         )
-        add_card.pack(fill='x', pady=(0, 20))
+        add_card.pack(fill='x', padx=5, pady=5)
 
-        # Icon
-        ctk.CTkLabel(
+        # Linker Bereich mit Icon und Gradient-Effekt
+        left_section = ctk.CTkFrame(
             add_card,
-            text="➕",
-            font=ctk.CTkFont(size=40)
-        ).pack(pady=(20, 10))
+            fg_color='#10b981',
+            corner_radius=18,
+            width=120
+        )
+        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack_propagate(False)
+
+        icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
+        icon_frame.place(relx=0.5, rely=0.5, anchor='center')
 
         ctk.CTkLabel(
-            add_card,
+            icon_frame,
+            text="✨",
+            font=ctk.CTkFont(size=48),
+            text_color="#ffffff"
+        ).pack()
+
+        ctk.CTkLabel(
+            icon_frame,
+            text="NEU",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#ffffff"
+        ).pack()
+
+        # Rechter Bereich mit Inhalt
+        right_section = ctk.CTkFrame(add_card, fg_color='transparent')
+        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+
+        # Header mit Badge
+        header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        header_frame.pack(anchor='w', pady=(0, 8))
+
+        ctk.CTkLabel(
+            header_frame,
             text="Neue Karte hinzufügen",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color="#2c3e50"
-        ).pack(pady=(0, 10))
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="#1f2937"
+        ).pack(side='left')
+
+        badge = ctk.CTkFrame(header_frame, fg_color='#d1fae5', corner_radius=12, height=24)
+        badge.pack(side='left', padx=10)
+        ctk.CTkLabel(
+            badge,
+            text="Empfohlen",
+            font=ctk.CTkFont(size=10, weight="bold"),
+            text_color="#059669"
+        ).pack(padx=10, pady=2)
 
         ctk.CTkLabel(
-            add_card,
-            text="Erstelle eine neue Lernkarte mit Frage und Antwort",
+            right_section,
+            text="Erstelle eine neue Lernkarte mit individuellen Fragen und Antworten. Füge optional Bilder und Kategorien hinzu.",
             font=ctk.CTkFont(size=13),
-            text_color="#7f8c8d",
-            wraplength=500
-        ).pack(pady=(0, 15), padx=20)
+            text_color="#6b7280",
+            wraplength=500,
+            justify='left'
+        ).pack(anchor='w', pady=(0, 18))
+
+        # Button mit modernem Design
+        button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        button_frame.pack(anchor='w')
 
         ctk.CTkButton(
-            add_card,
-            text="Karte erstellen",
+            button_frame,
+            text="→  Jetzt erstellen",
             command=self.add_card,
-            height=40,
-            width=200,
+            height=44,
+            width=180,
             font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color="#27ae60",
-            hover_color="#1e8449",
-            corner_radius=10
-        ).pack(pady=(0, 20))
+            fg_color="#10b981",
+            hover_color="#059669",
+            corner_radius=12,
+            border_width=0
+        ).pack()
 
-        # 2. Karten entfernen - Moderne Karte
+        # 2. Karten entfernen - Ultramodernes Design
+        remove_card_container = ctk.CTkFrame(
+            options_container,
+            fg_color='transparent'
+        )
+        remove_card_container.pack(fill='x', pady=(0, 25))
+
         remove_card = ctk.CTkFrame(
-            options_container,
+            remove_card_container,
             fg_color='#ffffff',
-            corner_radius=15,
-            border_width=2,
-            border_color='#e74c3c'
+            corner_radius=20,
+            border_width=0
         )
-        remove_card.pack(fill='x', pady=(0, 20))
+        remove_card.pack(fill='x', padx=5, pady=5)
 
-        # Icon
-        ctk.CTkLabel(
+        # Linker Bereich mit Icon und Gradient-Effekt
+        left_section = ctk.CTkFrame(
             remove_card,
-            text="🗑️",
-            font=ctk.CTkFont(size=40)
-        ).pack(pady=(20, 10))
+            fg_color='#ef4444',
+            corner_radius=18,
+            width=120
+        )
+        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack_propagate(False)
+
+        icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
+        icon_frame.place(relx=0.5, rely=0.5, anchor='center')
 
         ctk.CTkLabel(
-            remove_card,
+            icon_frame,
+            text="🗂️",
+            font=ctk.CTkFont(size=48),
+            text_color="#ffffff"
+        ).pack()
+
+        ctk.CTkLabel(
+            icon_frame,
+            text="CLEAN",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#ffffff"
+        ).pack()
+
+        # Rechter Bereich mit Inhalt
+        right_section = ctk.CTkFrame(remove_card, fg_color='transparent')
+        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+
+        # Header mit Warnung-Badge
+        header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        header_frame.pack(anchor='w', pady=(0, 8))
+
+        ctk.CTkLabel(
+            header_frame,
             text="Karten entfernen",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color="#2c3e50"
-        ).pack(pady=(0, 10))
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="#1f2937"
+        ).pack(side='left')
+
+        badge = ctk.CTkFrame(header_frame, fg_color='#fee2e2', corner_radius=12, height=24)
+        badge.pack(side='left', padx=10)
+        ctk.CTkLabel(
+            badge,
+            text="⚠ Vorsicht",
+            font=ctk.CTkFont(size=10, weight="bold"),
+            text_color="#dc2626"
+        ).pack(padx=10, pady=2)
 
         ctk.CTkLabel(
-            remove_card,
-            text="Lösche nicht mehr benötigte Lernkarten",
+            right_section,
+            text="Entferne nicht mehr benötigte Lernkarten aus deiner Sammlung. Gelöschte Karten können nicht wiederhergestellt werden.",
             font=ctk.CTkFont(size=13),
-            text_color="#7f8c8d",
-            wraplength=500
-        ).pack(pady=(0, 15), padx=20)
+            text_color="#6b7280",
+            wraplength=500,
+            justify='left'
+        ).pack(anchor='w', pady=(0, 18))
+
+        # Button mit modernem Design
+        button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        button_frame.pack(anchor='w')
 
         ctk.CTkButton(
-            remove_card,
-            text="Karten löschen",
+            button_frame,
+            text="→  Karten verwalten",
             command=self.show_remove_cards,
-            height=40,
-            width=200,
+            height=44,
+            width=180,
             font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color="#e74c3c",
-            hover_color="#c0392b",
-            corner_radius=10
-        ).pack(pady=(0, 20))
+            fg_color="#ef4444",
+            hover_color="#dc2626",
+            corner_radius=12,
+            border_width=0
+        ).pack()
 
-        # 3. Karten Management - Moderne Karte
-        manage_card = ctk.CTkFrame(
+        # 3. Karten Management - Ultramodernes Design
+        manage_card_container = ctk.CTkFrame(
             options_container,
-            fg_color='#ffffff',
-            corner_radius=15,
-            border_width=2,
-            border_color='#4A90E2'
+            fg_color='transparent'
         )
-        manage_card.pack(fill='x', pady=(0, 20))
+        manage_card_container.pack(fill='x', pady=(0, 25))
 
-        # Icon
-        ctk.CTkLabel(
+        manage_card = ctk.CTkFrame(
+            manage_card_container,
+            fg_color='#ffffff',
+            corner_radius=20,
+            border_width=0
+        )
+        manage_card.pack(fill='x', padx=5, pady=5)
+
+        # Linker Bereich mit Icon und Gradient-Effekt
+        left_section = ctk.CTkFrame(
             manage_card,
-            text="📝",
-            font=ctk.CTkFont(size=40)
-        ).pack(pady=(20, 10))
+            fg_color='#3b82f6',
+            corner_radius=18,
+            width=120
+        )
+        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack_propagate(False)
+
+        icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
+        icon_frame.place(relx=0.5, rely=0.5, anchor='center')
 
         ctk.CTkLabel(
-            manage_card,
+            icon_frame,
+            text="📚",
+            font=ctk.CTkFont(size=48),
+            text_color="#ffffff"
+        ).pack()
+
+        ctk.CTkLabel(
+            icon_frame,
+            text="EDIT",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#ffffff"
+        ).pack()
+
+        # Rechter Bereich mit Inhalt
+        right_section = ctk.CTkFrame(manage_card, fg_color='transparent')
+        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+
+        # Header mit Badge
+        header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        header_frame.pack(anchor='w', pady=(0, 8))
+
+        ctk.CTkLabel(
+            header_frame,
             text="Karten Management",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color="#2c3e50"
-        ).pack(pady=(0, 10))
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="#1f2937"
+        ).pack(side='left')
+
+        badge = ctk.CTkFrame(header_frame, fg_color='#dbeafe', corner_radius=12, height=24)
+        badge.pack(side='left', padx=10)
+        ctk.CTkLabel(
+            badge,
+            text="✓ Vollzugriff",
+            font=ctk.CTkFont(size=10, weight="bold"),
+            text_color="#1e40af"
+        ).pack(padx=10, pady=2)
 
         ctk.CTkLabel(
-            manage_card,
-            text="Bearbeite und verwalte deine bestehenden Karten",
+            right_section,
+            text="Bearbeite und verwalte alle deine bestehenden Lernkarten. Ändere Inhalte, passe Kategorien an oder organisiere deine Sammlung.",
             font=ctk.CTkFont(size=13),
-            text_color="#7f8c8d",
-            wraplength=500
-        ).pack(pady=(0, 15), padx=20)
+            text_color="#6b7280",
+            wraplength=500,
+            justify='left'
+        ).pack(anchor='w', pady=(0, 18))
+
+        # Button mit modernem Design
+        button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
+        button_frame.pack(anchor='w')
 
         ctk.CTkButton(
-            manage_card,
-            text="Karten verwalten",
+            button_frame,
+            text="→  Karten bearbeiten",
             command=self.show_card_details_manager,
-            height=40,
-            width=200,
+            height=44,
+            width=180,
             font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color="#4A90E2",
-            hover_color="#3a7bc8",
-            corner_radius=10
-        ).pack(pady=(0, 20))
+            fg_color="#3b82f6",
+            hover_color="#2563eb",
+            corner_radius=12,
+            border_width=0
+        ).pack()
 
-        # Zurück-Button mit modernem Design
+        # Moderner Zurück-Button
+        back_button_frame = ctk.CTkFrame(main_container, fg_color='transparent')
+        back_button_frame.pack(pady=(30, 0))
+
         back_btn = ctk.CTkButton(
-            main_container,
-            text="← Zurück zum Hauptmenü",
+            back_button_frame,
+            text="←  Zurück zum Hauptmenü",
             command=self.create_main_menu,
-            height=40,
-            width=200,
-            font=ctk.CTkFont(size=13),
-            fg_color="#95a5a6",
-            hover_color="#7f8c8d",
-            corner_radius=10
+            height=45,
+            width=220,
+            font=ctk.CTkFont(size=14),
+            fg_color="#f3f4f6",
+            hover_color="#e5e7eb",
+            text_color="#374151",
+            corner_radius=12,
+            border_width=2,
+            border_color="#d1d5db"
         )
-        back_btn.pack(pady=(10, 0))
+        back_btn.pack()
 
     def show_card_details_manager(self):
         """Zeigt detaillierte Kartenübersicht mit Bearbeitungsmöglichkeiten UND SUCHE."""
