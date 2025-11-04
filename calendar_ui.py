@@ -377,9 +377,11 @@ class WeeklyCalendarView(ttk.Frame):
         )
         kategorie_label.pack(anchor='w', padx=5, pady=2)
 
-        # Karten-Info
+        # Karten-Info mit Aktion
         erwartete = entry.get('erwartete_karten', 0)
-        info_text = f"{erwartete} Karten"
+        aktion = entry.get('aktion', 'lernen')
+        aktion_text = "Lernen" if aktion == 'lernen' else "Karten erstellen"
+        info_text = f"{aktion_text} • {erwartete} Karten"
         if entry.get('geplante_dauer'):
             info_text += f" • {entry['geplante_dauer']} Min."
 
@@ -396,10 +398,11 @@ class WeeklyCalendarView(ttk.Frame):
         button_frame.pack(fill='x', padx=5, pady=3)
 
         if status == 'offen':
-            # Jetzt lernen Button
+            # Button-Text basierend auf Aktion
+            button_text = "Lernen" if aktion == 'lernen' else "Erstellen"
             ModernButton(
                 button_frame,
-                text="Lernen",
+                text=button_text,
                 command=lambda: self._start_session(entry),
                 style='Primary.TButton'
             ).pack(side='left', padx=2)
@@ -442,6 +445,7 @@ class WeeklyCalendarView(ttk.Frame):
         open_sessions = 0
         total_cards = 0
         completed_cards = 0
+        total_correct = 0
 
         for date_str, entries in week_plan.items():
             for entry in entries:
@@ -449,6 +453,7 @@ class WeeklyCalendarView(ttk.Frame):
                 if entry['status'] == 'erledigt':
                     completed_sessions += 1
                     completed_cards += entry.get('tatsaechliche_karten', 0)
+                    total_correct += entry.get('karten_korrekt', 0)
                 else:
                     open_sessions += 1
                 total_cards += entry.get('erwartete_karten', 0)
@@ -457,6 +462,11 @@ class WeeklyCalendarView(ttk.Frame):
         progress = 0
         if total_sessions > 0:
             progress = int(completed_sessions / total_sessions * 100)
+
+        # Berechne Gesamt-Erfolgsquote
+        overall_success_rate = 0
+        if completed_cards > 0:
+            overall_success_rate = int(total_correct / completed_cards * 100)
 
         # Progress-Bar als Text
         bar_length = 10
@@ -471,7 +481,9 @@ class WeeklyCalendarView(ttk.Frame):
             f"Geplant: {total_sessions} Sessions | "
             f"Erledigt: {completed_sessions} ✓ | "
             f"Offen: {open_sessions} ⏳\n"
-            f"Fortschritt: {bar} {progress}% ({completed_cards}/{weekly_goal} Karten Wochenziel)"
+            f"Fortschritt: {bar} {progress}% | "
+            f"Erfolgsquote: {overall_success_rate}% ({total_correct}/{completed_cards} korrekt)\n"
+            f"Gelernte Karten: {completed_cards}/{weekly_goal} (Wochenziel)"
         )
 
         self.stats_label.configure(text=stats_text)

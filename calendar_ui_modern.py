@@ -874,11 +874,13 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         )
         kategorie_label.pack(side='left', fill='x', expand=True)
 
-        # Karten-Info mit Icon
+        # Karten-Info mit Icon und Aktion
         info_frame = ctk.CTkFrame(session_frame, fg_color="transparent")
         info_frame.pack(fill='x', padx=10, pady=5)
 
-        info_text = f"🎴 {entry.get('erwartete_karten', 0)} Karten"
+        aktion = entry.get('aktion', 'lernen')
+        aktion_text = "Lernen" if aktion == 'lernen' else "Karten erstellen"
+        info_text = f"🎴 {entry.get('erwartete_karten', 0)} Karten • {aktion_text}"
         ctk.CTkLabel(
             info_frame,
             text=info_text,
@@ -906,10 +908,11 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         edit_btn.pack(side='right', padx=(5, 0))
 
         if status == 'offen':
-            # Lernen Button mit modernem Design
+            # Button-Text basierend auf Aktion
+            button_text = "▶ Lernen starten" if aktion == 'lernen' else "▶ Karten erstellen"
             learn_btn = ctk.CTkButton(
                 buttons_frame,
-                text="▶ Lernen starten",
+                text=button_text,
                 font=ctk.CTkFont(size=11, weight="bold"),
                 fg_color=COLORS['primary'],
                 hover_color=COLORS['primary_hover'],
@@ -949,6 +952,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         completed_sessions = 0
         total_cards = 0
         completed_cards = 0
+        total_correct = 0
 
         for date_str, entries in week_plan.items():
             for entry in entries:
@@ -956,6 +960,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
                 if entry['status'] == 'erledigt':
                     completed_sessions += 1
                     completed_cards += entry.get('tatsaechliche_karten', 0)
+                    total_correct += entry.get('karten_korrekt', 0)
                 total_cards += entry.get('erwartete_karten', 0)
 
         # Fortschritt
@@ -963,25 +968,35 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         if total_sessions > 0:
             progress = completed_sessions / total_sessions
 
+        # Erfolgsquote
+        success_rate = 0
+        if completed_cards > 0:
+            success_rate = total_correct / completed_cards
+
         # Stats-Grid
         stats_grid = ctk.CTkFrame(self.stats_container, fg_color="transparent")
         stats_grid.pack(fill='x')
-        stats_grid.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        stats_grid.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
 
         # Sessions
         self._create_stat_card(stats_grid, 0, "📋", "Sessions", f"{completed_sessions}/{total_sessions}")
 
         # Karten
-        self._create_stat_card(stats_grid, 1, "🎴", "Karten", f"{completed_cards}/{total_cards}")
+        self._create_stat_card(stats_grid, 1, "🎴", "Gelernte Karten", f"{completed_cards}")
+
+        # Erfolgsquote
+        success_text = f"{int(success_rate * 100)}%"
+        success_color = COLORS['success'] if success_rate >= 0.7 else (COLORS['warning'] if success_rate >= 0.5 else COLORS['danger'])
+        self._create_stat_card(stats_grid, 2, "✓", "Erfolgsquote", success_text)
 
         # Fortschritt (anklickbar)
         progress_text = f"{int(progress * 100)}%"
-        self._create_stat_card(stats_grid, 2, "📈", "Fortschritt", progress_text, on_click=self._show_progress_chart)
+        self._create_stat_card(stats_grid, 3, "📈", "Fortschritt", progress_text, on_click=self._show_progress_chart)
 
         # Wochenziel
         planner_stats = self.planner_manager.get_planner_statistics(self.planner_id)
         goal_text = f"{planner_stats['total_weekly_goal']}"
-        self._create_stat_card(stats_grid, 3, "🎯", "Wochenziel", goal_text)
+        self._create_stat_card(stats_grid, 4, "🎯", "Wochenziel", goal_text)
 
     def _create_stat_card(self, parent, column: int, icon: str, label: str, value: str, on_click=None):
         """Erstellt eine moderne Statistik-Card mit verbessertem Design."""
