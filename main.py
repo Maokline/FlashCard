@@ -6546,6 +6546,16 @@ class FlashcardApp:
 
         ctk.CTkButton(
             button_frame,
+            text="📅 Zum Kalender",
+            command=self.show_weekly_calendar,
+            font=ctk.CTkFont(size=14),
+            height=35,
+            fg_color="#9b59b6",
+            hover_color="#8e44ad"
+        ).pack(side='left', padx=5)
+
+        ctk.CTkButton(
+            button_frame,
             text="Zurück zum Hauptmenü",
             command=self.create_main_menu,
             font=ctk.CTkFont(size=14),
@@ -6581,7 +6591,9 @@ class FlashcardApp:
                 updates = {
                     'status': 'erledigt',
                     'erledigt_am': datetime.datetime.now().isoformat(),
-                    'tatsaechliche_karten': total_cards
+                    'tatsaechliche_karten': total_cards,
+                    'erfolgsquote': success_rate,
+                    'karten_korrekt': correct_count
                 }
                 self.data_manager.update_plan_entry(self.current_plan_id, updates)
                 logging.info(f"Planeintrag {self.current_plan_id} als erledigt markiert.")
