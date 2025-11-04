@@ -1196,60 +1196,83 @@ class FlashcardApp:
         """Zeigt das Karten-Management-Menü an."""
         self._clear_content_frame()
 
-        # Hauptcontainer mit modernem Design
+        # Moderner Gradient-Header ähnlich wie bei Kategorien
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#3b82f6',
+            corner_radius=0,
+            height=120
+        )
+        header_container.pack(fill='x', pady=(0, 30))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="🎴",
+            font=ctk.CTkFont(size=40),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Karten verwalten",
+            font=ctk.CTkFont(size=32, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Organisiere und pflege deine Lernkartensammlung",
+            font=ctk.CTkFont(size=14),
+            text_color='#dbeafe'
+        ).pack(anchor='w')
+
+        # Hauptcontainer
         main_container = ctk.CTkFrame(
             self.content_frame,
             fg_color='transparent'
         )
-        main_container.pack(fill='both', expand=True, padx=40, pady=30)
-
-        # Moderner Header mit Untertitel
-        header_frame = ctk.CTkFrame(main_container, fg_color='transparent')
-        header_frame.pack(pady=(0, 35))
-
-        header = ctk.CTkLabel(
-            header_frame,
-            text="Karten verwalten",
-            font=ctk.CTkFont(size=32, weight="bold"),
-            text_color="#111827"
-        )
-        header.pack()
-
-        subtitle = ctk.CTkLabel(
-            header_frame,
-            text="Organisiere und pflege deine Lernkartensammlung",
-            font=ctk.CTkFont(size=14),
-            text_color="#6b7280"
-        )
-        subtitle.pack(pady=(5, 0))
+        main_container.pack(fill='both', expand=True, padx=50, pady=0)
 
         # Container für die Optionen
         options_container = ctk.CTkFrame(main_container, fg_color='transparent')
         options_container.pack(fill='both', expand=True)
 
-        # 1. Neue Karte hinzufügen - Ultramodernes Design
-        add_card_container = ctk.CTkFrame(
+        # 1. Neue Karte hinzufügen - Ultramodernes Design mit Schatten-Effekt
+        add_card_outer = ctk.CTkFrame(
             options_container,
-            fg_color='transparent'
+            fg_color='#e0e7ff',
+            corner_radius=22
         )
-        add_card_container.pack(fill='x', pady=(0, 25))
+        add_card_outer.pack(fill='x', pady=(0, 25), padx=2)
 
         add_card = ctk.CTkFrame(
-            add_card_container,
+            add_card_outer,
             fg_color='#ffffff',
             corner_radius=20,
-            border_width=0
+            border_width=2,
+            border_color='#10b981'
         )
-        add_card.pack(fill='x', padx=5, pady=5)
+        add_card.pack(fill='x', padx=3, pady=3)
 
         # Linker Bereich mit Icon und Gradient-Effekt
         left_section = ctk.CTkFrame(
             add_card,
             fg_color='#10b981',
             corner_radius=18,
-            width=120
+            width=130
         )
-        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack(side='left', fill='y', padx=4, pady=4)
         left_section.pack_propagate(False)
 
         icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
@@ -1258,49 +1281,49 @@ class FlashcardApp:
         ctk.CTkLabel(
             icon_frame,
             text="✨",
-            font=ctk.CTkFont(size=48),
+            font=ctk.CTkFont(size=52),
             text_color="#ffffff"
         ).pack()
 
         ctk.CTkLabel(
             icon_frame,
             text="NEU",
-            font=ctk.CTkFont(size=11, weight="bold"),
+            font=ctk.CTkFont(size=12, weight="bold"),
             text_color="#ffffff"
-        ).pack()
+        ).pack(pady=(5, 0))
 
         # Rechter Bereich mit Inhalt
         right_section = ctk.CTkFrame(add_card, fg_color='transparent')
-        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+        right_section.pack(side='left', fill='both', expand=True, padx=30, pady=28)
 
         # Header mit Badge
         header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
-        header_frame.pack(anchor='w', pady=(0, 8))
+        header_frame.pack(anchor='w', pady=(0, 10))
 
         ctk.CTkLabel(
             header_frame,
             text="Neue Karte hinzufügen",
-            font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#1f2937"
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color="#111827"
         ).pack(side='left')
 
-        badge = ctk.CTkFrame(header_frame, fg_color='#d1fae5', corner_radius=12, height=24)
-        badge.pack(side='left', padx=10)
+        badge = ctk.CTkFrame(header_frame, fg_color='#d1fae5', corner_radius=14, height=28)
+        badge.pack(side='left', padx=12)
         ctk.CTkLabel(
             badge,
-            text="Empfohlen",
-            font=ctk.CTkFont(size=10, weight="bold"),
+            text="⭐ Empfohlen",
+            font=ctk.CTkFont(size=11, weight="bold"),
             text_color="#059669"
-        ).pack(padx=10, pady=2)
+        ).pack(padx=12, pady=4)
 
         ctk.CTkLabel(
             right_section,
             text="Erstelle eine neue Lernkarte mit individuellen Fragen und Antworten. Füge optional Bilder und Kategorien hinzu.",
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=14),
             text_color="#6b7280",
-            wraplength=500,
+            wraplength=550,
             justify='left'
-        ).pack(anchor='w', pady=(0, 18))
+        ).pack(anchor='w', pady=(0, 20))
 
         # Button mit modernem Design
         button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
@@ -1310,38 +1333,40 @@ class FlashcardApp:
             button_frame,
             text="→  Jetzt erstellen",
             command=self.add_card,
-            height=44,
-            width=180,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            height=48,
+            width=190,
+            font=ctk.CTkFont(size=15, weight="bold"),
             fg_color="#10b981",
             hover_color="#059669",
-            corner_radius=12,
+            corner_radius=14,
             border_width=0
         ).pack()
 
-        # 2. Karten entfernen - Ultramodernes Design
-        remove_card_container = ctk.CTkFrame(
+        # 2. Karten entfernen - Ultramodernes Design mit Schatten-Effekt
+        remove_card_outer = ctk.CTkFrame(
             options_container,
-            fg_color='transparent'
+            fg_color='#fee2e2',
+            corner_radius=22
         )
-        remove_card_container.pack(fill='x', pady=(0, 25))
+        remove_card_outer.pack(fill='x', pady=(0, 25), padx=2)
 
         remove_card = ctk.CTkFrame(
-            remove_card_container,
+            remove_card_outer,
             fg_color='#ffffff',
             corner_radius=20,
-            border_width=0
+            border_width=2,
+            border_color='#ef4444'
         )
-        remove_card.pack(fill='x', padx=5, pady=5)
+        remove_card.pack(fill='x', padx=3, pady=3)
 
         # Linker Bereich mit Icon und Gradient-Effekt
         left_section = ctk.CTkFrame(
             remove_card,
             fg_color='#ef4444',
             corner_radius=18,
-            width=120
+            width=130
         )
-        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack(side='left', fill='y', padx=4, pady=4)
         left_section.pack_propagate(False)
 
         icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
@@ -1349,50 +1374,50 @@ class FlashcardApp:
 
         ctk.CTkLabel(
             icon_frame,
-            text="🗂️",
-            font=ctk.CTkFont(size=48),
+            text="🗑️",
+            font=ctk.CTkFont(size=52),
             text_color="#ffffff"
         ).pack()
 
         ctk.CTkLabel(
             icon_frame,
             text="CLEAN",
-            font=ctk.CTkFont(size=11, weight="bold"),
+            font=ctk.CTkFont(size=12, weight="bold"),
             text_color="#ffffff"
-        ).pack()
+        ).pack(pady=(5, 0))
 
         # Rechter Bereich mit Inhalt
         right_section = ctk.CTkFrame(remove_card, fg_color='transparent')
-        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+        right_section.pack(side='left', fill='both', expand=True, padx=30, pady=28)
 
         # Header mit Warnung-Badge
         header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
-        header_frame.pack(anchor='w', pady=(0, 8))
+        header_frame.pack(anchor='w', pady=(0, 10))
 
         ctk.CTkLabel(
             header_frame,
             text="Karten entfernen",
-            font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#1f2937"
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color="#111827"
         ).pack(side='left')
 
-        badge = ctk.CTkFrame(header_frame, fg_color='#fee2e2', corner_radius=12, height=24)
-        badge.pack(side='left', padx=10)
+        badge = ctk.CTkFrame(header_frame, fg_color='#fee2e2', corner_radius=14, height=28)
+        badge.pack(side='left', padx=12)
         ctk.CTkLabel(
             badge,
-            text="⚠ Vorsicht",
-            font=ctk.CTkFont(size=10, weight="bold"),
+            text="⚠️ Vorsicht",
+            font=ctk.CTkFont(size=11, weight="bold"),
             text_color="#dc2626"
-        ).pack(padx=10, pady=2)
+        ).pack(padx=12, pady=4)
 
         ctk.CTkLabel(
             right_section,
             text="Entferne nicht mehr benötigte Lernkarten aus deiner Sammlung. Gelöschte Karten können nicht wiederhergestellt werden.",
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=14),
             text_color="#6b7280",
-            wraplength=500,
+            wraplength=550,
             justify='left'
-        ).pack(anchor='w', pady=(0, 18))
+        ).pack(anchor='w', pady=(0, 20))
 
         # Button mit modernem Design
         button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
@@ -1402,38 +1427,40 @@ class FlashcardApp:
             button_frame,
             text="→  Karten verwalten",
             command=self.show_remove_cards,
-            height=44,
-            width=180,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            height=48,
+            width=190,
+            font=ctk.CTkFont(size=15, weight="bold"),
             fg_color="#ef4444",
             hover_color="#dc2626",
-            corner_radius=12,
+            corner_radius=14,
             border_width=0
         ).pack()
 
-        # 3. Karten Management - Ultramodernes Design
-        manage_card_container = ctk.CTkFrame(
+        # 3. Karten Management - Ultramodernes Design mit Schatten-Effekt
+        manage_card_outer = ctk.CTkFrame(
             options_container,
-            fg_color='transparent'
+            fg_color='#dbeafe',
+            corner_radius=22
         )
-        manage_card_container.pack(fill='x', pady=(0, 25))
+        manage_card_outer.pack(fill='x', pady=(0, 25), padx=2)
 
         manage_card = ctk.CTkFrame(
-            manage_card_container,
+            manage_card_outer,
             fg_color='#ffffff',
             corner_radius=20,
-            border_width=0
+            border_width=2,
+            border_color='#3b82f6'
         )
-        manage_card.pack(fill='x', padx=5, pady=5)
+        manage_card.pack(fill='x', padx=3, pady=3)
 
         # Linker Bereich mit Icon und Gradient-Effekt
         left_section = ctk.CTkFrame(
             manage_card,
             fg_color='#3b82f6',
             corner_radius=18,
-            width=120
+            width=130
         )
-        left_section.pack(side='left', fill='y', padx=3, pady=3)
+        left_section.pack(side='left', fill='y', padx=4, pady=4)
         left_section.pack_propagate(False)
 
         icon_frame = ctk.CTkFrame(left_section, fg_color='transparent')
@@ -1442,49 +1469,49 @@ class FlashcardApp:
         ctk.CTkLabel(
             icon_frame,
             text="📚",
-            font=ctk.CTkFont(size=48),
+            font=ctk.CTkFont(size=52),
             text_color="#ffffff"
         ).pack()
 
         ctk.CTkLabel(
             icon_frame,
             text="EDIT",
-            font=ctk.CTkFont(size=11, weight="bold"),
+            font=ctk.CTkFont(size=12, weight="bold"),
             text_color="#ffffff"
-        ).pack()
+        ).pack(pady=(5, 0))
 
         # Rechter Bereich mit Inhalt
         right_section = ctk.CTkFrame(manage_card, fg_color='transparent')
-        right_section.pack(side='left', fill='both', expand=True, padx=25, pady=25)
+        right_section.pack(side='left', fill='both', expand=True, padx=30, pady=28)
 
         # Header mit Badge
         header_frame = ctk.CTkFrame(right_section, fg_color='transparent')
-        header_frame.pack(anchor='w', pady=(0, 8))
+        header_frame.pack(anchor='w', pady=(0, 10))
 
         ctk.CTkLabel(
             header_frame,
             text="Karten Management",
-            font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#1f2937"
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color="#111827"
         ).pack(side='left')
 
-        badge = ctk.CTkFrame(header_frame, fg_color='#dbeafe', corner_radius=12, height=24)
-        badge.pack(side='left', padx=10)
+        badge = ctk.CTkFrame(header_frame, fg_color='#dbeafe', corner_radius=14, height=28)
+        badge.pack(side='left', padx=12)
         ctk.CTkLabel(
             badge,
             text="✓ Vollzugriff",
-            font=ctk.CTkFont(size=10, weight="bold"),
+            font=ctk.CTkFont(size=11, weight="bold"),
             text_color="#1e40af"
-        ).pack(padx=10, pady=2)
+        ).pack(padx=12, pady=4)
 
         ctk.CTkLabel(
             right_section,
             text="Bearbeite und verwalte alle deine bestehenden Lernkarten. Ändere Inhalte, passe Kategorien an oder organisiere deine Sammlung.",
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=14),
             text_color="#6b7280",
-            wraplength=500,
+            wraplength=550,
             justify='left'
-        ).pack(anchor='w', pady=(0, 18))
+        ).pack(anchor='w', pady=(0, 20))
 
         # Button mit modernem Design
         button_frame = ctk.CTkFrame(right_section, fg_color='transparent')
@@ -1494,12 +1521,12 @@ class FlashcardApp:
             button_frame,
             text="→  Karten bearbeiten",
             command=self.show_card_details_manager,
-            height=44,
-            width=180,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            height=48,
+            width=190,
+            font=ctk.CTkFont(size=15, weight="bold"),
             fg_color="#3b82f6",
             hover_color="#2563eb",
-            corner_radius=12,
+            corner_radius=14,
             border_width=0
         ).pack()
 
@@ -3099,32 +3126,45 @@ class FlashcardApp:
         categories_container = ctk.CTkFrame(scroll_container, fg_color='transparent')
         categories_container.pack(fill='both', expand=True, padx=10, pady=10)
 
-        def refresh_categories_display():
-            """Aktualisiert die Kategorien-Anzeige."""
-            # Lösche alle vorhandenen Widgets
+        # Performance-Optimierung: Cache für Kategorien-Daten
+        _last_categories_data = None
+        _search_timer = None
+
+        def refresh_categories_display(force=False):
+            """Aktualisiert die Kategorien-Anzeige mit Performance-Optimierung."""
+            nonlocal _last_categories_data
+
+            # Performance-Optimierung: Nur aktualisieren wenn sich Daten geändert haben
+            current_data = dict(self.data_manager.categories)
+            query = search_var.get().strip().lower()
+
+            if not force and _last_categories_data == current_data and not query:
+                return
+
+            _last_categories_data = current_data.copy()
+
+            # Batch-Delete: Alle Widgets auf einmal löschen (schneller als einzeln)
             for widget in categories_container.winfo_children():
                 widget.destroy()
 
-            query = search_var.get().strip().lower()
-            categories = sorted(self.data_manager.categories.keys())
+            # Vorfilterung: Kategorien frühzeitig filtern
+            categories = sorted(current_data.keys())
 
+            # Optimierte Kategorie-Erstellung
             for cat_name in categories:
-                # Filter anwenden
-                subcats = sorted(self.data_manager.categories[cat_name].keys())
+                subcats = sorted(current_data[cat_name].keys())
 
+                # Filter-Logik optimiert
                 if query:
-                    # Prüfe ob Kategorie oder Subkategorie übereinstimmt
                     cat_matches = query in cat_name.lower()
                     matching_subcats = [sc for sc in subcats if query in sc.lower()]
-
                     if not cat_matches and not matching_subcats:
                         continue
-
                     display_subcats = matching_subcats if matching_subcats else subcats
                 else:
                     display_subcats = subcats
 
-                # Kategorie-Card erstellen
+                # Optimierte Widget-Erstellung mit weniger Verschachtelung
                 cat_card = ctk.CTkFrame(
                     categories_container,
                     fg_color='#faf5ff',
@@ -3134,50 +3174,44 @@ class FlashcardApp:
                 )
                 cat_card.pack(fill='x', pady=8)
 
-                # Header der Kategorie
+                # Header der Kategorie - direkt ohne extra Content-Frame
                 cat_header = ctk.CTkFrame(cat_card, fg_color='#8b5cf6', corner_radius=10)
                 cat_header.pack(fill='x', padx=3, pady=3)
 
-                cat_header_content = ctk.CTkFrame(cat_header, fg_color='transparent')
-                cat_header_content.pack(fill='x', padx=15, pady=12)
-
+                # Direkte Pack-Anordnung ohne extra Frame
                 ctk.CTkLabel(
-                    cat_header_content,
-                    text="📁",
-                    font=ctk.CTkFont(size=20),
-                    text_color='#ffffff'
-                ).pack(side='left', padx=(0, 10))
-
-                ctk.CTkLabel(
-                    cat_header_content,
-                    text=cat_name,
+                    cat_header,
+                    text=f"📁  {cat_name}",
                     font=ctk.CTkFont(size=16, weight="bold"),
                     text_color='#ffffff'
-                ).pack(side='left')
+                ).pack(side='left', padx=15, pady=12)
 
-                # Badge mit Anzahl Unterkategorien
-                badge = ctk.CTkFrame(cat_header_content, fg_color='#c4b5fd', corner_radius=10, height=26)
-                badge.pack(side='left', padx=10)
-                ctk.CTkLabel(
-                    badge,
+                # Badge mit Anzahl
+                badge = ctk.CTkLabel(
+                    cat_header,
                     text=f"{len(display_subcats)} Unterkategorien",
                     font=ctk.CTkFont(size=11, weight="bold"),
-                    text_color='#5b21b6'
-                ).pack(padx=10, pady=3)
+                    text_color='#5b21b6',
+                    fg_color='#c4b5fd',
+                    corner_radius=10,
+                    padx=10,
+                    pady=3
+                )
+                badge.pack(side='left', padx=10)
 
-                # Löschen-Button
+                # Löschen-Button optimiert
                 def delete_main_category(c=cat_name):
                     if messagebox.askyesno("Bestätigen", f"Möchten Sie die Kategorie '{c}' und alle zugehörigen Unterkategorien löschen?"):
                         success = self.data_manager.delete_category(c)
                         if success:
                             messagebox.showinfo("Info", f"Kategorie '{c}' wurde gelöscht.")
                             logging.info(f"Kategorie '{c}' gelöscht.")
-                            refresh_categories_display()
+                            refresh_categories_display(force=True)
                         else:
                             messagebox.showerror("Fehler", "Fehler beim Löschen der Kategorie.")
 
-                delete_cat_btn = ctk.CTkButton(
-                    cat_header_content,
+                ctk.CTkButton(
+                    cat_header,
                     text="🗑️ Löschen",
                     command=delete_main_category,
                     width=100,
@@ -3186,42 +3220,30 @@ class FlashcardApp:
                     fg_color='#dc2626',
                     hover_color='#b91c1c',
                     font=ctk.CTkFont(size=12, weight="bold")
-                )
-                delete_cat_btn.pack(side='right')
+                ).pack(side='right', padx=15)
 
-                # Unterkategorien anzeigen
+                # Unterkategorien optimiert anzeigen
                 if display_subcats:
                     subcat_container = ctk.CTkFrame(cat_card, fg_color='transparent')
                     subcat_container.pack(fill='x', padx=15, pady=(0, 12))
 
                     for subcat_name in display_subcats:
+                        # Vereinfachte Subkategorie-Darstellung
                         subcat_frame = ctk.CTkFrame(
                             subcat_container,
                             fg_color='#ffffff',
                             corner_radius=8,
                             border_width=1,
-                            border_color='#e9d5ff',
-                            height=50
+                            border_color='#e9d5ff'
                         )
-                        subcat_frame.pack(fill='x', pady=4)
-                        subcat_frame.pack_propagate(False)
-
-                        subcat_content = ctk.CTkFrame(subcat_frame, fg_color='transparent')
-                        subcat_content.pack(fill='both', expand=True, padx=12, pady=8)
+                        subcat_frame.pack(fill='x', pady=4, ipady=8)
 
                         ctk.CTkLabel(
-                            subcat_content,
-                            text="📄",
-                            font=ctk.CTkFont(size=16),
-                            text_color='#8b5cf6'
-                        ).pack(side='left', padx=(0, 8))
-
-                        ctk.CTkLabel(
-                            subcat_content,
-                            text=subcat_name,
+                            subcat_frame,
+                            text=f"📄  {subcat_name}",
                             font=ctk.CTkFont(size=13),
                             text_color='#374151'
-                        ).pack(side='left')
+                        ).pack(side='left', padx=12)
 
                         # Löschen-Button für Unterkategorie
                         def delete_subcat(c=cat_name, sc=subcat_name):
@@ -3230,12 +3252,12 @@ class FlashcardApp:
                                 if success:
                                     messagebox.showinfo("Info", f"Unterkategorie '{sc}' wurde gelöscht.")
                                     logging.info(f"Unterkategorie '{sc}' in '{c}' gelöscht.")
-                                    refresh_categories_display()
+                                    refresh_categories_display(force=True)
                                 else:
                                     messagebox.showerror("Fehler", "Fehler beim Löschen der Unterkategorie.")
 
-                        delete_subcat_btn = ctk.CTkButton(
-                            subcat_content,
+                        ctk.CTkButton(
+                            subcat_frame,
                             text="🗑️",
                             command=delete_subcat,
                             width=60,
@@ -3245,20 +3267,28 @@ class FlashcardApp:
                             hover_color='#fee2e2',
                             text_color='#dc2626',
                             font=ctk.CTkFont(size=12)
-                        )
-                        delete_subcat_btn.pack(side='right')
+                        ).pack(side='right', padx=12)
 
         # Aktionsbuttons
         def add_category():
             self.create_add_category_view()
 
-        def search_action():
-            refresh_categories_display()
+        # Optimierte Suchfunktion mit Debouncing
+        def search_action(*args):
+            nonlocal _search_timer
+            # Vorheriges Timer abbrechen falls vorhanden
+            if _search_timer:
+                self.after_cancel(_search_timer)
+            # Neuen Timer setzen (300ms Verzögerung für bessere Performance)
+            _search_timer = self.after(300, lambda: refresh_categories_display(force=True))
+
+        # Such-Eingabe mit automatischer Suche beim Tippen
+        search_var.trace_add('write', search_action)
 
         search_btn = ctk.CTkButton(
             button_container,
             text="🔍 Suchen",
-            command=search_action,
+            command=lambda: refresh_categories_display(force=True),
             width=110,
             height=40,
             corner_radius=12,
@@ -3305,125 +3335,222 @@ class FlashcardApp:
 
     def create_add_category_view(self):
         self._clear_content_frame()
-        
-        # Header mit CustomTkinter
-        header = ctk.CTkLabel(
+
+        # Moderner Header mit Gradient-Hintergrund ähnlich wie manage_categories
+        header_container = ctk.CTkFrame(
             self.content_frame,
-            text="Kategorien verwalten",
-            font=ctk.CTkFont(size=24, weight="bold")
+            fg_color='#10b981',
+            corner_radius=0,
+            height=110
         )
-        header.pack(pady=20)
+        header_container.pack(fill='x', pady=(0, 25))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="➕",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Kategorien hinzufügen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Erstelle neue Kategorien und Unterkategorien für deine Lernkarten",
+            font=ctk.CTkFont(size=13),
+            text_color='#d1fae5'
+        ).pack(anchor='w')
+
+        # Hauptcontainer
+        main_container = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        main_container.pack(fill='both', expand=True, padx=30, pady=0)
 
         # Notebook für Tabs (behalte ttk.Notebook, da CTk kein Notebook hat)
-        notebook = ttk.Notebook(self.content_frame)
-        notebook.pack(fill='both', expand=True, padx=20, pady=10)
+        notebook = ttk.Notebook(main_container)
+        notebook.pack(fill='both', expand=True, pady=(0, 20))
 
         # Tab 1: Neue Hauptkategorie
-        new_cat_frame = ctk.CTkFrame(notebook)
-        notebook.add(new_cat_frame, text="Neue Hauptkategorie")
+        new_cat_frame = ctk.CTkFrame(notebook, fg_color='#fafafa')
+        notebook.add(new_cat_frame, text="📁 Neue Hauptkategorie")
 
         # Tab 2: Unterkategorie hinzufügen
-        add_subcat_frame = ctk.CTkFrame(notebook)
-        notebook.add(add_subcat_frame, text="Unterkategorie hinzufügen")
+        add_subcat_frame = ctk.CTkFrame(notebook, fg_color='#fafafa')
+        notebook.add(add_subcat_frame, text="📄 Unterkategorie hinzufügen")
 
-        # Inhalt Tab 1: Neue Hauptkategorie
+        # Inhalt Tab 1: Neue Hauptkategorie - Moderneres Layout
+        tab1_container = ctk.CTkFrame(new_cat_frame, fg_color='#ffffff', corner_radius=15, border_width=2, border_color='#10b981')
+        tab1_container.pack(fill='both', expand=True, padx=40, pady=40)
+
+        # Beschreibung
         ctk.CTkLabel(
-            new_cat_frame,
+            tab1_container,
+            text="🎯 Erstelle eine neue Hauptkategorie",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#10b981'
+        ).pack(pady=(25, 10))
+
+        ctk.CTkLabel(
+            tab1_container,
+            text="Gib einen eindeutigen Namen für deine neue Kategorie an und füge optional Unterkategorien hinzu.",
+            font=ctk.CTkFont(size=12),
+            text_color='#6b7280',
+            wraplength=400
+        ).pack(pady=(0, 25))
+
+        # Eingabefelder mit verbessertem Design
+        ctk.CTkLabel(
+            tab1_container,
             text="Kategorie-Name:",
-            font=ctk.CTkFont(size=14)
-        ).pack(pady=(20,5))
-        
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#374151'
+        ).pack(pady=(10, 5), anchor='w', padx=50)
+
         new_cat_entry = ctk.CTkEntry(
-            new_cat_frame,
-            width=300,
-            height=35,
-            placeholder_text="Name der neuen Kategorie"
+            tab1_container,
+            width=400,
+            height=40,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1fae5',
+            placeholder_text="z.B. Mathematik, Geschichte, Programmierung...",
+            font=ctk.CTkFont(size=13)
         )
-        new_cat_entry.pack(pady=(0,20))
+        new_cat_entry.pack(pady=(0, 20), padx=50)
 
         ctk.CTkLabel(
-            new_cat_frame,
-            text="Unterkategorien (kommagetrennt):",
-            font=ctk.CTkFont(size=14)
-        ).pack(pady=5)
-        
+            tab1_container,
+            text="Unterkategorien (kommagetrennt, optional):",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#374151'
+        ).pack(pady=(10, 5), anchor='w', padx=50)
+
         subcats_entry = ctk.CTkEntry(
-            new_cat_frame,
-            width=300,
-            height=35,
-            placeholder_text="z.B. Subkat1, Subkat2, Subkat3"
+            tab1_container,
+            width=400,
+            height=40,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1fae5',
+            placeholder_text="z.B. Algebra, Geometrie, Analysis",
+            font=ctk.CTkFont(size=13)
         )
-        subcats_entry.pack(pady=(0,20))
+        subcats_entry.pack(pady=(0, 30), padx=50)
 
+        # Moderner Speichern-Button
         save_main_btn = ctk.CTkButton(
-            new_cat_frame,
-            text="Hauptkategorie speichern",
+            tab1_container,
+            text="✓  Hauptkategorie speichern",
             command=lambda: self.save_new_category(new_cat_entry.get().strip(), subcats_entry.get()),
-            width=200,
-            height=35
+            width=240,
+            height=45,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        save_main_btn.pack(pady=20)
+        save_main_btn.pack(pady=(0, 25))
 
-        # Inhalt Tab 2: Unterkategorie hinzufügen
+        # Inhalt Tab 2: Unterkategorie hinzufügen - Moderneres Layout
+        tab2_container = ctk.CTkFrame(add_subcat_frame, fg_color='#ffffff', corner_radius=15, border_width=2, border_color='#10b981')
+        tab2_container.pack(fill='both', expand=True, padx=40, pady=40)
+
+        # Beschreibung
         ctk.CTkLabel(
-            add_subcat_frame,
-            text="Hauptkategorie auswÃƒÂ¤hlen:",
-            font=ctk.CTkFont(size=14)
-        ).pack(pady=(20,5))
+            tab2_container,
+            text="🗂️ Unterkategorie hinzufügen",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#10b981'
+        ).pack(pady=(25, 10))
+
+        ctk.CTkLabel(
+            tab2_container,
+            text="Erweitere eine bestehende Kategorie mit einer neuen Unterkategorie.",
+            font=ctk.CTkFont(size=12),
+            text_color='#6b7280',
+            wraplength=400
+        ).pack(pady=(0, 25))
+
+        # Hauptkategorie auswählen
+        ctk.CTkLabel(
+            tab2_container,
+            text="Hauptkategorie auswählen:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#374151'
+        ).pack(pady=(10, 5), anchor='w', padx=50)
 
         existing_categories = sorted(self.data_manager.categories.keys())
         category_var = tk.StringVar(value=existing_categories[0] if existing_categories else "")
-        
+
         category_dropdown = ctk.CTkOptionMenu(
-            add_subcat_frame,
-            values=existing_categories,
+            tab2_container,
+            values=existing_categories if existing_categories else ["Keine Kategorien"],
             variable=category_var,
-            width=300,
-            height=35
+            width=400,
+            height=40,
+            corner_radius=10,
+            fg_color='#10b981',
+            button_color='#059669',
+            button_hover_color='#047857',
+            font=ctk.CTkFont(size=13)
         )
-        category_dropdown.pack(pady=(0,20))
+        category_dropdown.pack(pady=(0, 20), padx=50)
 
+        # Neue Unterkategorie
         ctk.CTkLabel(
-            add_subcat_frame,
+            tab2_container,
             text="Neue Unterkategorie:",
-            font=ctk.CTkFont(size=14)
-        ).pack(pady=5)
-        
-        new_subcat_entry = ctk.CTkEntry(
-            add_subcat_frame,
-            width=300,
-            height=35,
-            placeholder_text="Name der neuen Unterkategorie"
-        )
-        new_subcat_entry.pack(pady=(0,20))
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#374151'
+        ).pack(pady=(10, 5), anchor='w', padx=50)
 
-        # Label für aktuelle Unterkategorien
-        current_subcats_label = ctk.CTkLabel(
-            add_subcat_frame,
-            text="",
-            font=ctk.CTkFont(size=12),
-            wraplength=300
+        new_subcat_entry = ctk.CTkEntry(
+            tab2_container,
+            width=400,
+            height=40,
+            corner_radius=10,
+            border_width=2,
+            border_color='#d1fae5',
+            placeholder_text="Name der neuen Unterkategorie",
+            font=ctk.CTkFont(size=13)
         )
-        current_subcats_label.pack(pady=10)
+        new_subcat_entry.pack(pady=(0, 20), padx=50)
 
         # Info-Box für existierende Unterkategorien
-        info_frame = ctk.CTkFrame(add_subcat_frame, fg_color=("gray85", "gray20"))
-        info_frame.pack(fill='x', pady=(0,20), padx=10)
+        info_frame = ctk.CTkFrame(tab2_container, fg_color='#f0fdf4', corner_radius=12, border_width=1, border_color='#bbf7d0')
+        info_frame.pack(fill='x', pady=(0, 20), padx=50)
 
         info_label = ctk.CTkLabel(
             info_frame,
-            text="Existierende Unterkategorien:",
-            font=ctk.CTkFont(size=12, weight="bold")
+            text="📋 Existierende Unterkategorien:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#059669'
         )
-        info_label.pack(pady=(10,5))
+        info_label.pack(pady=(15, 8))
 
         current_subcats_label = ctk.CTkLabel(
             info_frame,
             text="",
             font=ctk.CTkFont(size=12),
-            wraplength=280
+            text_color='#374151',
+            wraplength=380
         )
-        current_subcats_label.pack(pady=(0,10))
+        current_subcats_label.pack(pady=(0, 15), padx=20)
 
         def update_subcats_display(*args):
             selected_cat = category_var.get()
@@ -3437,26 +3564,16 @@ class FlashcardApp:
                     current_subcats_label.configure(
                         text="Keine Unterkategorien vorhanden"
                     )
+            else:
+                current_subcats_label.configure(
+                    text="Keine Kategorien verfügbar"
+                )
 
         # Statt trace_add verwenden wir command im OptionMenu
         category_dropdown.configure(command=update_subcats_display)
         update_subcats_display()
 
-        save_subcat_btn = ctk.CTkButton(
-            add_subcat_frame,
-            text="Unterkategorie hinzufügen",
-            command=lambda: self.save_new_subcategory(
-                category_var.get(),
-                new_subcat_entry.get().strip(),
-                new_subcat_entry,
-                current_subcats_label
-            ),
-            width=200,
-            height=35
-        )
-        save_subcat_btn.pack(pady=20)
-        
-    # Funktion zum Speichern und Aktualisieren
+        # Funktion zum Speichern und Aktualisieren
         def save_and_update_subcat():
             if self.save_new_subcategory(
                 category_var.get(),
@@ -3467,28 +3584,39 @@ class FlashcardApp:
                 update_subcats_display()
                 new_subcat_entry.delete(0, 'end')
 
-        # Speichern Button
+        # Moderner Speichern Button
         save_subcat_btn = ctk.CTkButton(
-            add_subcat_frame,
-            text="Unterkategorie speichern",
-            command=lambda: save_and_update_subcat(),
-            width=200,
-            height=35
+            tab2_container,
+            text="✓  Unterkategorie speichern",
+            command=save_and_update_subcat,
+            width=240,
+            height=45,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        save_subcat_btn.pack(pady=20)
+        save_subcat_btn.pack(pady=(0, 25))
 
-        # Zurück Button
+        # Moderner Zurück Button - zurück zu Kategorien Verwalten statt Hauptmenü
+        back_button_frame = ctk.CTkFrame(main_container, fg_color='transparent')
+        back_button_frame.pack(pady=(0, 0))
+
         back_btn = ctk.CTkButton(
-            self.content_frame,
-            text="Zurück zum Hauptmenü",
-            command=self.create_main_menu,
-            fg_color="gray",
-            hover_color="darkgray",
-            width=200,
-            height=35
+            back_button_frame,
+            text="←  Zurück zu Kategorien verwalten",
+            command=self.manage_categories,
+            height=45,
+            width=260,
+            font=ctk.CTkFont(size=14),
+            fg_color="#f3f4f6",
+            hover_color="#e5e7eb",
+            text_color="#374151",
+            corner_radius=12,
+            border_width=2,
+            border_color="#d1d5db"
         )
-        back_btn.pack(pady=20)
-        self.sidebar_buttons["back_to_manage_from_add"] = back_btn
+        back_btn.pack()
 
         logging.info("Kategorie hinzufügen Ansicht angezeigt.")
     def save_new_category(self, new_cat, subcats_entry_str):
