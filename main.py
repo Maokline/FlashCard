@@ -2781,48 +2781,67 @@ class FlashcardApp:
         stats_grid_frame.grid_columnconfigure(0, weight=1)
         stats_grid_frame.grid_columnconfigure(1, weight=1)
     def show_image_inline(self, frame, image_path):
-        """Zeigt eine Bildvorschau inline an."""
+        """Zeigt eine Bildvorschau inline an mit modernem Design."""
         # Lösche vorherige Inhalte
         for widget in frame.winfo_children():
             widget.destroy()
 
         if not image_path or not os.path.exists(image_path):
-             logging.warning(f"Bildpfad ungÃƒÂ¼ltig oder nicht gefunden: {image_path}")
+             logging.warning(f"Bildpfad ungültig oder nicht gefunden: {image_path}")
              ctk.CTkLabel(
                  frame,
-                 text="Bild nicht gefunden.",
-                 font=ctk.CTkFont(size=12)
+                 text="📷 Kein Bild vorhanden",
+                 font=ctk.CTkFont(size=13),
+                 text_color="gray"
              ).pack(pady=20)
              return
 
         try:
             image = Image.open(image_path)
-            # Maximale GrÃƒÂ¶ÃƒÅ¸e für das Vorschaubild
-            max_size = (400, 300) # Du kannst diese GrÃƒÂ¶ÃƒÅ¸e anpassen
+            # Maximale Größe für das Vorschaubild
+            max_size = (400, 300)
             image.thumbnail(max_size, Image.Resampling.LANCZOS)
 
-            # Verwende CTkImage für bessere Theme-Integration (optional)
+            # Moderner Container mit Rahmen
+            image_container = ctk.CTkFrame(
+                frame,
+                fg_color=("white", "gray20"),
+                corner_radius=15,
+                border_width=2,
+                border_color=("#8b5cf6", "#a78bfa")
+            )
+            image_container.pack(expand=True, fill='both', padx=10, pady=10)
+
+            # Verwende CTkImage für bessere Theme-Integration
             ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=image.size)
 
-            image_label = ctk.CTkLabel(frame, text="", image=ctk_image)
+            image_label = ctk.CTkLabel(
+                image_container,
+                text="",
+                image=ctk_image,
+                corner_radius=13
+            )
             image_label.image = ctk_image # Referenz behalten!
             image_label.pack(expand=True, fill='both', padx=5, pady=5)
 
-            # Button zum VergrÃƒÂ¶ÃƒÅ¸ern hinzufügen
+            # Moderner Button zum Vergrößern
             enlarge_btn = ctk.CTkButton(
-                frame,
-                text="Ã°Å¸â€Â VergrÃƒÂ¶ÃƒÅ¸ern",
-                command=lambda p=image_path: self.show_fullscreen_image(p),
-                height=28,
-                width=100
+                image_container,
+                text="🔍 Bild vergrößern",
+                command=lambda p=image_path: self._show_fullscreen_image(p),
+                height=32,
+                corner_radius=10,
+                fg_color=("#8b5cf6", "#7c3aed"),
+                hover_color=("#7c3aed", "#6d28d9"),
+                font=ctk.CTkFont(size=13, weight="bold")
             )
-            enlarge_btn.pack(pady=(5,0))
+            enlarge_btn.pack(pady=(5, 10), padx=10)
 
         except Exception as e:
             logging.error(f"Fehler beim Laden des Inline-Bildes: {e}")
             ctk.CTkLabel(
                 frame,
-                text=f"Fehler beim Laden des Bildes:\n{e}",
+                text=f"❌ Fehler beim Laden des Bildes:\n{e}",
                 font=ctk.CTkFont(size=12),
                 text_color="red"
             ).pack(pady=20)
@@ -5832,323 +5851,385 @@ class FlashcardApp:
     # APPEARANCE SETTINGS (Fortsetzung in configure_appearance)
     # -----------------------------------------------------------------------------------
     def configure_appearance(self):
+        """Moderne Einstellungsseite mit customtkinter Design."""
         self._clear_content_frame()
 
-        # Header Label
-        header = tk.Label(
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
             self.content_frame,
-            text="Design & Schrifteinstellungen",
-            font=("Segoe UI", 18, "bold"),
-            bg="#ffffff"
+            fg_color='#3b82f6',
+            corner_radius=0,
+            height=110
         )
-        header.pack(pady=20)
+        header_container.pack(fill='x', pady=(0, 20))
+        header_container.pack_propagate(False)
 
-        # Haupt-Frame für Einstellungen
-        main_frame = tk.Frame(self.content_frame, bg="#ffffff")
-        main_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
 
-        # Farbeinstellungen Abschnitt
-        colors_frame = ttk.LabelFrame(main_frame, text="Farbeinstellungen")
-        colors_frame.pack(fill="x", padx=10, pady=5)
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
 
-        def create_color_button(text, setting_type):
-            """
-            Erstellt eine Zeile mit einem Label, einer Farbvorschau und einem Änderungsbutton.
-            """
-            frame = ttk.Frame(colors_frame)
-            frame.pack(fill="x", padx=5, pady=5)
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="⚙️",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
 
-            label = ttk.Label(frame, text=text, width=25)  # Feste Breite für das Label
-            label.grid(row=0, column=0, sticky="w", padx=5, pady=2) # linksbÃƒÂ¼ndig ausrichten
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
 
-            preview = tk.Label(
-                frame,
-                width=3,
-                relief="solid",
-                bg=getattr(self.appearance_settings, f"{setting_type}_color")
+        ctk.CTkLabel(
+            title_frame,
+            text="Einstellungen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Personalisiere Design, Darstellung und Funktionen deiner Lern-App",
+            font=ctk.CTkFont(size=13),
+            text_color='#dbeafe'
+        ).pack(anchor='w')
+
+        # Scrollbarer Container
+        main_container = ctk.CTkScrollableFrame(
+            self.content_frame,
+            fg_color='transparent'
+        )
+        main_container.pack(fill='both', expand=True, padx=20, pady=10)
+
+        # === DARSTELLUNGSEINSTELLUNGEN SEKTION ===
+        appearance_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#f0f9ff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#3b82f6'
+        )
+        appearance_section.pack(fill='x', pady=(0, 15))
+
+        # Header der Darstellungs-Sektion
+        appearance_header = ctk.CTkFrame(appearance_section, fg_color='transparent')
+        appearance_header.pack(fill='x', pady=(15, 10), padx=15)
+
+        ctk.CTkLabel(
+            appearance_header,
+            text="🎨",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            appearance_header,
+            text="DARSTELLUNG & FARBEN",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#1e40af'
+        ).pack(side='left')
+
+        # Farbeinstellungen Frame
+        colors_frame = ctk.CTkFrame(
+            appearance_section,
+            fg_color='white',
+            corner_radius=10
+        )
+        colors_frame.pack(fill='x', padx=15, pady=(0, 15))
+
+        def create_color_button(parent, text, setting_type, row):
+            """Erstellt eine moderne Farbwahl-Zeile."""
+            # Label
+            ctk.CTkLabel(
+                parent,
+                text=text,
+                font=ctk.CTkFont(size=13),
+                text_color='#1f2937',
+                anchor='w',
+                width=200
+            ).grid(row=row, column=0, sticky='w', padx=15, pady=8)
+
+            # Farbvorschau
+            current_color = getattr(self.appearance_settings, f"{setting_type}_color", "#ffffff")
+            preview_frame = ctk.CTkFrame(
+                parent,
+                width=40,
+                height=30,
+                corner_radius=8,
+                border_width=2,
+                border_color='#d1d5db',
+                fg_color=current_color
             )
-            preview.grid(row=0, column=1, padx=5, pady=2)
+            preview_frame.grid(row=row, column=1, padx=10, pady=8)
+            preview_frame.grid_propagate(False)
 
             def update_color():
-                color = colorchooser.askcolor(title=f"WÃƒÂ¤hle {text}")
+                from tkinter import colorchooser
+                initial_color = getattr(self.appearance_settings, f"{setting_type}_color", "#ffffff")
+                color = colorchooser.askcolor(title=f"Wähle {text}", initialcolor=initial_color)
                 if color and color[1]:
                     setattr(self.appearance_settings, f"{setting_type}_color", color[1])
-                    preview.configure(bg=color[1])
-                    self.configure_styles()  # Aktualisiere die Styles nach FarbÃƒÂ¤nderung
+                    preview_frame.configure(fg_color=color[1])
+                    self.configure_styles()
                     self.apply_appearance_settings()
 
-            button = ttk.Button(frame, text="Ãƒâ€žndern", command=update_color)
-            button.grid(row=0, column=2, padx=5, pady=2)
-
-        # Erstellen der Farbwahlbuttons
-        create_color_button("Texthintergrundfarbe", "text_bg")
-        create_color_button("Textfarbe", "text_fg")
-        create_color_button("Button-Hintergrundfarbe", "button_bg")
-        create_color_button("Button-Textfarbe", "button_fg")
-
-        # Lernzeitmessung Einstellungen
-        learning_time_frame = ttk.LabelFrame(main_frame, text="Lernzeitmessung")
-        learning_time_frame.pack(fill="x", padx=10, pady=5)
-
-        track_time_var = tk.BooleanVar(value=self.appearance_settings.track_learning_time)
-        track_time_chk = ttk.Checkbutton(
-            learning_time_frame,
-            text="Lernzeitmessung aktivieren",
-            variable=track_time_var,
-            command=lambda: self.toggle_learning_time(track_time_var.get())
-        )
-        track_time_chk.pack(padx=5, pady=5)
-
-        # Transparenz Einstellungen
-        transparency_frame = ttk.LabelFrame(main_frame, text="Transparenz")
-        transparency_frame.pack(fill="x", padx=10, pady=5)# Innerhalb der FlashcardApp-Klasse in main.py
-
-    def configure_appearance(self):
-        self._clear_content_frame()
-
-        # Header Label
-        # Verwende die Farben aus appearance_settings, falls vorhanden
-        bg_color = getattr(self.appearance_settings, 'text_bg_color', "#ffffff")
-        fg_color = getattr(self.appearance_settings, 'text_fg_color', "#000000")
-        font_family = getattr(self.appearance_settings, 'font_family', "Segoe UI")
-        font_size = getattr(self.appearance_settings, 'font_size', 12)
-
-        header = tk.Label(
-            self.content_frame,
-            text="Design & Schrifteinstellungen",
-            font=(font_family, 18, "bold"),
-            bg=bg_color, # Verwende aktuelle Hintergrundfarbe
-            fg=fg_color  # Verwende aktuelle Textfarbe
-        )
-        header.pack(pady=20)
-
-        # Haupt-Frame für Einstellungen
-        main_frame = tk.Frame(self.content_frame, bg=bg_color) # Verwende aktuelle Hintergrundfarbe
-        main_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
-
-        # Farbeinstellungen Abschnitt
-        colors_frame = ttk.LabelFrame(main_frame, text="Farbeinstellungen")
-        # Style das LabelFrame, wenn möglich (ttk unterstÃƒÂ¼tzt das nicht direkt,
-        # es übernimmt meist den System-Look oder den Parent-Background)
-        # colors_frame.configure(background=bg_color) # Wirkt oft nicht wie erwartet
-        colors_frame.pack(fill="x", padx=10, pady=5)
-
-        def create_color_button(text, setting_type):
-            """
-            Erstellt eine Zeile mit einem Label, einer Farbvorschau und einem Änderungsbutton.
-            """
-            # Verwende tk.Frame mit expliziter Hintergrundfarbe für Konsistenz
-            frame = tk.Frame(colors_frame, bg=bg_color)
-            frame.pack(fill="x", padx=5, pady=5)
-
-            # Verwende tk.Label für bessere Farbanpassung
-            label = tk.Label(frame, text=text, width=25, anchor='w', bg=bg_color, fg=fg_color, font=(font_family, font_size))
-            label.grid(row=0, column=0, sticky="w", padx=5, pady=2) # linksbÃƒÂ¼ndig ausrichten
-
-            preview = tk.Label(
-                frame,
-                width=3,
-                relief="solid",
-                bg=getattr(self.appearance_settings, f"{setting_type}_color")
-            )
-            preview.grid(row=0, column=1, padx=5, pady=2)
-
-            def update_color():
-                initial_color = getattr(self.appearance_settings, f"{setting_type}_color")
-                color = colorchooser.askcolor(title=f"WÃƒÂ¤hle {text}", initialcolor=initial_color)
-                if color and color[1]:
-                    setattr(self.appearance_settings, f"{setting_type}_color", color[1])
-                    preview.configure(bg=color[1])
-                    self.configure_styles()  # Aktualisiere die Styles nach FarbÃƒÂ¤nderung
-                    self.apply_appearance_settings() # Wende Einstellungen auf alle Widgets an
-
-            # Verwende ModernButton, wenn verfügbar und passend gestyled
-            button = ModernButton( # Oder ctk.CTkButton / ttk.Button
-                frame,
-                text="Ãƒâ€žndern",
+            # Ändern Button
+            ctk.CTkButton(
+                parent,
+                text="Farbe wählen",
                 command=update_color,
-                style=ButtonStyle.SECONDARY.value # Oder passender Style
-            )
-            button.grid(row=0, column=2, padx=5, pady=2)
+                width=120,
+                height=30,
+                corner_radius=8,
+                fg_color='#3b82f6',
+                hover_color='#2563eb',
+                font=ctk.CTkFont(size=12)
+            ).grid(row=row, column=2, padx=10, pady=8)
 
-        # Erstellen der Farbwahlbuttons
-        create_color_button("Texthintergrundfarbe", "text_bg")
-        create_color_button("Textfarbe", "text_fg")
-        create_color_button("Button-Hintergrundfarbe", "button_bg")
-        create_color_button("Button-Textfarbe", "button_fg")
+        # Erstelle Farbwahl-Buttons
+        create_color_button(colors_frame, "📄 Text-Hintergrundfarbe", "text_bg", 0)
+        create_color_button(colors_frame, "✏️ Textfarbe", "text_fg", 1)
+        create_color_button(colors_frame, "🔘 Button-Hintergrundfarbe", "button_bg", 2)
+        create_color_button(colors_frame, "🔤 Button-Textfarbe", "button_fg", 3)
 
-        # Lernzeitmessung Einstellungen
-        learning_time_frame = ttk.LabelFrame(main_frame, text="Lernzeitmessung")
-        learning_time_frame.pack(fill="x", padx=10, pady=5)
+        # === LERNEINSTELLUNGEN SEKTION ===
+        learning_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#f0fdf4',
+            corner_radius=15,
+            border_width=2,
+            border_color='#10b981'
+        )
+        learning_section.pack(fill='x', pady=(0, 15))
 
-        track_time_var = tk.BooleanVar(value=self.appearance_settings.track_learning_time)
-        # Verwende tk.Checkbutton für bessere Farbanpassung oder ctk.CTkCheckBox
-        track_time_chk = tk.Checkbutton(
-            learning_time_frame,
-            text="Lernzeitmessung aktivieren",
+        # Header der Lern-Sektion
+        learning_header = ctk.CTkFrame(learning_section, fg_color='transparent')
+        learning_header.pack(fill='x', pady=(15, 10), padx=15)
+
+        ctk.CTkLabel(
+            learning_header,
+            text="📚",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            learning_header,
+            text="LERNEINSTELLUNGEN",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#047857'
+        ).pack(side='left')
+
+        # Lernzeitmessung
+        time_tracking_frame = ctk.CTkFrame(
+            learning_section,
+            fg_color='white',
+            corner_radius=10
+        )
+        time_tracking_frame.pack(fill='x', padx=15, pady=(0, 15))
+
+        track_time_var = ctk.BooleanVar(value=self.appearance_settings.track_learning_time)
+
+        time_check = ctk.CTkCheckBox(
+            time_tracking_frame,
+            text="⏱️ Lernzeitmessung aktivieren",
             variable=track_time_var,
             command=lambda: self.toggle_learning_time(track_time_var.get()),
-            bg=bg_color, # Hintergrund anpassen
-            fg=fg_color, # Textfarbe anpassen
-            selectcolor=COLORS.get("hover", "#d0e1f9"), # Auswahlfarbe anpassen
-            activebackground=bg_color, # Hintergrund beim Klick
-            activeforeground=fg_color, # Textfarbe beim Klick
-            font=(font_family, font_size)
+            font=ctk.CTkFont(size=14),
+            fg_color='#10b981',
+            hover_color='#059669',
+            border_color='#10b981'
         )
-        track_time_chk.pack(padx=5, pady=5, anchor='w')
+        time_check.pack(anchor='w', padx=15, pady=15)
 
-        # Transparenz Einstellungen (Hinweis: Echte Fenster-Transparenz ist komplexer)
-        transparency_frame = ttk.LabelFrame(main_frame, text="Transparenz (Nur für zukÃƒÂ¼nftige Features)")
-        transparency_frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(
+            time_tracking_frame,
+            text="Erfasst die Zeit, die du mit dem Lernen verbringst, und zeigt detaillierte Statistiken.",
+            font=ctk.CTkFont(size=12),
+            text_color='#6b7280',
+            wraplength=500,
+            justify='left'
+        ).pack(anchor='w', padx=15, pady=(0, 15))
 
-        def update_opacity(value):
-            """
-            Aktualisiert die Texttransparenz basierend auf der Benutzereingabe.
-            Hinweis: Dies beeinflusst derzeit nicht die tatsÃƒÂ¤chliche Widget-Transparenz.
-            """
-            try:
-                opacity = float(value)
-                if 0.0 <= opacity <= 1.0:
-                    self.appearance_settings.text_opacity = opacity
-                    # Hier kÃƒÂ¶nnte Code stehen, der die OpazitÃƒÂ¤t anwendet,
-                    # aber Tkinter unterstÃƒÂ¼tzt das nicht direkt für Widgets.
-                    # self.apply_appearance_settings() # Momentan keine visuelle Änderung
-                else:
-                    opacity_var.set(f"{self.appearance_settings.text_opacity:.1f}") # Korrigiere ungÃƒÂ¼ltigen Wert
-            except ValueError:
-                 opacity_var.set(f"{self.appearance_settings.text_opacity:.1f}") # Korrigiere ungÃƒÂ¼ltigen Wert
-
-        # Verwende tk.Label und tk.Entry für bessere Farbanpassung
-        opacity_label_frame = tk.Frame(transparency_frame, bg=bg_color)
-        opacity_label_frame.pack(fill='x', pady=5)
-        tk.Label(
-            opacity_label_frame,
-            text="Text-Transparenz (0.0 - 1.0):",
-            font=(font_family, font_size),
-            bg=bg_color,
-            fg=fg_color
-            ).pack(side=tk.LEFT, padx=5)
-
-        opacity_var = tk.StringVar(value=f"{self.appearance_settings.text_opacity:.1f}")
-        opacity_entry = ttk.Entry(opacity_label_frame, textvariable=opacity_var, width=5) # ttk für Konsistenz bei Eingabe
-        opacity_entry.pack(side=tk.LEFT, padx=5)
-        # Binden an <FocusOut> oder <Return> statt trace für robustere Validierung
-        opacity_entry.bind("<FocusOut>", lambda e: update_opacity(opacity_var.get()))
-        opacity_entry.bind("<Return>", lambda e: update_opacity(opacity_var.get()))
-
-        # Schrifteinstellungen Abschnitt
-        font_frame = ttk.LabelFrame(main_frame, text="Schrifteinstellungen")
-        font_frame.pack(fill="x", padx=10, pady=5)
-
-        # Button zum Anpassen der Schriftart
-        font_adjust_btn = ModernButton( # Oder ctk.CTkButton / ttk.Button
-            font_frame,
-            text="Schriftart anpassen",
-            command=self.configure_font,  # Methode zur Konfiguration der Schrift
-            width=20,
-            style=ButtonStyle.SECONDARY.value # Oder passender Style
+        # === SCHRIFTEINSTELLUNGEN SEKTION ===
+        font_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#fef3c7',
+            corner_radius=15,
+            border_width=2,
+            border_color='#f59e0b'
         )
-        font_adjust_btn.pack(pady=10)
+        font_section.pack(fill='x', pady=(0, 15))
 
-        # --- Abschnitt für Datenoperationen (HIER EINGEFÃƒÅ“GT) ---
-        data_ops_frame = ttk.LabelFrame(main_frame, text="Datenoperationen")
-        data_ops_frame.pack(fill="x", padx=10, pady=10) # Etwas mehr Abstand nach oben/unten
+        # Header der Schrift-Sektion
+        font_header = ctk.CTkFrame(font_section, fg_color='transparent')
+        font_header.pack(fill='x', pady=(15, 10), padx=15)
 
-        # Frame für den Neuplanungsbutton und Text
-        reschedule_frame_container = tk.Frame(data_ops_frame, bg=bg_color) # Nimm Hintergrundfarbe
-        reschedule_frame_container.pack(fill='x', padx=5, pady=5)
+        ctk.CTkLabel(
+            font_header,
+            text="🔤",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
 
-        # Hinweis Label links
-        reschedule_hint_label = tk.Label(
-            reschedule_frame_container,
-            text="Fälligkeiten einmalig planen:",
-            font=(font_family, font_size), # Verwende aktuelle Schrift
-            bg=bg_color,
-            fg=fg_color,
+        ctk.CTkLabel(
+            font_header,
+            text="SCHRIFTEINSTELLUNGEN",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#92400e'
+        ).pack(side='left')
+
+        # Schriftart anpassen
+        font_adjust_frame = ctk.CTkFrame(
+            font_section,
+            fg_color='white',
+            corner_radius=10
+        )
+        font_adjust_frame.pack(fill='x', padx=15, pady=(0, 15))
+
+        font_button = ctk.CTkButton(
+            font_adjust_frame,
+            text="🖋️ Schriftart anpassen",
+            command=self.configure_font,
+            width=200,
+            height=40,
+            corner_radius=10,
+            fg_color='#f59e0b',
+            hover_color='#d97706',
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        font_button.pack(padx=15, pady=15)
+
+        ctk.CTkLabel(
+            font_adjust_frame,
+            text="Passe Schriftart und -größe für die gesamte Anwendung an.",
+            font=ctk.CTkFont(size=12),
+            text_color='#6b7280'
+        ).pack(padx=15, pady=(0, 15))
+
+        # === DATENOPERATIONEN SEKTION ===
+        data_section = ctk.CTkFrame(
+            main_container,
+            fg_color='#fce7f3',
+            corner_radius=15,
+            border_width=2,
+            border_color='#ec4899'
+        )
+        data_section.pack(fill='x', pady=(0, 15))
+
+        # Header der Daten-Sektion
+        data_header = ctk.CTkFrame(data_section, fg_color='transparent')
+        data_header.pack(fill='x', pady=(15, 10), padx=15)
+
+        ctk.CTkLabel(
+            data_header,
+            text="🔧",
+            font=ctk.CTkFont(size=24)
+        ).pack(side='left', padx=(0, 10))
+
+        ctk.CTkLabel(
+            data_header,
+            text="DATENOPERATIONEN",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#9f1239'
+        ).pack(side='left')
+
+        # Neuplanung
+        reschedule_frame = ctk.CTkFrame(
+            data_section,
+            fg_color='white',
+            corner_radius=10
+        )
+        reschedule_frame.pack(fill='x', padx=15, pady=(0, 15))
+
+        ctk.CTkLabel(
+            reschedule_frame,
+            text="📅 Fälligkeiten neu planen",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#1f2937',
             anchor='w'
-        )
-        reschedule_hint_label.pack(side=tk.LEFT, padx=(0, 10))
+        ).pack(anchor='w', padx=15, pady=(15, 5))
 
-        # Der eigentliche Button rechts
-        reschedule_button = ModernButton( # Oder ctk.CTkButton / ttk.Button
-            reschedule_frame_container,
-            text="Planung starten...",
-            command=self.confirm_and_reschedule, # Verweist auf die BestÃƒÂ¤tigungsfunktion
-            width=20,
-            style=ButtonStyle.SECONDARY.value # SekundÃƒÂ¤r, da es eine fortgeschrittene Option ist
-        )
-        reschedule_button.pack(side=tk.LEFT) # Packe direkt daneben
+        ctk.CTkLabel(
+            reschedule_frame,
+            text="Verteilt alle Karten neu basierend auf ihrem Leitner-Level, um Lernspitzen zu vermeiden.\nNützlich nach Import oder längerer Pause.",
+            font=ctk.CTkFont(size=12),
+            text_color='#6b7280',
+            wraplength=600,
+            justify='left'
+        ).pack(anchor='w', padx=15, pady=(0, 10))
 
-        # Kurzer ErklÃƒÂ¤rungstext unterhalb
-        reschedule_explanation = tk.Label(
-            data_ops_frame, # Packe direkt in den LabelFrame für Datenoperationen
-            text=("Verteilt alle Karten neu basierend auf ihrem Leitner-Level, "
-                  "um Lernspitzen zu vermeiden. NÃƒÂ¼tzlich nach Import oder lÃƒÂ¤ngerer Pause."),
-            font=(font_family, font_size - 2), # Kleinere Schrift
-            bg=bg_color,
-            fg=fg_color,
-            justify=tk.LEFT,
-            wraplength=main_frame.winfo_width() - 40 # Dynamischer Umbruch (initial)
-        )
-        # Funktion zum Aktualisieren der Wraplength bei GrÃƒÂ¶ÃƒÅ¸enÃƒÂ¤nderung
-        def update_explanation_wrap(event=None):
-             try:
-                 wrap_w = main_frame.winfo_width() - 40
-                 if wrap_w > 10: # Nur wenn Breite sinnvoll ist
-                     reschedule_explanation.configure(wraplength=wrap_w)
-             except tk.TclError: # Widget existiert vielleicht nicht mehr
-                 pass
-        main_frame.bind('<Configure>', update_explanation_wrap, add='+') # Binde an GrÃƒÂ¶ÃƒÅ¸enÃƒÂ¤nderung des Parent
-        reschedule_explanation.pack(fill='x', padx=10, pady=(0, 5))
-        # ---------------------------------------------------------
+        ctk.CTkButton(
+            reschedule_frame,
+            text="🔄 Planung starten",
+            command=self.confirm_and_reschedule,
+            width=180,
+            height=36,
+            corner_radius=10,
+            fg_color='#ec4899',
+            hover_color='#db2777',
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(padx=15, pady=(0, 15))
 
-        # Reset und Zurück Buttons (diese sollten bereits vorhanden sein)
-        # Stelle sicher, dass dieser Frame *nach* allen anderen Elementen im main_frame gepackt wird
-        button_frame_bottom = tk.Frame(self.content_frame, bg=bg_color) # Eigener Frame am Ende
-        button_frame_bottom.pack(pady=20) # Abstand nach oben
+        # === AKTIONEN SEKTION ===
+        actions_frame = ctk.CTkFrame(
+            main_container,
+            fg_color='white',
+            corner_radius=15,
+            border_width=2,
+            border_color='#6b7280'
+        )
+        actions_frame.pack(fill='x', pady=(0, 0))
+
+        actions_content = ctk.CTkFrame(actions_frame, fg_color='transparent')
+        actions_content.pack(fill='x', padx=15, pady=15)
 
         def reset_settings():
-            """
-            Setzt alle Darstellungseinstellungen auf die Standardwerte zurück.
-            """
+            """Setzt alle Darstellungseinstellungen auf die Standardwerte zurück."""
+            from tkinter import messagebox
             confirm = messagebox.askyesno(
-                "BestÃƒÂ¤tigung",
-                "MÃƒÂ¶chten Sie alle Darstellungseinstellungen auf die Standardwerte zurücksetzen?"
+                "Bestätigung",
+                "Möchten Sie alle Darstellungseinstellungen auf die Standardwerte zurücksetzen?"
             )
             if confirm:
-                self.appearance_settings = AppearanceSettings() # Standardwerte neu laden
-                # Lade das Standard-Theme neu (z.B. light oder system)
+                self.appearance_settings = AppearanceSettings()
                 try:
-                    self.load_theme("light") # Oder "system", je nach Wunsch
+                    self.load_theme("light")
                 except Exception as e:
-                     logging.error(f"Fehler beim Laden des Standard-Themes nach Reset: {e}")
-                self.configure_styles() # Styles neu konfigurieren
-                self.apply_appearance_settings() # Einstellungen anwenden
-                # Lade die aktuelle Ansicht neu, um Änderungen zu sehen
-                self.configure_appearance() # Lade diese Einstellungsansicht neu
+                    logging.error(f"Fehler beim Laden des Standard-Themes nach Reset: {e}")
+                self.configure_styles()
+                self.apply_appearance_settings()
+                self.configure_appearance()
                 messagebox.showinfo("Info", "Darstellungseinstellungen wurden zurückgesetzt.")
 
-        reset_button = ModernButton( # Oder ctk.CTkButton / ttk.Button
-            button_frame_bottom,
-            text="Darstellung zurücksetzen",
+        # Buttons nebeneinander
+        button_container = ctk.CTkFrame(actions_content, fg_color='transparent')
+        button_container.pack(expand=True)
+
+        ctk.CTkButton(
+            button_container,
+            text="🔄 Darstellung zurücksetzen",
             command=reset_settings,
-            width=25, # Etwas breiter
-            style=ButtonStyle.SECONDARY.value
-        )
-        reset_button.pack(side=tk.LEFT, padx=10)
+            width=220,
+            height=40,
+            corner_radius=10,
+            fg_color='#6b7280',
+            hover_color='#4b5563',
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(side='left', padx=10)
 
-        back_button = ModernButton( # Oder ctk.CTkButton / ttk.Button
-            button_frame_bottom,
-            text="Zurück zum Hauptmenü",
-            command=self.create_main_menu, # Zurück zum Hauptmenü
-            width=25, # Etwas breiter
-            style=ButtonStyle.SECONDARY.value
-        )
-        back_button.pack(side=tk.LEFT, padx=10)
+        ctk.CTkButton(
+            button_container,
+            text="🏠 Zurück zum Hauptmenü",
+            command=self.create_main_menu,
+            width=220,
+            height=40,
+            corner_radius=10,
+            fg_color='#3b82f6',
+            hover_color='#2563eb',
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(side='left', padx=10)
 
-        logging.info("Darstellungseinstellungen angezeigt.")
-        # Update explanation wrap length after initial packing
-        self.master.after(50, update_explanation_wrap)
+        logging.info("Moderne Einstellungsseite angezeigt.")
+
 
     def show_theme_manager(self):
         """Moderne Theme-Verwaltung mit verbessertem Design."""
@@ -9144,64 +9225,103 @@ class FlashcardApp:
 
 
     def _show_fullscreen_image(self, image_path):
-        """Zeigt ein Bild vergrößert innerhalb der App (Overlay)."""
+        """Zeigt ein Bild vergrößert innerhalb der App (Overlay) mit optimierter Qualität."""
         try:
             from PIL import Image, ImageTk
 
-            # Erstelle ein Overlay-Frame über dem gesamten Content
+            # Erstelle ein modernes Overlay-Frame mit Blur-Effekt-Simulation
             overlay = ctk.CTkFrame(
                 self.content_frame,
-                fg_color=("gray90", "gray10"),  # Leicht transparent wirkend
+                fg_color=("rgba(255, 255, 255, 0.95)", "rgba(20, 20, 30, 0.95)"),  # Modernes Semi-Transparent Design
                 corner_radius=0
             )
             overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-            # Lade und skaliere das Bild
+            # Lade das Bild OHNE Größenanpassung zuerst
             image = Image.open(image_path)
+            original_width, original_height = image.size
 
-            # Bestimme die maximale Größe (90% der Content-Frame-Größe)
-            max_width = int(self.content_frame.winfo_width() * 0.9)
-            max_height = int(self.content_frame.winfo_height() * 0.9)
+            # Bestimme die maximale Größe (95% der Content-Frame-Größe für mehr Platz)
+            max_width = int(self.content_frame.winfo_width() * 0.95)
+            max_height = int(self.content_frame.winfo_height() * 0.95)
 
             # Fallback falls Frame noch nicht gerendert wurde
             if max_width < 100:
-                max_width = 900
+                max_width = 1200  # Größerer Fallback für bessere Qualität
             if max_height < 100:
-                max_height = 700
+                max_height = 900
 
-            # Skaliere das Bild
-            image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-            photo = ImageTk.PhotoImage(image)
+            # Intelligente Skalierung: Nur verkleinern wenn nötig, NIE vergrößern (verhindert Unschärfe)
+            if original_width <= max_width and original_height <= max_height:
+                # Bild ist klein genug - KEINE Skalierung für maximale Schärfe!
+                display_image = image
+            else:
+                # Nur wenn nötig skalieren, mit höchster Qualität
+                display_image = image.copy()
+                display_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
 
-            # Container für zentriertes Bild
-            image_container = ctk.CTkFrame(overlay, fg_color="transparent")
-            image_container.place(relx=0.5, rely=0.5, anchor="center")
+            photo = ImageTk.PhotoImage(display_image)
+
+            # Moderner Container mit Schatten-Effekt
+            image_outer_container = ctk.CTkFrame(
+                overlay,
+                fg_color="transparent"
+            )
+            image_outer_container.place(relx=0.5, rely=0.5, anchor="center")
+
+            # Innerer Container mit Schatten und Rundung
+            image_container = ctk.CTkFrame(
+                image_outer_container,
+                fg_color=("white", "gray20"),
+                corner_radius=20,
+                border_width=3,
+                border_color=("#8b5cf6", "#a78bfa")  # Violetter Akzent
+            )
+            image_container.pack(padx=20, pady=20)
 
             # Bild-Label
-            image_label = ctk.CTkLabel(image_container, image=photo, text="")
-            image_label.image = photo  # Referenz behalten
-            image_label.pack()
-
-            # Hinweis-Text
-            hint_label = ctk.CTkLabel(
+            image_label = ctk.CTkLabel(
                 image_container,
-                text="(Klick zum Schließen)",
-                font=ctk.CTkFont(size=12),
-                text_color="gray"
+                image=photo,
+                text="",
+                corner_radius=17
             )
-            hint_label.pack(pady=(5, 0))
+            image_label.image = photo  # Referenz behalten
+            image_label.pack(padx=5, pady=5)
+
+            # Moderner Hinweis-Container am unteren Rand
+            hint_container = ctk.CTkFrame(
+                image_outer_container,
+                fg_color=("#8b5cf6", "#7c3aed"),
+                corner_radius=25,
+                height=45
+            )
+            hint_container.pack(pady=(10, 0))
+            hint_container.pack_propagate(False)
+
+            hint_label = ctk.CTkLabel(
+                hint_container,
+                text="✕  Klicken zum Schließen  ✕",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color="white"
+            )
+            hint_label.pack(expand=True, padx=30)
 
             # Schließen bei Klick auf das Overlay oder das Bild
             def close_overlay(event=None):
                 overlay.destroy()
 
             overlay.bind("<Button-1>", close_overlay)
+            image_container.bind("<Button-1>", close_overlay)
             image_label.bind("<Button-1>", close_overlay)
+            hint_container.bind("<Button-1>", close_overlay)
             hint_label.bind("<Button-1>", close_overlay)
 
             # Cursor-Stil für alle klickbaren Elemente
             overlay.configure(cursor="hand2")
+            image_container.configure(cursor="hand2")
             image_label.configure(cursor="hand2")
+            hint_container.configure(cursor="hand2")
             hint_label.configure(cursor="hand2")
 
         except Exception as e:
@@ -9209,6 +9329,10 @@ class FlashcardApp:
             messagebox.showerror("Fehler", f"Fehler beim Laden des Bildes:\n{e}")
 
 
+
+    def show_fullscreen_image(self, image_path):
+        """Alias für _show_fullscreen_image."""
+        return self._show_fullscreen_image(image_path)
     def _show_answer_and_rating(self, answer_container, show_btn, rating_frame):
         """Zeigt die Antwort und Bewertungs-Buttons."""
         show_btn.pack_forget()
