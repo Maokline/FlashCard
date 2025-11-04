@@ -635,6 +635,9 @@ class WeeklyPlanner:
             for cat, subcat in all_categories:
                 score_result = self.category_scorer.calculate_score(cat, subcat, start_date)
 
+                # Prüfe ob dies eine neue Kategorie ist
+                is_new_category = self._is_new_category(cat, subcat, start_date)
+
                 # Passe Score basierend auf Prioritäten an
                 adjusted_score = self._adjust_score_by_preferences(
                     score_result,
@@ -642,9 +645,15 @@ class WeeklyPlanner:
                     preferences
                 )
 
+                # Erhöhe Score für neue Kategorien
+                if is_new_category:
+                    adjusted_score *= 1.3  # 30% Bonus für neue Kategorien
+                    logging.info(f"Neue Kategorie erkannt: {cat}/{subcat} - Score erhöht")
+
                 category_scores[(cat, subcat)] = {
                     **score_result,
-                    'adjusted_score': adjusted_score
+                    'adjusted_score': adjusted_score,
+                    'is_new': is_new_category
                 }
 
             # Sortiere Kategorien nach angepasstem Score
@@ -682,11 +691,17 @@ class WeeklyPlanner:
                     due_cards = score_data['details']['fällige_karten']
                     overdue_cards = score_data['details']['überfällige_karten']
 
+                    # Hole Kartengrenzen aus Präferenzen
+                    day_card_limits = preferences.get('day_card_limits', [999] * 7)
+
                     # Berechne maximale Karten für diesen Tag basierend auf verbleibendem Budget
                     remaining_budget = target_cards_per_day[best_day] - cards_per_day[best_day]
+                    day_limit_remaining = day_card_limits[best_day] - cards_per_day[best_day]
+
                     expected_cards = min(
                         due_cards + overdue_cards,
                         int(remaining_budget),
+                        int(day_limit_remaining),  # Berücksichtige Tages-Limit
                         50  # Maximale Session-Größe
                     )
 
@@ -708,7 +723,8 @@ class WeeklyPlanner:
                         'unterkategorie': subcat,
                         'erwartete_karten': expected_cards,
                         'prioritaet': prioritaet,
-                        'score': score_data['adjusted_score']
+                        'score': score_data['adjusted_score'],
+                        'is_new': score_data.get('is_new', False)
                     }
 
                     sessions_per_day[best_day].append(session)
@@ -718,6 +734,11 @@ class WeeklyPlanner:
                 date = start_date + datetime.timedelta(days=day_offset)
 
                 for session in day_sessions:
+                    # Füge Marker für neue Kategorien hinzu
+                    notiz = ""
+                    if session.get('is_new', False):
+                        notiz = "🆕 Neue Kategorie - Optimal zum Einstieg!"
+
                     self.data_manager.add_plan_entry(
                         date=date,
                         kategorie=session['kategorie'],
@@ -725,11 +746,13 @@ class WeeklyPlanner:
                         aktion='lernen',
                         erwartete_karten=session['erwartete_karten'],
                         prioritaet=session['prioritaet'],
-                        auto_generiert=True
+                        auto_generiert=True,
+                        notiz=notiz
                     )
 
+                    new_marker = " [NEU]" if session.get('is_new', False) else ""
                     logging.info(
-                        f"Session geplant: {session['kategorie']}/{session['unterkategorie']} "
+                        f"Session geplant: {session['kategorie']}/{session['unterkategorie']}{new_marker} "
                         f"am {date} (Score: {session['score']:.1f}, Karten: {session['erwartete_karten']})"
                     )
 
@@ -738,6 +761,74 @@ class WeeklyPlanner:
 
         except Exception as e:
             logging.error(f"Fehler bei Auto-Planung mit Präferenzen: {e}", exc_info=True)
+            return False
+
+    def _is_new_category(self, category: str, subcategory: str, reference_date: datetime.date) -> bool:
+        """
+        Prüft ob eine Kategorie/Unterkategorie neu ist.
+
+        Eine Kategorie gilt als neu wenn:
+        1. Sie noch nie gelernt wurde (keine Statistiken vorhanden)
+        2. Die letzte Lernsession mehr als 7 Tage zurückliegt
+        3. Weniger als 10 Karten der Kategorie gelernt wurden
+
+        Args:
+            category: Kategorie-Name
+            subcategory: Unterkategorie-Name
+            reference_date: Referenzdatum für die Prüfung
+
+        Returns:
+            bool: True wenn Kategorie als neu gilt
+        """
+        try:
+            # Hole alle Flashcards der Kategorie/Unterkategorie
+            flashcards = self.data_manager.flashcards
+            matching_cards = [
+                card for card in flashcards
+                if card.get('kategorie') == category and card.get('unterkategorie') == subcategory
+            ]
+
+            if not matching_cards:
+                return False  # Keine Karten vorhanden
+
+            # Prüfe wie viele Karten bereits gelernt wurden
+            learned_count = 0
+            last_review_date = None
+
+            for card in matching_cards:
+                review_history = card.get('review_history', [])
+                if review_history:
+                    learned_count += 1
+                    # Finde das neueste Review-Datum
+                    for review in review_history:
+                        review_date_str = review.get('date')
+                        if review_date_str:
+                            try:
+                                review_date = datetime.datetime.fromisoformat(review_date_str).date()
+                                if last_review_date is None or review_date > last_review_date:
+                                    last_review_date = review_date
+                            except:
+                                pass
+
+            # Kriterien für "neue" Kategorie
+            total_cards = len(matching_cards)
+
+            # Weniger als 20% der Karten wurden gelernt
+            if learned_count < total_cards * 0.2:
+                return True
+
+            # Letzte Review ist mehr als 14 Tage her oder nie
+            if last_review_date is None:
+                return True
+
+            days_since_last_review = (reference_date - last_review_date).days
+            if days_since_last_review > 14:
+                return True
+
+            return False
+
+        except Exception as e:
+            logging.error(f"Fehler bei Prüfung ob Kategorie neu ist: {e}", exc_info=True)
             return False
 
     def _adjust_score_by_preferences(self, score_result: Dict, category: str, preferences: Dict) -> float:
@@ -805,9 +896,24 @@ class WeeklyPlanner:
         Returns:
             int: Tag-Index (0-6) oder None wenn Woche voll
         """
+        # Hole Kartengrenzen aus Präferenzen (falls vorhanden)
+        day_card_limits = preferences.get('day_card_limits', [999] * 7)
+
         # Berechne "Last" pro Tag
         day_loads = []
         for day in range(7):
+            # Prüfe ob Tag freigegeben ist (Limit = 0)
+            if day_card_limits[day] == 0:
+                # Sehr hohe Strafe für freie Tage
+                day_loads.append((day, 10000))
+                continue
+
+            # Prüfe ob Tages-Limit bereits erreicht
+            if cards_per_day[day] >= day_card_limits[day]:
+                # Sehr hohe Strafe für volle Tage
+                day_loads.append((day, 9000))
+                continue
+
             # Bevorzuge Tage ohne diese Kategorie
             if category in used_categories_per_day[day]:
                 penalty = 1000  # Sehr hohe Strafe
@@ -815,7 +921,7 @@ class WeeklyPlanner:
                 penalty = 0
 
             # Bevorzuge Tage, die noch unter ihrem Ziel sind
-            remaining_capacity = target_cards_per_day[day] - cards_per_day[day]
+            remaining_capacity = min(target_cards_per_day[day], day_card_limits[day]) - cards_per_day[day]
             if remaining_capacity < 5:
                 capacity_penalty = 500  # Hohe Strafe für volle Tage
             else:

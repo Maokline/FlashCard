@@ -1580,6 +1580,12 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         # Berechne Tagesgewichte basierend auf der Verteilung
         day_weights = self._calculate_day_weights(preferences['daily_distribution'])
 
+        # Berechne Kartengrenzen für jeden Tag
+        day_card_limits = self._get_day_card_limits(preferences['daily_distribution'])
+
+        # Füge Kartengrenzen zu den Präferenzen hinzu
+        preferences['day_card_limits'] = day_card_limits
+
         # Rufe die erweiterte auto_plan_week Methode mit Präferenzen auf
         success = self.weekly_planner.auto_plan_week_with_preferences(
             start_date=self.week_start,
@@ -1613,7 +1619,7 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         Berechnet Gewichte für jeden Tag basierend auf der gewählten Belastung.
 
         Args:
-            daily_distribution: Dict mit Tag-Namen und Belastung (Hoch/Mittel/Gering)
+            daily_distribution: Dict mit Tag-Namen und Belastung (Hoch/Mittel/Niedrig/Frei)
 
         Returns:
             Liste von 7 Gewichten (Montag-Sonntag), normalisiert auf Summe 7.0
@@ -1622,18 +1628,45 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
         weight_map = {
             "Hoch": 1.5,
             "Mittel": 1.0,
-            "Gering": 0.5
+            "Niedrig": 0.5,
+            "Gering": 0.5,  # Rückwärtskompatibilität
+            "Frei": 0.0
         }
 
         days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
         weights = [weight_map.get(daily_distribution.get(day, "Mittel"), 1.0) for day in days]
 
         # Normalisiere, damit die Summe 7.0 ist (durchschnittlich 1.0 pro Tag)
+        # Berücksichtige freie Tage
         total_weight = sum(weights)
         if total_weight > 0:
             weights = [w * 7.0 / total_weight for w in weights]
 
         return weights
+
+    def _get_day_card_limits(self, daily_distribution: Dict[str, str]) -> List[int]:
+        """
+        Gibt die Kartengrenzen für jeden Tag zurück.
+
+        Args:
+            daily_distribution: Dict mit Tag-Namen und Belastung (Hoch/Mittel/Niedrig/Frei)
+
+        Returns:
+            Liste von 7 maximalen Kartenanzahlen (Montag-Sonntag)
+        """
+        # Mapping von Belastung zu Kartengrenze
+        limit_map = {
+            "Hoch": 999,  # Praktisch unbegrenzt (mindestens 35)
+            "Mittel": 35,
+            "Niedrig": 20,
+            "Gering": 20,  # Rückwärtskompatibilität
+            "Frei": 0
+        }
+
+        days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+        limits = [limit_map.get(daily_distribution.get(day, "Mittel"), 35) for day in days]
+
+        return limits
 
     def _load_day_data(self):
         """Lädt Daten für die Tagesansicht."""
@@ -3501,7 +3534,7 @@ class PlannerPreferencesPanel(ctk.CTkFrame):
 
         ctk.CTkLabel(
             frame,
-            text="Hoch = viele Karten, Mittel = durchschnittlich, Gering = wenige Karten",
+            text="Hoch = 35+ Karten, Mittel = 20-35 Karten, Niedrig = max 20 Karten, Frei = 0 Karten",
             font=ctk.CTkFont(size=13),
             text_color=COLORS['text_secondary']
         ).pack(anchor='w', padx=20, pady=(0, 15))
@@ -3528,7 +3561,7 @@ class PlannerPreferencesPanel(ctk.CTkFrame):
             ctk.CTkOptionMenu(
                 day_frame,
                 variable=var,
-                values=["Hoch", "Mittel", "Gering"],
+                values=["Hoch", "Mittel", "Niedrig", "Frei"],
                 width=140,
                 height=35,
                 font=ctk.CTkFont(size=13),
