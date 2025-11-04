@@ -9232,7 +9232,7 @@ class FlashcardApp:
             # Erstelle ein modernes Overlay-Frame mit Blur-Effekt-Simulation
             overlay = ctk.CTkFrame(
                 self.content_frame,
-                fg_color=("rgba(255, 255, 255, 0.95)", "rgba(20, 20, 30, 0.95)"),  # Modernes Semi-Transparent Design
+                fg_color=("#f5f5f5", "#1a1a1e"),  # Modernes Design
                 corner_radius=0
             )
             overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -10813,34 +10813,217 @@ class FlashcardApp:
 
 
     def configure_font(self):
+        """Moderne Schrifteinstellungsseite mit customtkinter Design."""
         self._clear_content_frame()
-        header_frame = tk.Frame(self.content_frame, bg=self.appearance_settings.text_bg_color)
-        header_frame.pack(fill='x', pady=(30, 20))
-        tk.Label(
-            header_frame,
-            text="Schrifteinstellungen",
-            font=(self.appearance_settings.font_family, 16, "bold"),
-            bg=self.appearance_settings.text_bg_color,
-            fg=self.appearance_settings.text_fg_color
-        ).pack()
 
-        main_frame = ttk.Frame(self.content_frame)
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#f59e0b',
+            corner_radius=0,
+            height=110
+        )
+        header_container.pack(fill='x', pady=(0, 20))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="🔤",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Schrifteinstellungen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Passe Schriftart und -größe für die gesamte Anwendung an",
+            font=ctk.CTkFont(size=13),
+            text_color='#fef3c7'
+        ).pack(anchor='w')
+
+        # Hauptcontainer für Schrifteinstellungen
+        main_frame = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#fef3c7',
+            corner_radius=15,
+            border_width=2,
+            border_color='#f59e0b'
+        )
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
-        # Schriftart auswÃƒÂ¤hlen
-        ttk.Label(main_frame, text="Schriftart auswÃƒÂ¤hlen:", font=(self.appearance_settings.font_family, 12)).pack(pady=5)
+        # Innerer Container mit weißem Hintergrund
+        inner_frame = ctk.CTkFrame(
+            main_frame,
+            fg_color='white',
+            corner_radius=10
+        )
+        inner_frame.pack(fill='both', expand=True, padx=15, pady=15)
+
+        # Schrifteinstellungen mit modernem Design
+
+        # Aktuelle Einstellungen
+        current_settings_frame = ctk.CTkFrame(inner_frame, fg_color='#f9fafb', corner_radius=10)
+        current_settings_frame.pack(fill='x', padx=15, pady=(15, 20))
+
+        ctk.CTkLabel(
+            current_settings_frame,
+            text="📋 Aktuelle Einstellungen",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color='#1f2937'
+        ).pack(pady=(10, 5))
+
+        current_info = ctk.CTkLabel(
+            current_settings_frame,
+            text=f"Schriftart: {self.appearance_settings.font_family}  |  Größe: {self.appearance_settings.font_size}",
+            font=ctk.CTkFont(size=14),
+            text_color='#6b7280'
+        )
+        current_info.pack(pady=(0, 10))
+
+        # Schriftart auswählen
+        font_family_frame = ctk.CTkFrame(inner_frame, fg_color='transparent')
+        font_family_frame.pack(fill='x', padx=15, pady=10)
+
+        ctk.CTkLabel(
+            font_family_frame,
+            text="🖋️ Schriftart auswählen:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#1f2937',
+            anchor='w'
+        ).pack(anchor='w', pady=(0, 5))
+
         font_families = sorted(tkfont.families())
         self.selected_font = tk.StringVar(value=self.appearance_settings.font_family)
-        font_dropdown = ModernCombobox(main_frame, textvariable=self.selected_font, values=font_families, state="readonly")
-        font_dropdown.pack(pady=5)
 
-        # SchriftgrÃƒÂ¶ÃƒÅ¸e auswÃƒÂ¤hlen
-        ttk.Label(main_frame, text="SchriftgrÃƒÂ¶ÃƒÅ¸e auswÃƒÂ¤hlen:", font=(self.appearance_settings.font_family, 12)).pack(pady=5)
+        font_dropdown = ctk.CTkComboBox(
+            font_family_frame,
+            variable=self.selected_font,
+            values=font_families,
+            state="readonly",
+            width=400,
+            height=40,
+            corner_radius=10,
+            font=ctk.CTkFont(size=13),
+            dropdown_font=ctk.CTkFont(size=12),
+            button_color='#f59e0b',
+            button_hover_color='#d97706',
+            border_color='#f59e0b'
+        )
+        font_dropdown.pack(fill='x', pady=(0, 5))
+
+        ctk.CTkLabel(
+            font_family_frame,
+            text="Wähle eine Schriftart aus der Liste der verfügbaren System-Schriftarten",
+            font=ctk.CTkFont(size=11),
+            text_color='#9ca3af'
+        ).pack(anchor='w')
+
+        # Schriftgröße auswählen
+        font_size_frame = ctk.CTkFrame(inner_frame, fg_color='transparent')
+        font_size_frame.pack(fill='x', padx=15, pady=10)
+
+        ctk.CTkLabel(
+            font_size_frame,
+            text="📏 Schriftgröße auswählen:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#1f2937',
+            anchor='w'
+        ).pack(anchor='w', pady=(0, 5))
+
+        size_control_frame = ctk.CTkFrame(font_size_frame, fg_color='transparent')
+        size_control_frame.pack(fill='x', pady=(0, 5))
+
         self.selected_font_size = tk.IntVar(value=self.appearance_settings.font_size)
-        font_size_spinbox = ttk.Spinbox(main_frame, from_=8, to=72, textvariable=self.selected_font_size)
-        font_size_spinbox.pack(pady=5)
 
-        # ÃƒÅ“bernehmen Button
+        # Slider für Schriftgröße
+        size_slider = ctk.CTkSlider(
+            size_control_frame,
+            from_=8,
+            to=72,
+            number_of_steps=64,
+            variable=self.selected_font_size,
+            width=300,
+            button_color='#f59e0b',
+            button_hover_color='#d97706',
+            progress_color='#f59e0b'
+        )
+        size_slider.pack(side='left', fill='x', expand=True, padx=(0, 15))
+
+        # Anzeige der aktuellen Größe
+        size_display = ctk.CTkLabel(
+            size_control_frame,
+            text=f"{self.selected_font_size.get()}",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color='#f59e0b',
+            width=60
+        )
+        size_display.pack(side='left')
+
+        # Update Funktion für die Anzeige
+        def update_size_display(*args):
+            size_display.configure(text=f"{self.selected_font_size.get()}")
+
+        self.selected_font_size.trace('w', update_size_display)
+
+        ctk.CTkLabel(
+            font_size_frame,
+            text="Wähle eine Größe zwischen 8 und 72 Punkten",
+            font=ctk.CTkFont(size=11),
+            text_color='#9ca3af'
+        ).pack(anchor='w')
+
+        # Vorschau
+        preview_frame = ctk.CTkFrame(inner_frame, fg_color='#f9fafb', corner_radius=10)
+        preview_frame.pack(fill='x', padx=15, pady=(20, 15))
+
+        ctk.CTkLabel(
+            preview_frame,
+            text="👁️ Vorschau",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#1f2937'
+        ).pack(pady=(10, 5))
+
+        preview_text = ctk.CTkLabel(
+            preview_frame,
+            text="Die schnelle braune Fuchs springt über den faulen Hund",
+            font=ctk.CTkFont(family=self.selected_font.get(), size=self.selected_font_size.get()),
+            text_color='#1f2937',
+            wraplength=500
+        )
+        preview_text.pack(pady=(5, 15), padx=15)
+
+        # Vorschau aktualisieren
+        def update_preview(*args):
+            try:
+                preview_text.configure(
+                    font=ctk.CTkFont(
+                        family=self.selected_font.get(),
+                        size=self.selected_font_size.get()
+                    )
+                )
+            except:
+                pass
+
+        self.selected_font.trace('w', update_preview)
+        self.selected_font_size.trace('w', update_preview)
+
+        # Übernehmen Button
         def apply_font_changes():
             font_family = self.selected_font.get()
             try:
@@ -10848,33 +11031,43 @@ class FlashcardApp:
                 if 8 <= font_size <= 72:
                     self.appearance_settings.font_family = font_family
                     self.appearance_settings.font_size = font_size
-                    self.configure_styles()  # Aktualisiere die Styles mit den neuen Schrifteinstellungen
+                    self.configure_styles()
                     self.apply_appearance_settings()
-                    messagebox.showinfo("Info", f"Schriftart auf '{font_family}' und GrÃƒÂ¶ÃƒÅ¸e {font_size} gesetzt.")
-                    self.navigate_to('main')  # Verwenden Sie navigate_to
+                    current_info.configure(text=f"Schriftart: {font_family}  |  Größe: {font_size}")
+                    messagebox.showinfo("Erfolg", f"Schriftart auf '{font_family}' und Größe {font_size} gesetzt.")
                 else:
-                    messagebox.showwarning("Warnung", "SchriftgrÃƒÂ¶ÃƒÅ¸e muss zwischen 8 und 72 liegen.")
+                    messagebox.showwarning("Warnung", "Schriftgröße muss zwischen 8 und 72 liegen.")
             except ValueError:
-                messagebox.showwarning("Warnung", "Bitte eine gÃƒÂ¼ltige SchriftgrÃƒÂ¶ÃƒÅ¸e eingeben.")
+                messagebox.showwarning("Warnung", "Bitte eine gültige Schriftgröße eingeben.")
 
-        apply_font_button = ModernButton(
-            main_frame,
-            text="ÃƒÅ“bernehmen",
+        # Buttons
+        button_frame = ctk.CTkFrame(inner_frame, fg_color='transparent')
+        button_frame.pack(fill='x', padx=15, pady=20)
+
+        ctk.CTkButton(
+            button_frame,
+            text="✓ Änderungen übernehmen",
             command=apply_font_changes,
-            width=20,
-            style=ButtonStyle.PRIMARY.value
-        )
-        apply_font_button.pack(pady=10)
+            width=200,
+            height=40,
+            corner_radius=10,
+            fg_color='#f59e0b',
+            hover_color='#d97706',
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(side='left', padx=5)
 
-        # Zurück Button
-        back_btn = ModernButton(
-            main_frame,
-            text="Zurück zum Hauptmenü",
-            command=self.navigate_back,  # Verwenden Sie navigate_back statt create_main_menu
-            width=20,
-            style=ButtonStyle.SECONDARY.value
+        back_btn = ctk.CTkButton(
+            button_frame,
+            text="← Zurück zu Einstellungen",
+            command=self.configure_appearance,
+            width=200,
+            height=40,
+            corner_radius=10,
+            fg_color='#6b7280',
+            hover_color='#4b5563',
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        back_btn.pack(pady=5)
+        back_btn.pack(side='left', padx=5)
         self.sidebar_buttons["back_to_main_from_font"] = back_btn
 
         logging.info("Schrifteinstellungen angezeigt.")
@@ -12108,97 +12301,225 @@ Wie werden Karten einsortiert?
     # STATISTIK-FUNKTIONEN
     # -----------------------------------------------------------------------------------
     def show_statistics(self):
-        """Hauptansicht für die Statistiken mit modernem CTk Design."""
+        """Hauptansicht für die Statistiken mit modernem Design."""
         self._clear_content_frame()
-        
-        # Hauptcontainer
-        main_container = ctk.CTkFrame(self.content_frame)
-        main_container.pack(fill='both', expand=True, padx=20, pady=20)
-        
-        # ÃƒÅ“berschrift
-        header = ctk.CTkLabel(
-            main_container,
-            text="Statistiken & Auswertungen",
-            font=ctk.CTkFont(size=24, weight="bold")
+
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#8b5cf6',
+            corner_radius=0,
+            height=110
         )
-        header.pack(pady=10)
-        
-        # Notebook für Tabs
-        notebook = ttk.Notebook(main_container)
-        notebook.pack(fill='both', expand=True, padx=10, pady=10)
-        
+        header_container.pack(fill='x', pady=(0, 20))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="📊",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Statistiken & Auswertungen",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Analysiere deine Lernfortschritte und Erfolge",
+            font=ctk.CTkFont(size=13),
+            text_color='#e9d5ff'
+        ).pack(anchor='w')
+
+        # Hauptcontainer für Tabs
+        main_container = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        main_container.pack(fill='both', expand=True, padx=20, pady=10)
+
+        # Tab-Button Container
+        tab_button_frame = ctk.CTkFrame(
+            main_container,
+            fg_color='#f3f4f6',
+            corner_radius=12,
+            height=60
+        )
+        tab_button_frame.pack(fill='x', pady=(0, 15))
+        tab_button_frame.pack_propagate(False)
+
+        # Content Container für die verschiedenen Tab-Inhalte
+        content_container = ctk.CTkFrame(
+            main_container,
+            fg_color='transparent'
+        )
+        content_container.pack(fill='both', expand=True)
+
         # Tab-Frames erstellen
-        overview_frame = ctk.CTkFrame(notebook)
-        category_frame = ctk.CTkFrame(notebook)
-        progress_frame = ctk.CTkFrame(notebook)
-        
-        notebook.add(overview_frame, text="Gesamtübersicht")
-        notebook.add(category_frame, text="Nach Kategorien")
-        notebook.add(progress_frame, text="Fortschrittsverlauf")
-        
-        # Tabs mit Inhalt fÃƒÂ¼llen
+        overview_frame = ctk.CTkFrame(content_container, fg_color='transparent')
+        category_frame = ctk.CTkFrame(content_container, fg_color='transparent')
+        progress_frame = ctk.CTkFrame(content_container, fg_color='transparent')
+
+        # Tab-State verwalten
+        self.current_stats_tab = 'overview'
+        self.stats_tab_buttons = {}
+
+        def switch_tab(tab_name, frame):
+            """Wechselt zwischen Tabs."""
+            # Verstecke alle Frames
+            overview_frame.pack_forget()
+            category_frame.pack_forget()
+            progress_frame.pack_forget()
+
+            # Zeige ausgewählten Frame
+            frame.pack(fill='both', expand=True)
+
+            # Update Button-Styles
+            for btn_name, btn in self.stats_tab_buttons.items():
+                if btn_name == tab_name:
+                    btn.configure(
+                        fg_color='#8b5cf6',
+                        hover_color='#7c3aed',
+                        text_color='#ffffff'
+                    )
+                else:
+                    btn.configure(
+                        fg_color='transparent',
+                        hover_color='#e5e7eb',
+                        text_color='#6b7280'
+                    )
+
+            self.current_stats_tab = tab_name
+
+        # Tab-Buttons erstellen
+        button_container = ctk.CTkFrame(tab_button_frame, fg_color='transparent')
+        button_container.place(relx=0.5, rely=0.5, anchor='center')
+
+        tabs = [
+            ('overview', '📈 Gesamtübersicht', overview_frame),
+            ('category', '📁 Nach Kategorien', category_frame),
+            ('progress', '📊 Fortschrittsverlauf', progress_frame)
+        ]
+
+        for tab_id, tab_text, tab_frame in tabs:
+            btn = ctk.CTkButton(
+                button_container,
+                text=tab_text,
+                command=lambda t=tab_id, f=tab_frame: switch_tab(t, f),
+                width=200,
+                height=40,
+                corner_radius=10,
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color='transparent' if tab_id != 'overview' else '#8b5cf6',
+                hover_color='#e5e7eb' if tab_id != 'overview' else '#7c3aed',
+                text_color='#6b7280' if tab_id != 'overview' else '#ffffff'
+            )
+            btn.pack(side='left', padx=5)
+            self.stats_tab_buttons[tab_id] = btn
+
+        # Tabs mit Inhalt füllen
         self._create_overview_stats(overview_frame)
         self._create_category_stats(category_frame)
         self._create_progress_stats(progress_frame)
-        
+
+        # Zeige initial Overview
+        overview_frame.pack(fill='both', expand=True)
+
         # Zurück-Button
         back_btn = ctk.CTkButton(
             self.content_frame,
-            text="Zurück zum Hauptmenü",
+            text="🏠 Zurück zum Hauptmenü",
             command=self.create_main_menu,
-            font=ctk.CTkFont(size=14),
-            height=35
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            corner_radius=10,
+            fg_color='#6b7280',
+            hover_color='#4b5563'
         )
-        back_btn.pack(pady=10)
+        back_btn.pack(pady=15)
         self.sidebar_buttons["back_to_main_from_statistics"] = back_btn
         self.highlight_active_button('statistik')
 
     def _create_overview_stats(self, parent_frame):
         """Erstellt die Gesamtübersicht im modernen Design."""
-        stats_container = ctk.CTkFrame(parent_frame)
-        stats_container.pack(fill='both', expand=True, padx=20, pady=20)
-        
+        # Scrollbarer Container
+        stats_container = ctk.CTkScrollableFrame(parent_frame, fg_color='transparent')
+        stats_container.pack(fill='both', expand=True, padx=10, pady=10)
+
         # Statistiken berechnen
-        total_cards_in_system = len(self.data_manager.flashcards)  # TatsÃƒÂ¤chliche Anzahl der Karten im System
-        total_cards_asked = sum(stat['cards_total'] for stat in self.data_manager.stats 
+        total_cards_in_system = len(self.data_manager.flashcards)
+        total_cards_asked = sum(stat['cards_total'] for stat in self.data_manager.stats
                             if isinstance(stat, dict) and 'cards_total' in stat)
-        correct_cards = sum(stat['cards_correct'] for stat in self.data_manager.stats 
+        correct_cards = sum(stat['cards_correct'] for stat in self.data_manager.stats
                         if isinstance(stat, dict) and 'cards_correct' in stat)
-        total_sessions = len([stat for stat in self.data_manager.stats 
+        total_sessions = len([stat for stat in self.data_manager.stats
                             if isinstance(stat, dict) and 'cards_total' in stat])
         success_rate = (correct_cards / total_cards_asked * 100) if total_cards_asked > 0 else 0
-        total_learning_time = sum(stat['total_time'] for stat in self.data_manager.stats 
+        total_learning_time = sum(stat['total_time'] for stat in self.data_manager.stats
                                 if isinstance(stat, dict) and 'total_time' in stat)
-        
-        # Grid für Statistik-Karten
-        stats_container.grid_columnconfigure((0, 1), weight=1)
-        stats_container.grid_rowconfigure((0, 1, 2, 3), weight=1)  # Eine zusÃƒÂ¤tzliche Reihe für die neue Statistik
-        
-        # Statistik-Karten erstellen
-        stats = [
-            ("Lernsitzungen", f"{total_sessions}"),
-            ("Karten im System", f"{total_cards_in_system}"),  # Neue Statistik
-            ("Karten abgefragt", f"{total_cards_asked}"),  # Umbenannt
-            ("Korrekt beantwortet", f"{correct_cards}"),
-            ("Erfolgsquote", f"{success_rate:.1f}%"),
-            ("Gesamte Lernzeit", self.data_manager.format_learning_time(total_learning_time)),
+
+        # Statistik-Karten mit Icons
+        stats_data = [
+            ("🎯", "Lernsitzungen", f"{total_sessions}", "#3b82f6"),
+            ("📚", "Karten im System", f"{total_cards_in_system}", "#10b981"),
+            ("✏️", "Karten abgefragt", f"{total_cards_asked}", "#f59e0b"),
+            ("✓", "Korrekt beantwortet", f"{correct_cards}", "#8b5cf6"),
+            ("📈", "Erfolgsquote", f"{success_rate:.1f}%", "#ec4899"),
+            ("⏱️", "Gesamte Lernzeit", self.data_manager.format_learning_time(total_learning_time), "#6366f1"),
         ]
-        
-        for idx, (title, value) in enumerate(stats):
-            card = ctk.CTkFrame(stats_container)
-            card.grid(row=idx//2, column=idx%2, padx=10, pady=10, sticky="nsew")
-            
+
+        # Grid für Statistik-Karten (3 Spalten)
+        for idx, (icon, title, value, color) in enumerate(stats_data):
+            row = idx // 3
+            col = idx % 3
+
+            # Statistik-Karte
+            card = ctk.CTkFrame(
+                stats_container,
+                fg_color=color,
+                corner_radius=15,
+                border_width=0
+            )
+            card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
+            # Icon
+            ctk.CTkLabel(
+                card,
+                text=icon,
+                font=ctk.CTkFont(size=36),
+                text_color='#ffffff'
+            ).pack(pady=(20, 5))
+
+            # Titel
             ctk.CTkLabel(
                 card,
                 text=title,
-                font=ctk.CTkFont(size=14)
-            ).pack(pady=(15, 5))
-            
+                font=ctk.CTkFont(size=13, weight="bold"),
+                text_color='#ffffff'
+            ).pack(pady=(0, 5))
+
+            # Wert
             ctk.CTkLabel(
                 card,
                 text=value,
-                font=ctk.CTkFont(size=24, weight="bold")
-            ).pack(pady=(5, 15))
+                font=ctk.CTkFont(size=32, weight="bold"),
+                text_color='#ffffff'
+            ).pack(pady=(5, 20))
+
+        # Grid-Konfiguration
+        for i in range(3):
+            stats_container.grid_columnconfigure(i, weight=1, minsize=250)
 
     def _create_category_stats(self, parent_frame):
         """Erstellt die Kategoriestatistik mit Dropdown-Funktion."""
@@ -12435,6 +12756,148 @@ Wie werden Karten einsortiert?
         if categories:
             show_category_stats(categories[0])
 
+
+    def _create_progress_stats(self, parent_frame):
+        """Erstellt die Fortschrittsverlauf-Ansicht im modernen Design."""
+        # Scrollbarer Container
+        progress_container = ctk.CTkScrollableFrame(parent_frame, fg_color='transparent')
+        progress_container.pack(fill='both', expand=True, padx=10, pady=10)
+
+        # Header
+        header_frame = ctk.CTkFrame(
+            progress_container,
+            fg_color='#8b5cf6',
+            corner_radius=15
+        )
+        header_frame.pack(fill='x', padx=10, pady=(10, 20))
+
+        ctk.CTkLabel(
+            header_frame,
+            text="📊 Dein Lernfortschritt im Zeitverlauf",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color='#ffffff'
+        ).pack(pady=20)
+
+        # Berechne Statistiken nach Datum
+        daily_stats = {}
+        for stat in self.data_manager.stats:
+            if isinstance(stat, dict) and 'date' in stat:
+                date = stat['date']
+                if date not in daily_stats:
+                    daily_stats[date] = {
+                        'total': 0,
+                        'correct': 0,
+                        'sessions': 0,
+                        'time': 0
+                    }
+                daily_stats[date]['total'] += stat.get('cards_total', 0)
+                daily_stats[date]['correct'] += stat.get('cards_correct', 0)
+                daily_stats[date]['sessions'] += 1
+                daily_stats[date]['time'] += stat.get('total_time', 0)
+
+        if not daily_stats:
+            # Keine Daten verfügbar
+            no_data_frame = ctk.CTkFrame(
+                progress_container,
+                fg_color='#f3f4f6',
+                corner_radius=15
+            )
+            no_data_frame.pack(fill='both', expand=True, padx=10, pady=10)
+
+            ctk.CTkLabel(
+                no_data_frame,
+                text="📭",
+                font=ctk.CTkFont(size=64),
+                text_color='#9ca3af'
+            ).pack(pady=(40, 10))
+
+            ctk.CTkLabel(
+                no_data_frame,
+                text="Noch keine Lernstatistiken vorhanden",
+                font=ctk.CTkFont(size=18, weight="bold"),
+                text_color='#6b7280'
+            ).pack(pady=(0, 5))
+
+            ctk.CTkLabel(
+                no_data_frame,
+                text="Starte deine erste Lernsitzung, um Fortschritte zu sehen!",
+                font=ctk.CTkFont(size=14),
+                text_color='#9ca3af'
+            ).pack(pady=(0, 40))
+        else:
+            # Sortiere Daten nach Datum
+            sorted_dates = sorted(daily_stats.keys(), reverse=True)
+
+            # Zeige letzte 10 Tage
+            for date in sorted_dates[:10]:
+                stats = daily_stats[date]
+                success_rate = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+
+                # Tag-Container
+                day_frame = ctk.CTkFrame(
+                    progress_container,
+                    fg_color='white',
+                    corner_radius=12,
+                    border_width=2,
+                    border_color='#e5e7eb'
+                )
+                day_frame.pack(fill='x', padx=10, pady=5)
+
+                # Datum
+                date_label = ctk.CTkFrame(
+                    day_frame,
+                    fg_color='#8b5cf6',
+                    corner_radius=10,
+                    width=120
+                )
+                date_label.pack(side='left', padx=15, pady=15)
+
+                ctk.CTkLabel(
+                    date_label,
+                    text=date,
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color='#ffffff'
+                ).pack(padx=15, pady=10)
+
+                # Statistiken
+                stats_frame = ctk.CTkFrame(day_frame, fg_color='transparent')
+                stats_frame.pack(side='left', fill='x', expand=True, padx=15, pady=10)
+
+                stats_grid = ctk.CTkFrame(stats_frame, fg_color='transparent')
+                stats_grid.pack(fill='x')
+
+                # Einzelne Stats
+                stat_items = [
+                    ("🎯", "Sitzungen", stats['sessions']),
+                    ("📝", "Karten", stats['total']),
+                    ("✓", "Richtig", stats['correct']),
+                    ("📈", "Quote", f"{success_rate:.0f}%"),
+                    ("⏱️", "Zeit", self.data_manager.format_learning_time(stats['time']))
+                ]
+
+                for idx, (icon, label, value) in enumerate(stat_items):
+                    item_frame = ctk.CTkFrame(stats_grid, fg_color='transparent')
+                    item_frame.grid(row=0, column=idx, padx=10)
+
+                    ctk.CTkLabel(
+                        item_frame,
+                        text=icon,
+                        font=ctk.CTkFont(size=16)
+                    ).pack()
+
+                    ctk.CTkLabel(
+                        item_frame,
+                        text=str(value),
+                        font=ctk.CTkFont(size=16, weight="bold"),
+                        text_color='#1f2937'
+                    ).pack()
+
+                    ctk.CTkLabel(
+                        item_frame,
+                        text=label,
+                        font=ctk.CTkFont(size=11),
+                        text_color='#6b7280'
+                    ).pack()
 
     def get_weekly_progress(self, category, subcategory):
         """Berechnet den Fortschritt pro Woche."""
