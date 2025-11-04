@@ -730,6 +730,34 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             text=f"KW {week_num}  •  {self.week_start.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}"
         )
 
+        # Prüfe ob day_frames existieren und noch gültig sind
+        # (können durch Ansichtswechsel von day/month zu week zerstört worden sein)
+        need_recreate = False
+        if not hasattr(self, 'day_frames') or not self.day_frames:
+            need_recreate = True
+        else:
+            # Prüfe ob erstes Frame noch existiert
+            try:
+                if not self.day_frames[0].winfo_exists():
+                    need_recreate = True
+            except:
+                need_recreate = True
+
+        if need_recreate:
+            # Lösche alte Widgets und erstelle Grid neu
+            for widget in self.scroll_frame.winfo_children():
+                widget.destroy()
+
+            # Grid für 7 Tage neu erstellen
+            self.day_frames = []
+            day_names = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+
+            for i in range(7):
+                day_frame = self._create_day_frame(self.scroll_frame, i, day_names[i])
+                day_frame.grid(row=0, column=i, padx=10, pady=10, sticky='nsew')
+                self.day_frames.append(day_frame)
+                self.scroll_frame.grid_columnconfigure(i, weight=1, minsize=200)
+
         # Aktualisiere jeden Tag
         for i, day_frame in enumerate(self.day_frames):
             date = self.week_start + datetime.timedelta(days=i)
