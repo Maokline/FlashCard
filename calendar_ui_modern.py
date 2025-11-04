@@ -834,6 +834,8 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
 
         # Status Icon
         status = entry.get('status', 'offen')
+        aktion = entry.get('aktion', 'lernen')
+
         if status == 'erledigt':
             icon = '✓'
             color = COLORS['success']
@@ -843,9 +845,15 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             color = COLORS['warning']
             border_color = COLORS['warning']
         else:
-            icon = '⏳'
-            color = COLORS['accent']
-            border_color = COLORS['accent']
+            # Offene Sessions: Orange für Karten erstellen, Blau für Lernen
+            if aktion == 'kategorie_erweitern':
+                icon = '📝'
+                color = COLORS['warning']
+                border_color = COLORS['warning']
+            else:
+                icon = '⏳'
+                color = COLORS['accent']
+                border_color = COLORS['accent']
 
         session_frame.configure(border_color=border_color)
 
@@ -888,6 +896,21 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             text_color=COLORS['text_secondary'],
             anchor='w'
         ).pack(side='left')
+
+        # Notizen anzeigen falls vorhanden
+        notizen = entry.get('notizen', '').strip()
+        if notizen:
+            notes_frame = ctk.CTkFrame(session_frame, fg_color=COLORS['card'], corner_radius=8)
+            notes_frame.pack(fill='x', padx=10, pady=(0, 5))
+
+            ctk.CTkLabel(
+                notes_frame,
+                text=f"📝 {notizen}",
+                font=ctk.CTkFont(size=10),
+                text_color=COLORS['text_secondary'],
+                anchor='w',
+                wraplength=300
+            ).pack(padx=8, pady=6, anchor='w')
 
         # Buttons Frame
         buttons_frame = ctk.CTkFrame(session_frame, fg_color="transparent")
@@ -1439,48 +1462,76 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             messagebox.showerror("Fehler", f"Fehler beim Markieren:\n{e}")
 
     def _start_session(self, entry: Dict):
-        """Startet eine Lern-Session - Navigiert zur Leitner-Kartenauswahl mit voreingestellten Filtern."""
+        """Startet eine Lern-Session oder navigiert zu Karten verwalten."""
         if not self.app:
             messagebox.showerror("Fehler", "App-Referenz fehlt.")
             return
 
         try:
-            # Navigiere zur Leitner-Kartenauswahl-Seite
-            self.app.show_leitner_options()
-
-            # Setze die Filter entsprechend der geplanten Session
+            aktion = entry.get('aktion', 'lernen')
             kategorie = entry.get('kategorie', 'Alle')
             unterkategorie = entry.get('unterkategorie', 'Alle')
             erwartete_karten = entry.get('erwartete_karten', 20)
+            plan_id = entry.get('id')
 
-            # Setze Kategorie
-            if kategorie and kategorie != 'Alle':
-                self.app.category_var.set(kategorie)
-                self.app.update_leitner_subcategories()
+            if aktion == 'kategorie_erweitern':
+                # Navigiere zu Karten verwalten
+                self.app.show_card_management()
 
-            # Setze Unterkategorie
-            if unterkategorie and unterkategorie != 'Alle':
-                self.app.subcategory_var.set(unterkategorie)
+                # Setze die Filter entsprechend der geplanten Session
+                if kategorie and kategorie != 'Alle':
+                    self.app.category_var.set(kategorie)
+                    self.app.update_subcategories()
 
-            # Setze Session-Größe
-            cards_str = str(erwartete_karten)
-            available_cards = ["10", "20", "30", "40", "50", "100"]
-            if cards_str in available_cards:
-                self.app.cards_per_session_var.set(cards_str)
+                # Setze Unterkategorie falls vorhanden
+                if unterkategorie and unterkategorie != 'Alle':
+                    self.app.subcategory_var.set(unterkategorie)
+
+                # Markiere den Planeintrag als erledigt (da es keine Session gibt, die das automatisch macht)
+                updates = {
+                    'status': 'erledigt',
+                    'erledigt_am': datetime.datetime.now().isoformat(),
+                    'tatsaechliche_karten': 0,  # Karten werden separat erstellt
+                }
+                self.data_manager.update_plan_entry(plan_id, updates)
+                logging.info(f"Navigiert zu Karten verwalten mit Kategorie: {kategorie}/{unterkategorie}")
+
             else:
-                # Finde den nächstgelegenen Wert
-                cards_int = int(erwartete_karten)
-                closest = min(available_cards, key=lambda x: abs(int(x) - cards_int))
-                self.app.cards_per_session_var.set(closest)
+                # Navigiere zur Leitner-Kartenauswahl-Seite
+                self.app.show_leitner_options()
 
-            # Aktualisiere die Kartenvorschau mit den neuen Filtern
-            self.app.preview_leitner_cards()
+                # Setze die Filter entsprechend der geplanten Session
+                if kategorie and kategorie != 'Alle':
+                    self.app.category_var.set(kategorie)
+                    self.app.update_leitner_subcategories()
 
-            logging.info(f"Navigiert zur Leitner-Kartenauswahl mit Filtern: {kategorie}/{unterkategorie}, {erwartete_karten} Karten")
+                # Setze Unterkategorie
+                if unterkategorie and unterkategorie != 'Alle':
+                    self.app.subcategory_var.set(unterkategorie)
+
+                # Setze Session-Größe
+                cards_str = str(erwartete_karten)
+                available_cards = ["10", "20", "30", "40", "50", "100"]
+                if cards_str in available_cards:
+                    self.app.cards_per_session_var.set(cards_str)
+                else:
+                    # Finde den nächstgelegenen Wert
+                    cards_int = int(erwartete_karten)
+                    closest = min(available_cards, key=lambda x: abs(int(x) - cards_int))
+                    self.app.cards_per_session_var.set(closest)
+
+                # Setze die plan_id für die Session, damit Statistiken korrekt gespeichert werden
+                if plan_id:
+                    self.app.current_plan_id = plan_id
+
+                # Aktualisiere die Kartenvorschau mit den neuen Filtern
+                self.app.preview_leitner_cards()
+
+                logging.info(f"Navigiert zur Leitner-Kartenauswahl mit Filtern: {kategorie}/{unterkategorie}, {erwartete_karten} Karten, plan_id: {plan_id}")
 
         except Exception as e:
-            logging.error(f"Fehler beim Navigieren zur Leitner-Auswahl: {e}", exc_info=True)
-            messagebox.showerror("Fehler", f"Fehler beim Öffnen der Kartenauswahl:\n{e}")
+            logging.error(f"Fehler beim Navigieren: {e}", exc_info=True)
+            messagebox.showerror("Fehler", f"Fehler beim Öffnen:\n{e}")
 
     def _auto_plan_week(self):
         """Startet die intelligente automatische Wochenplanung mit individuellen Präferenzen."""
@@ -1646,29 +1697,52 @@ class ModernWeeklyCalendarView(ctk.CTkFrame):
             ).pack(pady=40)
         else:
             for entry in entries:
-                session_card = ctk.CTkFrame(day_container, fg_color=COLORS['surface'], corner_radius=15, border_width=2, border_color=COLORS['border'])
+                # Bestimme Border-Farbe basierend auf Status und Aktion
+                status = entry.get('status', 'offen')
+                aktion = entry.get('aktion', 'lernen')
+
+                if status == 'erledigt':
+                    border_color = COLORS['success']
+                elif status == 'übersprungen':
+                    border_color = COLORS['warning']
+                else:
+                    # Offene Sessions: Orange für Karten erstellen, Blau für Lernen
+                    border_color = COLORS['warning'] if aktion == 'kategorie_erweitern' else COLORS['accent']
+
+                session_card = ctk.CTkFrame(day_container, fg_color=COLORS['surface'], corner_radius=15, border_width=2, border_color=border_color)
                 session_card.pack(fill='x', pady=10)
 
                 # Header
                 header = ctk.CTkFrame(session_card, fg_color="transparent")
                 header.pack(fill='x', padx=20, pady=(15, 10))
 
-                status = entry.get('status', 'offen')
-                status_icons = {'offen': '⏳', 'erledigt': '✓', 'übersprungen': '✗'}
-                status_colors = {'offen': COLORS['accent'], 'erledigt': COLORS['success'], 'übersprungen': COLORS['warning']}
+                # Status Icons mit angepassten Farben
+                if status == 'erledigt':
+                    status_icon = '✓'
+                    status_color = COLORS['success']
+                elif status == 'übersprungen':
+                    status_icon = '✗'
+                    status_color = COLORS['warning']
+                else:
+                    # Offene Sessions: Orange Icon für Karten erstellen
+                    if aktion == 'kategorie_erweitern':
+                        status_icon = '📝'
+                        status_color = COLORS['warning']
+                    else:
+                        status_icon = '⏳'
+                        status_color = COLORS['accent']
 
                 ctk.CTkLabel(
                     header,
-                    text=status_icons.get(status, '⏳'),
+                    text=status_icon,
                     font=ctk.CTkFont(size=24),
-                    text_color=status_colors.get(status, COLORS['accent'])
+                    text_color=status_color
                 ).pack(side='left', padx=(0, 15))
 
                 info_frame = ctk.CTkFrame(header, fg_color="transparent")
                 info_frame.pack(side='left', fill='x', expand=True)
 
-                # Unterscheide zwischen Aktionstypen
-                aktion = entry.get('aktion', 'lernen')
+                # Unterscheide zwischen Aktionstypen (aktion wurde bereits oben definiert)
                 if aktion == 'kategorie_erweitern':
                     aktion_text = "📝 Neue Karten erstellen"
                     aktion_icon = "📚"
@@ -2007,12 +2081,13 @@ class SessionEditorFrame(ctk.CTkFrame):
         category_combo.pack(fill='x', pady=(0, 15))
 
         # Unterkategorie
-        ctk.CTkLabel(
+        self.subcategory_label = ctk.CTkLabel(
             inner_content,
             text="Unterkategorie:",
             font=ctk.CTkFont(size=13),
             text_color=COLORS['text_secondary']
-        ).pack(anchor='w', pady=(10, 5))
+        )
+        self.subcategory_label.pack(anchor='w', pady=(10, 5))
 
         def update_subcategories(*args):
             cat = self.category_var.get()
@@ -2021,7 +2096,7 @@ class SessionEditorFrame(ctk.CTkFrame):
             if subcats and not self.entry:
                 self.subcategory_var.set(subcats[0])
 
-        self.subcategory_var = ctk.StringVar(value=self.entry['unterkategorie'] if self.entry else "")
+        self.subcategory_var = ctk.StringVar(value=self.entry.get('unterkategorie', '') if self.entry else "")
         self.subcategory_combo = ctk.CTkComboBox(
             inner_content,
             variable=self.subcategory_var,
@@ -2049,8 +2124,14 @@ class SessionEditorFrame(ctk.CTkFrame):
             aktion = self.action_var.get()
             if aktion == "Kategorie erweitern (neue Karten erstellen)":
                 self.cards_label.configure(text="Erwartete Karten (optional):")
+                # Verstecke Unterkategorie-Felder für Karten erstellen
+                self.subcategory_label.pack_forget()
+                self.subcategory_combo.pack_forget()
             else:
                 self.cards_label.configure(text="Erwartete Karten:")
+                # Zeige Unterkategorie-Felder für Lernen
+                self.subcategory_label.pack(anchor='w', pady=(10, 5), after=category_combo)
+                self.subcategory_combo.pack(fill='x', pady=(0, 15), after=self.subcategory_label)
 
         self.action_var = ctk.StringVar(
             value="Lernen" if not self.entry or self.entry.get('aktion', 'lernen') == 'lernen'
@@ -2191,13 +2272,23 @@ class SessionEditorFrame(ctk.CTkFrame):
             prioritaet = self.priority_var.get()
             notizen = self.notes_textbox.get('1.0', 'end').strip()
 
-            if not kategorie or not unterkategorie:
-                messagebox.showwarning("Fehler", "Bitte wähle Kategorie und Unterkategorie.")
+            # Validierung: Kategorie immer erforderlich
+            if not kategorie:
+                messagebox.showwarning("Fehler", "Bitte wähle eine Kategorie.")
                 return
 
-            if aktion == 'lernen' and erwartete_karten <= 0:
-                messagebox.showwarning("Fehler", "Erwartete Karten muss größer als 0 sein.")
-                return
+            # Unterkategorie nur bei Lernen erforderlich
+            if aktion == 'lernen':
+                if not unterkategorie:
+                    messagebox.showwarning("Fehler", "Bitte wähle eine Unterkategorie für Lernen.")
+                    return
+                if erwartete_karten <= 0:
+                    messagebox.showwarning("Fehler", "Erwartete Karten muss größer als 0 sein.")
+                    return
+            else:
+                # Bei Karten erstellen: Verwende erste Unterkategorie falls vorhanden, sonst "Alle"
+                if not unterkategorie:
+                    unterkategorie = "Alle"
 
             if self.entry:
                 # Bearbeite bestehende Session
