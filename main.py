@@ -2995,139 +2995,310 @@ class FlashcardApp:
     # KATEGORIEN & KARTENVERWALTUNG
     # -----------------------------------------------------------------------------------
     def manage_categories(self):
+        """Moderne Kategorieverwaltung mit verbessertem Design."""
         self._clear_content_frame()
-        header_frame = tk.Frame(self.content_frame, bg=self.default_bg)
-        header_frame.pack(fill='x', pady=(30, 20))
-        tk.Label(
-            header_frame,
+
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='#8b5cf6',
+            corner_radius=0,
+            height=110
+        )
+        header_container.pack(fill='x', pady=(0, 25))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="📂",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
             text="Kategorien verwalten",
-            font=("Segoe UI", 16, "bold"),
-            bg=self.default_bg
-        ).pack()
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
 
-        categories = sorted(self.data_manager.categories.keys())
-        tree = ttk.Treeview(self.content_frame, columns=("Subkategorien"), show="tree")
-        tree.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+        ctk.CTkLabel(
+            title_frame,
+            text="Organisiere deine Lernkarten in Kategorien und Unterkategorien",
+            font=ctk.CTkFont(size=13),
+            text_color='#ede9fe'
+        ).pack(anchor='w')
 
-        for c in categories:
-            parent = tree.insert('', 'end', text=c, open=True)
-            subcats = sorted(self.data_manager.categories[c].keys())
-            for sc in subcats:
-                tree.insert(parent, 'end', text=sc)
+        # Hauptcontainer
+        main_container = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        main_container.pack(fill='both', expand=True, padx=30, pady=0)
 
-        # Button Frame
-        button_frame = tk.Frame(self.content_frame, bg=self.default_bg)
-        button_frame.pack(pady=10)
+        # Top-Bereich: Suchleiste und Aktionsbuttons
+        top_bar = ctk.CTkFrame(main_container, fg_color='#ffffff', corner_radius=15, border_width=2, border_color='#8b5cf6')
+        top_bar.pack(fill='x', pady=(0, 20))
 
+        top_content = ctk.CTkFrame(top_bar, fg_color='transparent')
+        top_content.pack(fill='x', padx=20, pady=15)
+
+        # Suchbereich links
+        search_frame = ctk.CTkFrame(top_content, fg_color='transparent')
+        search_frame.pack(side='left', fill='x', expand=True)
+
+        ctk.CTkLabel(
+            search_frame,
+            text="🔍",
+            font=ctk.CTkFont(size=18),
+            text_color='#8b5cf6'
+        ).pack(side='left', padx=(0, 10))
+
+        search_var = tk.StringVar()
+        search_entry = ctk.CTkEntry(
+            search_frame,
+            textvariable=search_var,
+            width=300,
+            height=40,
+            corner_radius=12,
+            border_width=2,
+            border_color='#e9d5ff',
+            placeholder_text="Kategorie oder Unterkategorie suchen...",
+            font=ctk.CTkFont(size=13)
+        )
+        search_entry.pack(side='left', padx=(0, 12))
+
+        # Buttons rechts
+        button_container = ctk.CTkFrame(top_content, fg_color='transparent')
+        button_container.pack(side='right')
+
+        # Hauptcontainer mit Grid-Layout für Tree und Buttons
+        content_frame = ctk.CTkFrame(main_container, fg_color='transparent')
+        content_frame.pack(fill='both', expand=True)
+        content_frame.grid_columnconfigure(0, weight=1)
+        content_frame.grid_rowconfigure(0, weight=1)
+
+        # Scrollable Frame für die Kategorien
+        scroll_container = ctk.CTkScrollableFrame(
+            content_frame,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#e9d5ff'
+        )
+        scroll_container.grid(row=0, column=0, sticky='nsew', pady=(0, 15))
+
+        # Container für die Kategorien-Cards
+        categories_container = ctk.CTkFrame(scroll_container, fg_color='transparent')
+        categories_container.pack(fill='both', expand=True, padx=10, pady=10)
+
+        def refresh_categories_display():
+            """Aktualisiert die Kategorien-Anzeige."""
+            # Lösche alle vorhandenen Widgets
+            for widget in categories_container.winfo_children():
+                widget.destroy()
+
+            query = search_var.get().strip().lower()
+            categories = sorted(self.data_manager.categories.keys())
+
+            for cat_name in categories:
+                # Filter anwenden
+                subcats = sorted(self.data_manager.categories[cat_name].keys())
+
+                if query:
+                    # Prüfe ob Kategorie oder Subkategorie übereinstimmt
+                    cat_matches = query in cat_name.lower()
+                    matching_subcats = [sc for sc in subcats if query in sc.lower()]
+
+                    if not cat_matches and not matching_subcats:
+                        continue
+
+                    display_subcats = matching_subcats if matching_subcats else subcats
+                else:
+                    display_subcats = subcats
+
+                # Kategorie-Card erstellen
+                cat_card = ctk.CTkFrame(
+                    categories_container,
+                    fg_color='#faf5ff',
+                    corner_radius=12,
+                    border_width=2,
+                    border_color='#e9d5ff'
+                )
+                cat_card.pack(fill='x', pady=8)
+
+                # Header der Kategorie
+                cat_header = ctk.CTkFrame(cat_card, fg_color='#8b5cf6', corner_radius=10)
+                cat_header.pack(fill='x', padx=3, pady=3)
+
+                cat_header_content = ctk.CTkFrame(cat_header, fg_color='transparent')
+                cat_header_content.pack(fill='x', padx=15, pady=12)
+
+                ctk.CTkLabel(
+                    cat_header_content,
+                    text="📁",
+                    font=ctk.CTkFont(size=20),
+                    text_color='#ffffff'
+                ).pack(side='left', padx=(0, 10))
+
+                ctk.CTkLabel(
+                    cat_header_content,
+                    text=cat_name,
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color='#ffffff'
+                ).pack(side='left')
+
+                # Badge mit Anzahl Unterkategorien
+                badge = ctk.CTkFrame(cat_header_content, fg_color='#c4b5fd', corner_radius=10, height=26)
+                badge.pack(side='left', padx=10)
+                ctk.CTkLabel(
+                    badge,
+                    text=f"{len(display_subcats)} Unterkategorien",
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color='#5b21b6'
+                ).pack(padx=10, pady=3)
+
+                # Löschen-Button
+                def delete_main_category(c=cat_name):
+                    if messagebox.askyesno("Bestätigen", f"Möchten Sie die Kategorie '{c}' und alle zugehörigen Unterkategorien löschen?"):
+                        success = self.data_manager.delete_category(c)
+                        if success:
+                            messagebox.showinfo("Info", f"Kategorie '{c}' wurde gelöscht.")
+                            logging.info(f"Kategorie '{c}' gelöscht.")
+                            refresh_categories_display()
+                        else:
+                            messagebox.showerror("Fehler", "Fehler beim Löschen der Kategorie.")
+
+                delete_cat_btn = ctk.CTkButton(
+                    cat_header_content,
+                    text="🗑️ Löschen",
+                    command=delete_main_category,
+                    width=100,
+                    height=32,
+                    corner_radius=10,
+                    fg_color='#dc2626',
+                    hover_color='#b91c1c',
+                    font=ctk.CTkFont(size=12, weight="bold")
+                )
+                delete_cat_btn.pack(side='right')
+
+                # Unterkategorien anzeigen
+                if display_subcats:
+                    subcat_container = ctk.CTkFrame(cat_card, fg_color='transparent')
+                    subcat_container.pack(fill='x', padx=15, pady=(0, 12))
+
+                    for subcat_name in display_subcats:
+                        subcat_frame = ctk.CTkFrame(
+                            subcat_container,
+                            fg_color='#ffffff',
+                            corner_radius=8,
+                            border_width=1,
+                            border_color='#e9d5ff',
+                            height=50
+                        )
+                        subcat_frame.pack(fill='x', pady=4)
+                        subcat_frame.pack_propagate(False)
+
+                        subcat_content = ctk.CTkFrame(subcat_frame, fg_color='transparent')
+                        subcat_content.pack(fill='both', expand=True, padx=12, pady=8)
+
+                        ctk.CTkLabel(
+                            subcat_content,
+                            text="📄",
+                            font=ctk.CTkFont(size=16),
+                            text_color='#8b5cf6'
+                        ).pack(side='left', padx=(0, 8))
+
+                        ctk.CTkLabel(
+                            subcat_content,
+                            text=subcat_name,
+                            font=ctk.CTkFont(size=13),
+                            text_color='#374151'
+                        ).pack(side='left')
+
+                        # Löschen-Button für Unterkategorie
+                        def delete_subcat(c=cat_name, sc=subcat_name):
+                            if messagebox.askyesno("Bestätigen", f"Möchten Sie die Unterkategorie '{sc}' in '{c}' löschen?"):
+                                success = self.data_manager.delete_subcategory(c, sc)
+                                if success:
+                                    messagebox.showinfo("Info", f"Unterkategorie '{sc}' wurde gelöscht.")
+                                    logging.info(f"Unterkategorie '{sc}' in '{c}' gelöscht.")
+                                    refresh_categories_display()
+                                else:
+                                    messagebox.showerror("Fehler", "Fehler beim Löschen der Unterkategorie.")
+
+                        delete_subcat_btn = ctk.CTkButton(
+                            subcat_content,
+                            text="🗑️",
+                            command=delete_subcat,
+                            width=60,
+                            height=28,
+                            corner_radius=8,
+                            fg_color='#fef2f2',
+                            hover_color='#fee2e2',
+                            text_color='#dc2626',
+                            font=ctk.CTkFont(size=12)
+                        )
+                        delete_subcat_btn.pack(side='right')
+
+        # Aktionsbuttons
         def add_category():
             self.create_add_category_view()
 
-        def delete_category():
-            selected_item = tree.selection()
-            if not selected_item:
-                messagebox.showwarning("Warnung", "Bitte eine Kategorie oder Subkategorie auswÃƒÂ¤hlen.")
-                return
+        def search_action():
+            refresh_categories_display()
 
-            item_text = tree.item(selected_item)["text"]
-            parent = tree.parent(selected_item)
+        search_btn = ctk.CTkButton(
+            button_container,
+            text="🔍 Suchen",
+            command=search_action,
+            width=110,
+            height=40,
+            corner_radius=12,
+            fg_color='#8b5cf6',
+            hover_color='#7c3aed',
+            font=ctk.CTkFont(size=13, weight="bold")
+        )
+        search_btn.pack(side='left', padx=5)
 
-            if parent:  # Subkategorie
-                category = tree.item(parent)["text"]
-                subcategory = item_text
-                if messagebox.askyesno("BestÃƒÂ¤tigen", f"MÃƒÂ¶chten Sie die Subkategorie '{subcategory}' in '{category}' lÃƒÂ¶schen?"):
-                    success = self.data_manager.delete_subcategory(category, subcategory)
-                    if success:
-                        tree.delete(selected_item)
-                        messagebox.showinfo("Info", f"Subkategorie '{subcategory}' in '{category}' wurde gelöscht.")
-                        logging.info(f"Subkategorie '{subcategory}' in '{category}' gelöscht.")
-                    else:
-                        messagebox.showerror("Fehler", "Fehler beim Löschen der Subkategorie.")
-            else:  # Hauptkategorie
-                category = item_text
-                if messagebox.askyesno("BestÃƒÂ¤tigen", f"MÃƒÂ¶chten Sie die Kategorie '{category}' und alle zugehÃƒÂ¶rigen Subkategorien lÃƒÂ¶schen?"):
-                    success = self.data_manager.delete_category(category)
-                    if success:
-                        tree.delete(selected_item)
-                        messagebox.showinfo("Info", f"Kategorie '{category}' wurde gelöscht.")
-                        logging.info(f"Kategorie '{category}' gelöscht.")
-                    else:
-                        messagebox.showerror("Fehler", "Fehler beim Löschen der Kategorie.")
-
-        def refresh_tree():
-            tree.delete(*tree.get_children())
-            categories = sorted(self.data_manager.categories.keys())
-            for c in categories:
-                parent = tree.insert('', 'end', text=c, open=True)
-                subcats = sorted(self.data_manager.categories[c].keys())
-                for sc in subcats:
-                    tree.insert(parent, 'end', text=sc)
-            logging.info("Kategorienbaum aktualisiert.")
-
-        # Add/Remove Buttons
-        add_btn = ModernButton(
-            button_frame,
-            text="Kategorie hinzufügen",
+        add_btn = ctk.CTkButton(
+            button_container,
+            text="➕ Hinzufügen",
             command=add_category,
-            width=20,
-            style=ButtonStyle.SECONDARY.value
+            width=130,
+            height=40,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=13, weight="bold")
         )
-        add_btn.pack(side=tk.LEFT, padx=10)
+        add_btn.pack(side='left', padx=5)
 
-        delete_btn = ModernButton(
-            button_frame,
-            text="Kategorie lÃƒÂ¶schen",
-            command=delete_category,
-            width=20,
-            style=ButtonStyle.DANGER.value
+        refresh_btn = ctk.CTkButton(
+            button_container,
+            text="🔄 Aktualisieren",
+            command=refresh_categories_display,
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#3b82f6',
+            hover_color='#2563eb',
+            font=ctk.CTkFont(size=13, weight="bold")
         )
-        delete_btn.pack(side=tk.LEFT, padx=10)
+        refresh_btn.pack(side='left', padx=5)
 
-        refresh_btn = ModernButton(
-            button_frame,
-            text="Aktualisieren",
-            command=refresh_tree,
-            width=20,
-            style=ButtonStyle.PRIMARY.value
-        )
-        refresh_btn.pack(side=tk.LEFT, padx=10)
+        # Enter-Taste für Suche binden
+        search_entry.bind("<Return>", lambda e: search_action())
 
-        # Implementierung der Suchfunktion
-        search_frame = ttk.Frame(self.content_frame)
-        search_frame.pack(pady=5, fill='x', padx=10)
-        ttk.Label(search_frame, text="Suche:", font=(self.appearance_settings.font_family, 12)).pack(side=tk.LEFT, padx=(0, 5))
-        search_var = tk.StringVar()
-        search_entry = ttk.Entry(search_frame, textvariable=search_var)
-        search_entry.pack(side=tk.LEFT, fill='x', expand=True)
-
-        def search_categories():
-            query = search_var.get().strip().lower()
-            if not query:
-                refresh_tree()
-                return
-            tree.delete(*tree.get_children())
-            for c in self.data_manager.categories.keys():
-                if query in c.lower():
-                    parent = tree.insert('', 'end', text=c, open=True)
-                    subcats = sorted(self.data_manager.categories[c].keys())
-                    for sc in subcats:
-                        tree.insert(parent, 'end', text=sc)
-                else:
-                    # Suche in Subkategorien
-                    matching_subcats = [sc for sc in self.data_manager.categories[c] if query in sc.lower()]
-                    if matching_subcats:
-                        parent = tree.insert('', 'end', text=c, open=True)
-                        for sc in sorted(matching_subcats):
-                            tree.insert(parent, 'end', text=sc)
-            logging.info(f"Suchergebnisse für '{query}' angezeigt.")
-
-        search_btn = ModernButton(
-            search_frame,
-            text="Suchen",
-            command=search_categories,
-            width=10,
-            style=ButtonStyle.PRIMARY.value
-        )
-        search_btn.pack(side=tk.LEFT, padx=5)
+        # Initiale Anzeige
+        refresh_categories_display()
 
         # Setze den aktiven Button auf 'verwaltung'
         self.highlight_active_button('verwaltung')
@@ -5652,108 +5823,217 @@ class FlashcardApp:
         self.master.after(50, update_explanation_wrap)
 
     def show_theme_manager(self):
-        """Zeigt die Theme-Verwaltung im Hauptfenster an."""
+        """Moderne Theme-Verwaltung mit verbessertem Design."""
         self._clear_content_frame()
-        
-        # Header
-        header = tk.Label(
+
+        # Moderner Header mit Gradient-Hintergrund
+        header_container = ctk.CTkFrame(
             self.content_frame,
-            text="Theme-Verwaltung",
-            font=("Segoe UI", 18, "bold"),
-            bg=self.default_bg
+            fg_color='#f59e0b',
+            corner_radius=0,
+            height=110
         )
-        header.pack(pady=20)
+        header_container.pack(fill='x', pady=(0, 25))
+        header_container.pack_propagate(False)
+
+        header_content = ctk.CTkFrame(header_container, fg_color='transparent')
+        header_content.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Icon und Titel
+        icon_title_frame = ctk.CTkFrame(header_content, fg_color='transparent')
+        icon_title_frame.pack()
+
+        ctk.CTkLabel(
+            icon_title_frame,
+            text="🎨",
+            font=ctk.CTkFont(size=36),
+            text_color='#ffffff'
+        ).pack(side='left', padx=(0, 15))
+
+        title_frame = ctk.CTkFrame(icon_title_frame, fg_color='transparent')
+        title_frame.pack(side='left')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Theme-Verwaltung",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color='#ffffff'
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_frame,
+            text="Personalisiere das Erscheinungsbild deiner Anwendung",
+            font=ctk.CTkFont(size=13),
+            text_color='#fef3c7'
+        ).pack(anchor='w')
 
         # Hauptcontainer
-        main_frame = ttk.Frame(self.content_frame)
-        main_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        main_container = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        main_container.pack(fill='both', expand=True, padx=30, pady=0)
 
-        # VerfÃƒÂ¼gbare Themes anzeigen
-        themes_frame = ttk.LabelFrame(main_frame, text="VerfÃƒÂ¼gbare Themes")
-        themes_frame.pack(fill='x', padx=10, pady=5)
+        # Top-Aktionsleiste
+        actions_bar = ctk.CTkFrame(main_container, fg_color='#ffffff', corner_radius=15, border_width=2, border_color='#f59e0b')
+        actions_bar.pack(fill='x', pady=(0, 20))
 
-        # Themes aus der JSON-Datei laden und anzeigen
-        themes = self.data_manager.theme_manager.themes
-        
-        for theme_name, theme_data in themes.items():
-            theme_frame = ttk.Frame(themes_frame)
-            theme_frame.pack(fill='x', pady=5, padx=5)
-            
-            # Theme-Vorschau
-            preview = tk.Frame(
-                theme_frame,
-                bg=theme_data.get('button_bg_color', '#ffffff'),
-                width=30,
-                height=30
-            )
-            preview.pack(side='left', padx=5)
-            preview.pack_propagate(False)
-            
-            # Theme-Name
-            name_label = tk.Label(
-                theme_frame,
-                text=theme_name.capitalize(),
-                font=("Segoe UI", 12),
-                bg=self.default_bg
-            )
-            name_label.pack(side='left', padx=10)
-            
-            # Buttons
-            edit_btn = ModernButton(
-                theme_frame,
-                text="Bearbeiten",
-                command=lambda t=theme_name, d=theme_data: self.edit_theme_inline(main_frame, t, d),
-                style=ButtonStyle.SECONDARY.value,
-                width=10
-            )
-            edit_btn.pack(side='right', padx=5)
-            
-            apply_btn = ModernButton(
-                theme_frame,
-                text="Aktivieren",
-                command=lambda t=theme_name: self.quick_apply_theme(t),
-                style=ButtonStyle.PRIMARY.value,
-                width=10
-            )
-            apply_btn.pack(side='right', padx=5)
-        # Management Buttons
-        button_frame = ttk.Frame(main_frame)
-        button_frame.pack(pady=20)
+        actions_content = ctk.CTkFrame(actions_bar, fg_color='transparent')
+        actions_content.pack(fill='x', padx=20, pady=15)
 
-        ModernButton(
-            button_frame,
-            text="Neues Theme",
-            command=lambda: self.create_new_theme_inline(main_frame),
-            style=ButtonStyle.PRIMARY.value,
-            width=15
+        ctk.CTkLabel(
+            actions_content,
+            text="⚡ Schnellaktionen",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color='#92400e'
+        ).pack(side='left', padx=(0, 20))
+
+        def create_new_theme_dialog():
+            self.create_new_theme_inline(themes_container)
+
+        ctk.CTkButton(
+            actions_content,
+            text="➕ Neues Theme",
+            command=create_new_theme_dialog,
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
 
-        ModernButton(
-            button_frame,
-            text="Importieren",
+        ctk.CTkButton(
+            actions_content,
+            text="📥 Importieren",
             command=self.import_theme_file,
-            style=ButtonStyle.SECONDARY.value,
-            width=15
+            width=130,
+            height=40,
+            corner_radius=12,
+            fg_color='#3b82f6',
+            hover_color='#2563eb',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
 
-        ModernButton(
-            button_frame,
-            text="Exportieren",
+        ctk.CTkButton(
+            actions_content,
+            text="📤 Exportieren",
             command=self.export_current_theme,
-            style=ButtonStyle.SECONDARY.value,
-            width=15
+            width=130,
+            height=40,
+            corner_radius=12,
+            fg_color='#8b5cf6',
+            hover_color='#7c3aed',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
 
-        # Zurück-Button
-        back_btn = ModernButton(
-            self.content_frame,
-            text="Zurück zum Hauptmenü",
-            command=self.create_main_menu,
-            width=15,
-            style=ButtonStyle.SECONDARY.value
+        # Scrollable Frame für Themes
+        scroll_container = ctk.CTkScrollableFrame(
+            main_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#fed7aa'
         )
-        back_btn.pack(pady=20)
-        self.sidebar_buttons["back_to_main_from_themes"] = back_btn
+        scroll_container.pack(fill='both', expand=True, pady=(0, 15))
+
+        # Container für Theme-Cards
+        themes_container = ctk.CTkFrame(scroll_container, fg_color='transparent')
+        themes_container.pack(fill='both', expand=True, padx=10, pady=10)
+
+        # Themes laden und anzeigen
+        themes = self.data_manager.theme_manager.themes
+
+        for theme_name, theme_data in themes.items():
+            # Theme-Card erstellen
+            theme_card = ctk.CTkFrame(
+                themes_container,
+                fg_color='#fffbeb',
+                corner_radius=15,
+                border_width=2,
+                border_color='#fed7aa'
+            )
+            theme_card.pack(fill='x', pady=10)
+
+            # Card Content
+            card_content = ctk.CTkFrame(theme_card, fg_color='transparent')
+            card_content.pack(fill='x', padx=20, pady=15)
+
+            # Linke Seite: Theme-Info
+            left_section = ctk.CTkFrame(card_content, fg_color='transparent')
+            left_section.pack(side='left', fill='x', expand=True)
+
+            # Theme-Name und Badge
+            name_frame = ctk.CTkFrame(left_section, fg_color='transparent')
+            name_frame.pack(anchor='w', pady=(0, 8))
+
+            ctk.CTkLabel(
+                name_frame,
+                text=theme_name.capitalize(),
+                font=ctk.CTkFont(size=18, weight="bold"),
+                text_color='#78350f'
+            ).pack(side='left')
+
+            # Farbvorschau-Palette
+            color_preview_frame = ctk.CTkFrame(left_section, fg_color='transparent')
+            color_preview_frame.pack(anchor='w')
+
+            # Zeige die wichtigsten Farben als kleine Vorschau
+            preview_colors = [
+                theme_data.get('button_bg_color', '#ffffff'),
+                theme_data.get('button_fg_color', '#000000'),
+                theme_data.get('text_bg_color', '#f0f0f0'),
+                theme_data.get('default_bg', '#ffffff')
+            ]
+
+            for color in preview_colors[:4]:
+                color_box = ctk.CTkFrame(
+                    color_preview_frame,
+                    fg_color=color,
+                    width=40,
+                    height=40,
+                    corner_radius=8,
+                    border_width=2,
+                    border_color='#d1d5db'
+                )
+                color_box.pack(side='left', padx=3)
+                color_box.pack_propagate(False)
+
+            # Rechte Seite: Aktionsbuttons
+            right_section = ctk.CTkFrame(card_content, fg_color='transparent')
+            right_section.pack(side='right')
+
+            button_container = ctk.CTkFrame(right_section, fg_color='transparent')
+            button_container.pack()
+
+            def apply_theme(t=theme_name):
+                self.quick_apply_theme(t)
+
+            def edit_theme(t=theme_name, d=theme_data):
+                self.edit_theme_inline(themes_container, t, d)
+
+            # Aktivieren-Button
+            ctk.CTkButton(
+                button_container,
+                text="✓ Aktivieren",
+                command=apply_theme,
+                width=120,
+                height=40,
+                corner_radius=12,
+                fg_color='#f59e0b',
+                hover_color='#d97706',
+                font=ctk.CTkFont(size=13, weight="bold")
+            ).pack(pady=3)
+
+            # Bearbeiten-Button
+            ctk.CTkButton(
+                button_container,
+                text="✏️ Bearbeiten",
+                command=edit_theme,
+                width=120,
+                height=40,
+                corner_radius=12,
+                fg_color='#6b7280',
+                hover_color='#4b5563',
+                font=ctk.CTkFont(size=13, weight="bold")
+            ).pack(pady=3)
 
     def quick_apply_theme(self, theme_name):
         """Wendet ein Theme direkt an."""
@@ -5766,47 +6046,106 @@ class FlashcardApp:
             logging.error(f"Fehler beim Aktivieren des Themes {theme_name}: {str(e)}")
 
     def edit_theme_inline(self, parent_frame, theme_name, theme_data):
-        """Bearbeitet ein Theme direkt in der Liste."""
+        """Bearbeitet ein Theme mit modernem Design."""
         # Entfernt eventuell vorhandene Edit-Frames
         for widget in parent_frame.winfo_children():
-            if isinstance(widget, ttk.LabelFrame) and widget.winfo_name().startswith('edit_theme_'):
-                widget.destroy()
+            if isinstance(widget, ctk.CTkFrame):
+                widget_name = str(widget)
+                if 'edit_theme_' in widget_name or 'create_theme' in widget_name:
+                    widget.destroy()
 
-        # Theme-Bearbeitungsframe
-        edit_frame = ttk.LabelFrame(parent_frame, text=f"Theme '{theme_name}' bearbeiten")
-        edit_frame.pack(fill='x', pady=10, padx=5)
-        edit_frame.configure(name=f'edit_theme_{theme_name}')
-        
+        # Theme-Bearbeitungsframe mit modernem Design
+        edit_frame = ctk.CTkFrame(
+            parent_frame,
+            fg_color='#fef3c7',
+            corner_radius=15,
+            border_width=3,
+            border_color='#f59e0b'
+        )
+        edit_frame.pack(fill='x', pady=15, padx=0)
+
+        # Header
+        header_frame = ctk.CTkFrame(edit_frame, fg_color='#f59e0b', corner_radius=12)
+        header_frame.pack(fill='x', padx=3, pady=3)
+
+        ctk.CTkLabel(
+            header_frame,
+            text=f"✏️ Theme '{theme_name}' bearbeiten",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color='#ffffff'
+        ).pack(pady=12)
+
+        # Scrollable Content für Farbeinstellungen
+        scroll_content = ctk.CTkScrollableFrame(
+            edit_frame,
+            fg_color='transparent',
+            height=300
+        )
+        scroll_content.pack(fill='both', expand=True, padx=15, pady=(10, 15))
+
         color_vars = {}
         preview_labels = {}
-        
+
         for key, value in theme_data.items():
-            row = ttk.Frame(edit_frame)
-            row.pack(fill='x', pady=2)
-            
-            ttk.Label(row, text=key.replace('_', ' ').title()).pack(side='left', padx=5)
-            
+            row = ctk.CTkFrame(scroll_content, fg_color='#ffffff', corner_radius=10, border_width=1, border_color='#fcd34d')
+            row.pack(fill='x', pady=5, padx=5)
+
+            row_content = ctk.CTkFrame(row, fg_color='transparent')
+            row_content.pack(fill='x', padx=12, pady=10)
+
+            # Label
+            ctk.CTkLabel(
+                row_content,
+                text=key.replace('_', ' ').title(),
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color='#78350f',
+                width=180,
+                anchor='w'
+            ).pack(side='left', padx=(0, 10))
+
+            # Color Entry
             color_vars[key] = tk.StringVar(value=value)
-            color_entry = ttk.Entry(row, textvariable=color_vars[key], width=10)
-            color_entry.pack(side='left', padx=5)
-            
-            preview_labels[key] = tk.Label(row, width=3, bg=value)
-            preview_labels[key].pack(side='left', padx=5)
-            
-            def update_color(key=key):
-                color = colorchooser.askcolor(color=color_vars[key].get())[1]
-                if color:
-                    color_vars[key].set(color)
-                    preview_labels[key].configure(bg=color)
-        
-            pick_btn = ModernButton(
-                row,
-                text="WÃƒÂ¤hlen",
-                command=lambda k=key: update_color(k),
-                style=ButtonStyle.SECONDARY.value,
-                width=8
+            color_entry = ctk.CTkEntry(
+                row_content,
+                textvariable=color_vars[key],
+                width=100,
+                height=32,
+                corner_radius=8
             )
-            pick_btn.pack(side='left', padx=5)
+            color_entry.pack(side='left', padx=5)
+
+            # Preview Label
+            preview_frame = ctk.CTkFrame(
+                row_content,
+                fg_color=value,
+                width=40,
+                height=32,
+                corner_radius=8,
+                border_width=2,
+                border_color='#d1d5db'
+            )
+            preview_frame.pack(side='left', padx=5)
+            preview_frame.pack_propagate(False)
+            preview_labels[key] = preview_frame
+
+            def update_color(k=key):
+                color = colorchooser.askcolor(color=color_vars[k].get())[1]
+                if color:
+                    color_vars[k].set(color)
+                    preview_labels[k].configure(fg_color=color)
+
+            # Color Picker Button
+            ctk.CTkButton(
+                row_content,
+                text="🎨 Wählen",
+                command=lambda k=key: update_color(k),
+                width=100,
+                height=32,
+                corner_radius=8,
+                fg_color='#8b5cf6',
+                hover_color='#7c3aed',
+                font=ctk.CTkFont(size=11, weight="bold")
+            ).pack(side='left', padx=5)
 
         def save_changes():
             """Speichert die Änderungen am Theme."""
@@ -5825,46 +6164,113 @@ class FlashcardApp:
             edit_frame.destroy()
 
         # Button-Frame
-        btn_frame = ttk.Frame(edit_frame)
-        btn_frame.pack(fill='x', pady=5)
-        
+        btn_frame = ctk.CTkFrame(edit_frame, fg_color='transparent')
+        btn_frame.pack(fill='x', padx=15, pady=(0, 15))
+
         # Speichern-Button
-        ModernButton(
+        ctk.CTkButton(
             btn_frame,
-            text="Speichern",
+            text="💾 Speichern",
             command=save_changes,
-            style=ButtonStyle.PRIMARY.value,
-            width=10
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
-        
+
         # Abbrechen-Button
-        ModernButton(
+        ctk.CTkButton(
             btn_frame,
-            text="Abbrechen",
+            text="✖ Abbrechen",
             command=cancel_edit,
-            style=ButtonStyle.SECONDARY.value,
-            width=10
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#dc2626',
+            hover_color='#b91c1c',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
 
     def create_new_theme_inline(self, parent_frame):
-        """Erstellt ein neues Theme direkt in der Liste."""
+        """Erstellt ein neues Theme mit modernem Design."""
         # Entfernt eventuell vorhandene Create-Frames
         for widget in parent_frame.winfo_children():
-            if isinstance(widget, ttk.LabelFrame) and widget.winfo_name().startswith('create_theme'):
-                widget.destroy()
-                return
+            if isinstance(widget, ctk.CTkFrame):
+                widget_name = str(widget)
+                if 'create_theme' in widget_name or 'edit_theme_' in widget_name:
+                    widget.destroy()
+                    return
 
-        create_frame = ttk.LabelFrame(parent_frame, text="Neues Theme erstellen")
-        create_frame.pack(fill='x', pady=10, padx=5)
-        create_frame.configure(name='create_theme')
-        
+        # Theme-Erstellungsframe mit modernem Design
+        create_frame = ctk.CTkFrame(
+            parent_frame,
+            fg_color='#dbeafe',
+            corner_radius=15,
+            border_width=3,
+            border_color='#3b82f6'
+        )
+        create_frame.pack(fill='x', pady=15, padx=0)
+
+        # Header
+        header_frame = ctk.CTkFrame(create_frame, fg_color='#3b82f6', corner_radius=12)
+        header_frame.pack(fill='x', padx=3, pady=3)
+
+        ctk.CTkLabel(
+            header_frame,
+            text="✨ Neues Theme erstellen",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color='#ffffff'
+        ).pack(pady=12)
+
+        # Content Frame
+        content_frame = ctk.CTkFrame(create_frame, fg_color='transparent')
+        content_frame.pack(fill='both', expand=True, padx=15, pady=(10, 15))
+
         # Name-Eingabe
-        name_frame = ttk.Frame(create_frame)
-        name_frame.pack(fill='x', pady=5)
-        ttk.Label(name_frame, text="Theme-Name:").pack(side='left', padx=5)
+        name_container = ctk.CTkFrame(content_frame, fg_color='#ffffff', corner_radius=10, border_width=1, border_color='#93c5fd')
+        name_container.pack(fill='x', pady=(0, 15))
+
+        name_content = ctk.CTkFrame(name_container, fg_color='transparent')
+        name_content.pack(fill='x', padx=15, pady=12)
+
+        ctk.CTkLabel(
+            name_content,
+            text="Theme-Name:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#1e3a8a',
+            width=120,
+            anchor='w'
+        ).pack(side='left', padx=(0, 10))
+
         name_var = tk.StringVar()
-        ttk.Entry(name_frame, textvariable=name_var).pack(side='left', padx=5, fill='x', expand=True)
-        
+        name_entry = ctk.CTkEntry(
+            name_content,
+            textvariable=name_var,
+            height=36,
+            corner_radius=10,
+            placeholder_text="z.B. Mein Custom Theme",
+            font=ctk.CTkFont(size=13)
+        )
+        name_entry.pack(side='left', fill='x', expand=True)
+
+        # Scrollable Content für Farbeinstellungen
+        ctk.CTkLabel(
+            content_frame,
+            text="Farbeinstellungen:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color='#1e3a8a',
+            anchor='w'
+        ).pack(anchor='w', pady=(5, 10))
+
+        scroll_content = ctk.CTkScrollableFrame(
+            content_frame,
+            fg_color='transparent',
+            height=250
+        )
+        scroll_content.pack(fill='both', expand=True)
+
         # Standard-Farben
         default_colors = {
             'default_bg': '#ffffff',
@@ -5873,43 +6279,77 @@ class FlashcardApp:
             'button_bg_color': '#4a90e2',
             'button_fg_color': '#ffffff'
         }
-        
+
         color_vars = {}
         preview_labels = {}
-        
-        for key, value in default_colors.items():
-            row = ttk.Frame(create_frame)
-            row.pack(fill='x', pady=2)
-            
-            ttk.Label(row, text=key.replace('_', ' ').title()).pack(side='left', padx=5)
-            
-            color_vars[key] = tk.StringVar(value=value)
-            ttk.Entry(row, textvariable=color_vars[key], width=10).pack(side='left', padx=5)
-            
-            preview_labels[key] = tk.Label(row, width=3, bg=value)
-            preview_labels[key].pack(side='left', padx=5)
-            
-            def update_color(key=key):
-                color = colorchooser.askcolor(color=color_vars[key].get())[1]
-                if color:
-                    color_vars[key].set(color)
-                    preview_labels[key].configure(bg=color)
 
-            pick_btn = ModernButton(
-                row,
-                text="WÃƒÂ¤hlen",
-                command=lambda k=key: update_color(k),
-                style=ButtonStyle.SECONDARY.value,
-                width=8
+        for key, value in default_colors.items():
+            row = ctk.CTkFrame(scroll_content, fg_color='#ffffff', corner_radius=10, border_width=1, border_color='#93c5fd')
+            row.pack(fill='x', pady=5, padx=5)
+
+            row_content = ctk.CTkFrame(row, fg_color='transparent')
+            row_content.pack(fill='x', padx=12, pady=10)
+
+            # Label
+            ctk.CTkLabel(
+                row_content,
+                text=key.replace('_', ' ').title(),
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color='#1e3a8a',
+                width=180,
+                anchor='w'
+            ).pack(side='left', padx=(0, 10))
+
+            # Color Entry
+            color_vars[key] = tk.StringVar(value=value)
+            color_entry = ctk.CTkEntry(
+                row_content,
+                textvariable=color_vars[key],
+                width=100,
+                height=32,
+                corner_radius=8
             )
-            pick_btn.pack(side='left', padx=5)
+            color_entry.pack(side='left', padx=5)
+
+            # Preview Label
+            preview_frame = ctk.CTkFrame(
+                row_content,
+                fg_color=value,
+                width=40,
+                height=32,
+                corner_radius=8,
+                border_width=2,
+                border_color='#d1d5db'
+            )
+            preview_frame.pack(side='left', padx=5)
+            preview_frame.pack_propagate(False)
+            preview_labels[key] = preview_frame
+
+            def update_color(k=key):
+                color = colorchooser.askcolor(color=color_vars[k].get())[1]
+                if color:
+                    color_vars[k].set(color)
+                    preview_labels[k].configure(fg_color=color)
+
+            # Color Picker Button
+            ctk.CTkButton(
+                row_content,
+                text="🎨 Wählen",
+                command=lambda k=key: update_color(k),
+                width=100,
+                height=32,
+                corner_radius=8,
+                fg_color='#8b5cf6',
+                hover_color='#7c3aed',
+                font=ctk.CTkFont(size=11, weight="bold")
+            ).pack(side='left', padx=5)
 
         def save_new_theme():
             theme_name = name_var.get().strip()
             if not theme_name:
                 messagebox.showerror("Fehler", "Bitte geben Sie einen Theme-Namen ein.")
                 return
-            
+
             try:
                 new_theme_data = {k: v.get() for k, v in color_vars.items()}
                 self.data_manager.theme_manager.add_or_update_theme(theme_name, new_theme_data)
@@ -5924,23 +6364,33 @@ class FlashcardApp:
             create_frame.destroy()
 
         # Button-Frame
-        btn_frame = ttk.Frame(create_frame)
-        btn_frame.pack(fill='x', pady=5)
-        
-        ModernButton(
+        btn_frame = ctk.CTkFrame(content_frame, fg_color='transparent')
+        btn_frame.pack(fill='x', pady=(15, 0))
+
+        # Speichern-Button
+        ctk.CTkButton(
             btn_frame,
-            text="Speichern",
+            text="💾 Speichern",
             command=save_new_theme,
-            style=ButtonStyle.PRIMARY.value,
-            width=10
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#10b981',
+            hover_color='#059669',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
-        
-        ModernButton(
+
+        # Abbrechen-Button
+        ctk.CTkButton(
             btn_frame,
-            text="Abbrechen",
+            text="✖ Abbrechen",
             command=cancel_create,
-            style=ButtonStyle.SECONDARY.value,
-            width=10
+            width=140,
+            height=40,
+            corner_radius=12,
+            fg_color='#dc2626',
+            hover_color='#b91c1c',
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left', padx=5)
 
     def toggle_learning_time(self, is_enabled):
