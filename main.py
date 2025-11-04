@@ -1195,60 +1195,172 @@ class FlashcardApp:
     def show_card_management(self):
         """Zeigt das Karten-Management-Menü an."""
         self._clear_content_frame()
-        
+
+        # Hauptcontainer mit modernem Design
+        main_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='transparent'
+        )
+        main_container.pack(fill='both', expand=True, padx=40, pady=30)
+
         # Header
         header = ctk.CTkLabel(
-            self.content_frame,
+            main_container,
             text="Karten verwalten",
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="#2c3e50"
         )
-        header.pack(pady=20)
-        
-        # Button-Container
-        button_frame = ctk.CTkFrame(self.content_frame)
-        button_frame.pack(pady=20)
-        
-        # Karte hinzufügen Button
-        add_btn = ctk.CTkButton(
-            button_frame,
+        header.pack(pady=(0, 30))
+
+        # Container für die Optionen
+        options_container = ctk.CTkFrame(main_container, fg_color='transparent')
+        options_container.pack(fill='both', expand=True)
+
+        # 1. Neue Karte hinzufügen - Moderne Karte
+        add_card = ctk.CTkFrame(
+            options_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#27ae60'
+        )
+        add_card.pack(fill='x', pady=(0, 20))
+
+        # Icon
+        ctk.CTkLabel(
+            add_card,
+            text="➕",
+            font=ctk.CTkFont(size=40)
+        ).pack(pady=(20, 10))
+
+        ctk.CTkLabel(
+            add_card,
             text="Neue Karte hinzufügen",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#2c3e50"
+        ).pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            add_card,
+            text="Erstelle eine neue Lernkarte mit Frage und Antwort",
+            font=ctk.CTkFont(size=13),
+            text_color="#7f8c8d",
+            wraplength=500
+        ).pack(pady=(0, 15), padx=20)
+
+        ctk.CTkButton(
+            add_card,
+            text="Karte erstellen",
             command=self.add_card,
-            width=200,
-            height=40
-        )
-        add_btn.pack(pady=10)
-        
-        # Karten entfernen Button
-        remove_btn = ctk.CTkButton(
-            button_frame,
-            text="Karten entfernen",
-            command=self.show_remove_cards,
-            width=200,
-            height=40
-        )
-        remove_btn.pack(pady=10)
-        
-        # Karten Management
-        manage_btn = ctk.CTkButton(
-            button_frame,
-            text="Karten Management",
-            command=self.show_card_details_manager,
-            width=200,
-            height=40
-        )
-        manage_btn.pack(pady=10)
-        
-        # Zurück Button
-        back_btn = ctk.CTkButton(
-            self.content_frame,
-            text="Zurück zum Hauptmenü",
-            command=self.create_main_menu,
-            width=200,
             height=40,
-            fg_color="gray",
-            hover_color="darkgray"
+            width=200,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#27ae60",
+            hover_color="#1e8449",
+            corner_radius=10
+        ).pack(pady=(0, 20))
+
+        # 2. Karten entfernen - Moderne Karte
+        remove_card = ctk.CTkFrame(
+            options_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#e74c3c'
         )
-        back_btn.pack(pady=20)
+        remove_card.pack(fill='x', pady=(0, 20))
+
+        # Icon
+        ctk.CTkLabel(
+            remove_card,
+            text="🗑️",
+            font=ctk.CTkFont(size=40)
+        ).pack(pady=(20, 10))
+
+        ctk.CTkLabel(
+            remove_card,
+            text="Karten entfernen",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#2c3e50"
+        ).pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            remove_card,
+            text="Lösche nicht mehr benötigte Lernkarten",
+            font=ctk.CTkFont(size=13),
+            text_color="#7f8c8d",
+            wraplength=500
+        ).pack(pady=(0, 15), padx=20)
+
+        ctk.CTkButton(
+            remove_card,
+            text="Karten löschen",
+            command=self.show_remove_cards,
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#e74c3c",
+            hover_color="#c0392b",
+            corner_radius=10
+        ).pack(pady=(0, 20))
+
+        # 3. Karten Management - Moderne Karte
+        manage_card = ctk.CTkFrame(
+            options_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#4A90E2'
+        )
+        manage_card.pack(fill='x', pady=(0, 20))
+
+        # Icon
+        ctk.CTkLabel(
+            manage_card,
+            text="📝",
+            font=ctk.CTkFont(size=40)
+        ).pack(pady=(20, 10))
+
+        ctk.CTkLabel(
+            manage_card,
+            text="Karten Management",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#2c3e50"
+        ).pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            manage_card,
+            text="Bearbeite und verwalte deine bestehenden Karten",
+            font=ctk.CTkFont(size=13),
+            text_color="#7f8c8d",
+            wraplength=500
+        ).pack(pady=(0, 15), padx=20)
+
+        ctk.CTkButton(
+            manage_card,
+            text="Karten verwalten",
+            command=self.show_card_details_manager,
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#4A90E2",
+            hover_color="#3a7bc8",
+            corner_radius=10
+        ).pack(pady=(0, 20))
+
+        # Zurück-Button mit modernem Design
+        back_btn = ctk.CTkButton(
+            main_container,
+            text="← Zurück zum Hauptmenü",
+            command=self.create_main_menu,
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=13),
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d",
+            corner_radius=10
+        )
+        back_btn.pack(pady=(10, 0))
 
     def show_card_details_manager(self):
         """Zeigt detaillierte Kartenübersicht mit Bearbeitungsmöglichkeiten UND SUCHE."""
@@ -5267,81 +5379,7 @@ class FlashcardApp:
     def create_main_menu(self):
         self._clear_content_frame()
 
-        # Modernes Design mit Canvas und animierten Kreisen im Hintergrund
-        # Canvas für animierte Kreise
-        canvas = tk.Canvas(
-            self.content_frame,
-            bg='#f0f4f8',  # Helles Blaugrau
-            highlightthickness=0
-        )
-        canvas.place(x=0, y=0, relwidth=1, relheight=1)
-
-        # Initialisiere Kreise für Animation
-        if not hasattr(self, 'home_circles'):
-            self.home_circles = []
-            circle_count = 8
-            colors = ['#4A90E2', '#5CA0F2', '#6EB0FF', '#80C0FF', '#92D0FF']  # Verschiedene Blautöne
-
-            for i in range(circle_count):
-                size = random.randint(80, 200)
-                x = random.randint(0, 800)
-                y = random.randint(0, 600)
-                vx = random.uniform(-1, 1)
-                vy = random.uniform(-1, 1)
-                color = random.choice(colors)
-
-                # Erstelle Kreis mit Transparenz-Effekt
-                circle = canvas.create_oval(
-                    x, y, x + size, y + size,
-                    fill=color, outline='', stipple='gray25'  # stipple für Transparenz-Effekt
-                )
-
-                self.home_circles.append({
-                    'id': circle,
-                    'x': x,
-                    'y': y,
-                    'size': size,
-                    'vx': vx,
-                    'vy': vy,
-                    'canvas': canvas
-                })
-
-        # Animiere Kreise
-        def animate_circles():
-            if not hasattr(self, 'home_circles') or not self.home_circles:
-                return
-
-            for circle in self.home_circles:
-                # Update Position
-                circle['x'] += circle['vx']
-                circle['y'] += circle['vy']
-
-                # Bounce an Rändern
-                canvas_width = canvas.winfo_width() if canvas.winfo_width() > 1 else 800
-                canvas_height = canvas.winfo_height() if canvas.winfo_height() > 1 else 600
-
-                if circle['x'] <= 0 or circle['x'] + circle['size'] >= canvas_width:
-                    circle['vx'] *= -1
-                if circle['y'] <= 0 or circle['y'] + circle['size'] >= canvas_height:
-                    circle['vy'] *= -1
-
-                # Update Canvas Position
-                try:
-                    circle['canvas'].coords(
-                        circle['id'],
-                        circle['x'], circle['y'],
-                        circle['x'] + circle['size'], circle['y'] + circle['size']
-                    )
-                except:
-                    pass
-
-            # Nächster Frame
-            if hasattr(self, 'animation_id'):
-                self.master.after_cancel(self.animation_id)
-            self.animation_id = self.master.after(50, animate_circles)
-
-        # Starte Animation
-        animate_circles()
+        # Modernes Design mit einfachem Hintergrund
 
         # Container Frame über dem Canvas
         container = ctk.CTkFrame(
@@ -5549,74 +5587,127 @@ class FlashcardApp:
         """Zeigt die verschiedenen Lernmethoden zur Auswahl an."""
         self._clear_content_frame()
 
+        # Hauptcontainer mit modernem Design
+        main_container = ctk.CTkFrame(
+            self.content_frame,
+            fg_color='transparent'
+        )
+        main_container.pack(fill='both', expand=True, padx=40, pady=30)
+
         # Header
         header = ctk.CTkLabel(
-            self.content_frame,
+            main_container,
             text="Lernmethode auswählen",
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="#2c3e50"
         )
-        header.pack(pady=20)
+        header.pack(pady=(0, 30))
 
-        # Container für die Lernmethoden
-        methods_frame = ctk.CTkFrame(self.content_frame)
-        methods_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        # Container für die Lernmethoden mit Grid-Layout
+        methods_container = ctk.CTkFrame(main_container, fg_color='transparent')
+        methods_container.pack(fill='both', expand=True)
 
-        # 1. Intelligentes Lernen (SRS)
-        srs_frame = ctk.CTkFrame(methods_frame)
-        srs_frame.pack(fill='x', pady=10, padx=10)
+        # 1. Intelligentes Lernen (SRS) - Moderne Karte
+        srs_card = ctk.CTkFrame(
+            methods_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#4A90E2'
+        )
+        srs_card.pack(fill='x', pady=(0, 20))
+
+        # SRS Icon/Emoji
+        ctk.CTkLabel(
+            srs_card,
+            text="🧠",
+            font=ctk.CTkFont(size=40)
+        ).pack(pady=(20, 10))
 
         ctk.CTkLabel(
-            srs_frame,
+            srs_card,
             text="Intelligentes Lernen (SRS)",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=5)
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#2c3e50"
+        ).pack(pady=(0, 10))
 
         ctk.CTkLabel(
-            srs_frame,
-            text="Optimierte Wiederholungen basierend auf deiner Lernleistung (lineare Variante)",
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5)
+            srs_card,
+            text="Optimierte Wiederholungen basierend auf deiner Lernleistung",
+            font=ctk.CTkFont(size=13),
+            text_color="#7f8c8d",
+            wraplength=500
+        ).pack(pady=(0, 15), padx=20)
 
         ctk.CTkButton(
-            srs_frame,
+            srs_card,
             text="Starten",
             command=self.show_srs_learning_options,
-            height=35
-        ).pack(pady=10)
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#4A90E2",
+            hover_color="#3a7bc8",
+            corner_radius=10
+        ).pack(pady=(0, 20))
 
-        # 2. Leitner System
-        leitner_frame = ctk.CTkFrame(methods_frame)
-        leitner_frame.pack(fill='x', pady=10, padx=10)
+        # 2. Leitner System - Moderne Karte
+        leitner_card = ctk.CTkFrame(
+            methods_container,
+            fg_color='#ffffff',
+            corner_radius=15,
+            border_width=2,
+            border_color='#27ae60'
+        )
+        leitner_card.pack(fill='x', pady=(0, 20))
+
+        # Leitner Icon/Emoji
+        ctk.CTkLabel(
+            leitner_card,
+            text="📦",
+            font=ctk.CTkFont(size=40)
+        ).pack(pady=(20, 10))
 
         ctk.CTkLabel(
-            leitner_frame,
+            leitner_card,
             text="Leitner System",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(pady=5)
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#2c3e50"
+        ).pack(pady=(0, 10))
 
         ctk.CTkLabel(
-            leitner_frame,
-            text="Systematisches Lernen mit Box-System",
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5)
+            leitner_card,
+            text="Systematisches Lernen mit bewährtem Box-System",
+            font=ctk.CTkFont(size=13),
+            text_color="#7f8c8d",
+            wraplength=500
+        ).pack(pady=(0, 15), padx=20)
 
         ctk.CTkButton(
-            leitner_frame,
+            leitner_card,
             text="Starten",
             command=self.show_leitner_options,
-            height=35
-        ).pack(pady=10)
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#27ae60",
+            hover_color="#1e8449",
+            corner_radius=10
+        ).pack(pady=(0, 20))
 
-        # Zurück-Button
+        # Zurück-Button mit modernem Design
         back_btn = ctk.CTkButton(
-            self.content_frame,
-            text="Zurück zum Hauptmenü",
+            main_container,
+            text="← Zurück zum Hauptmenü",
             command=self.create_main_menu,
-            height=35,
-            fg_color="gray",
-            hover_color="darkgray"
+            height=40,
+            width=200,
+            font=ctk.CTkFont(size=13),
+            fg_color="#95a5a6",
+            hover_color="#7f8c8d",
+            corner_radius=10
         )
-        back_btn.pack(pady=20)
+        back_btn.pack(pady=(10, 0))
 
         # Setze aktiven Button (für optische Markierung in Sidebar)
         self.highlight_active_button('Lernsession')
@@ -11002,29 +11093,27 @@ Wie werden Karten einsortiert?
                 self.sidebar_frame.configure(width=self.sidebar_collapsed_width)
                 if self.toggle_button.winfo_exists():
                     self.toggle_button.configure(text="►")  # Pfeil nach rechts
-                
-                # Verstecke Button-Texte
+
+                # Verstecke Button-Texte komplett
                 for name, button in self.sidebar_buttons.items():
                     # Prüfe ob Button noch existiert
                     if button.winfo_exists():
-                        button.pack_forget()
                         # Speichere originalen Text falls noch nicht geschehen
                         if not hasattr(button, '_original_text'):
                             button._original_text = button.cget('text')
-                        button.configure(width=2)  # Reduziere Button-Breite
-                        button.configure(text="•")  # Zeige nur einen Punkt
-                        button.pack(pady=(0,10), padx=5)
+                        # Verstecke Button komplett
+                        button.pack_forget()
                     else:
                         # Entferne zerstörte Buttons aus dem Dictionary
                         del self.sidebar_buttons[name]
-                    
+
             else:
                 # Sidebar ausklappen
                 self.sidebar_frame.configure(width=self.sidebar_width)
                 if self.toggle_button.winfo_exists():
                     self.toggle_button.configure(text="◄")  # Pfeil nach links
-                
-                # Stelle Button-Texte wieder her
+
+                # Zeige Button-Texte wieder
                 for name, button in self.sidebar_buttons.items():
                     if button.winfo_exists():
                         button.pack_forget()
@@ -11039,7 +11128,7 @@ Wie werden Karten einsortiert?
                         del self.sidebar_buttons[name]
 
             self.sidebar_expanded = not self.sidebar_expanded
-            
+
         except Exception as e:
             logging.error(f"Fehler beim Umschalten der Sidebar: {e}")
             # Versuche die Sidebar in einen konsistenten Zustand zu bringen
