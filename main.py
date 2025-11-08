@@ -11836,249 +11836,1124 @@ class FlashcardApp:
         self.highlight_active_button('backup')
 
     def show_help(self):
-        """Zeigt eine umfassende Hilfe-Seite zum Leitner-System."""
+        """Zeigt die moderne Hilfe-Hauptseite mit Untermenüs."""
         self._clear_content_frame()
 
-        # Scrollable Frame für den gesamten Inhalt
+        # Hauptcontainer
+        main_container = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        main_container.pack(fill='both', expand=True, padx=40, pady=30)
+
+        # Header mit Gradient-Style
+        header_frame = ctk.CTkFrame(main_container, corner_radius=15, fg_color=("#3b8ed0", "#1f6aa5"))
+        header_frame.pack(fill='x', pady=(0, 30))
+
+        ctk.CTkLabel(
+            header_frame,
+            text="📚 Hilfe & Dokumentation",
+            font=ctk.CTkFont(size=32, weight="bold"),
+            text_color="white"
+        ).pack(pady=25)
+
+        # Einführungstext
+        intro_frame = ctk.CTkFrame(main_container, corner_radius=12)
+        intro_frame.pack(fill='x', pady=(0, 25), padx=10)
+
+        ctk.CTkLabel(
+            intro_frame,
+            text="Willkommen im Hilfebereich!",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            anchor="w"
+        ).pack(pady=(20, 10), padx=25, anchor="w")
+
+        ctk.CTkLabel(
+            intro_frame,
+            text="Wählen Sie unten ein Thema aus, um detaillierte Informationen und Anleitungen zu erhalten.",
+            font=ctk.CTkFont(size=14),
+            anchor="w",
+            wraplength=700,
+            text_color=("gray20", "gray80")
+        ).pack(pady=(0, 20), padx=25, anchor="w")
+
+        # Grid für Hilfe-Karten (2x2 Layout)
+        cards_container = ctk.CTkFrame(main_container, fg_color="transparent")
+        cards_container.pack(fill='both', expand=True, pady=10)
+
+        # Konfiguriere Grid
+        cards_container.grid_columnconfigure((0, 1), weight=1, uniform="column")
+        cards_container.grid_rowconfigure((0, 1), weight=1, uniform="row")
+
+        # Hilfe-Karten Daten
+        help_topics = [
+            {
+                "icon": "📅",
+                "title": "Wochenkalender",
+                "description": "Planung, Tagesansicht und\nWochenübersicht",
+                "color": ("#4a90e2", "#357abd"),
+                "command": self.help_weekly_calendar
+            },
+            {
+                "icon": "🎯",
+                "title": "Leitner Session",
+                "description": "Lernsystem, Punkte und\nWiederholungslogik",
+                "color": ("#e24a4a", "#bd3535"),
+                "command": self.help_leitner_session
+            },
+            {
+                "icon": "📁",
+                "title": "Kategorien",
+                "description": "Kategorien erstellen,\nbearbeiten und löschen",
+                "color": ("#4ae290", "#35bd6f"),
+                "command": self.help_categories
+            },
+            {
+                "icon": "🗂️",
+                "title": "Karten",
+                "description": "Karteikarten hinzufügen,\nbearbeiten und verwalten",
+                "color": ("#e2a04a", "#bd8235"),
+                "command": self.help_cards
+            }
+        ]
+
+        # Erstelle Hilfe-Karten im Grid
+        for idx, topic in enumerate(help_topics):
+            row = idx // 2
+            col = idx % 2
+
+            card = ctk.CTkFrame(
+                cards_container,
+                corner_radius=15,
+                fg_color=topic["color"],
+                cursor="hand2"
+            )
+            card.grid(row=row, column=col, padx=15, pady=15, sticky="nsew")
+
+            # Icon
+            ctk.CTkLabel(
+                card,
+                text=topic["icon"],
+                font=ctk.CTkFont(size=48)
+            ).pack(pady=(30, 10))
+
+            # Titel
+            ctk.CTkLabel(
+                card,
+                text=topic["title"],
+                font=ctk.CTkFont(size=20, weight="bold"),
+                text_color="white"
+            ).pack(pady=(0, 8))
+
+            # Beschreibung
+            ctk.CTkLabel(
+                card,
+                text=topic["description"],
+                font=ctk.CTkFont(size=13),
+                text_color=("white", "gray90"),
+                justify="center"
+            ).pack(pady=(0, 20))
+
+            # Button
+            ctk.CTkButton(
+                card,
+                text="Mehr erfahren →",
+                command=topic["command"],
+                fg_color="white",
+                text_color=topic["color"][0],
+                hover_color=("gray90", "gray80"),
+                height=35,
+                corner_radius=8,
+                font=ctk.CTkFont(size=13, weight="bold")
+            ).pack(pady=(0, 25), padx=30)
+
+        # Zurück-Button
+        ctk.CTkButton(
+            main_container,
+            text="← Zurück zum Hauptmenü",
+            command=self.create_main_menu,
+            width=220,
+            height=45,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            corner_radius=10,
+            fg_color=("gray70", "gray30"),
+            hover_color=("gray60", "gray40")
+        ).pack(pady=(25, 10))
+
+    def help_weekly_calendar(self):
+        """Zeigt detaillierte Hilfe zum Wochenkalender."""
+        self._clear_content_frame()
+
+        # Scrollable Frame
         scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
         scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
 
         # Header
+        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#4a90e2", "#357abd"))
+        header_frame.pack(fill='x', pady=(0, 25))
+
         ctk.CTkLabel(
+            header_frame,
+            text="📅 Wochenkalender",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="white"
+        ).pack(pady=20)
+
+        # === SEKTION 1: Übersicht ===
+        self._create_help_section(
             scroll_frame,
-            text="🎓 Leitner-System Hilfe",
-            font=ctk.CTkFont(size=28, weight="bold")
-        ).pack(pady=(10, 30))
+            "📋 Übersicht",
+            """Der Wochenkalender hilft Ihnen, Ihre Lernziele zu planen und Ihren Fortschritt zu verfolgen.
+Er zeigt Ihnen auf einen Blick, welche Aufgaben heute anstehen und wie Ihre Woche aussieht."""
+        )
 
-        # Übersicht
-        overview_frame = ctk.CTkFrame(scroll_frame)
-        overview_frame.pack(fill='x', pady=10, padx=10)
+        # === SEKTION 2: Tagesansicht ===
+        self._create_help_section(
+            scroll_frame,
+            "☀️ Tagesansicht",
+            """Funktionen der Tagesansicht:
+
+• Aktuelle Aufgaben: Zeigt alle für heute fälligen Karteikarten
+• Fälligkeitsstatistik: Übersicht über Karten nach Priorität
+  - Überfällige Karten (rot markiert)
+  - Heute fällige Karten (gelb markiert)
+  - Bald fällige Karten (grün markiert)
+
+• Session starten: Direkter Zugriff auf Ihre heutige Lernsession
+• Fortschrittsanzeige: Zeigt erledigte vs. offene Karten
+
+Methode: calendar_ui_modern.py → update_today_view()
+Diese Methode lädt die aktuellen Daten und aktualisiert die Tagesansicht.""",
+            use_monospace=True
+        )
+
+        # === SEKTION 3: Wochenübersicht ===
+        self._create_help_section(
+            scroll_frame,
+            "📊 Wochenübersicht",
+            """Die Wochenübersicht zeigt:
+
+• 7-Tage-Kalender: Montag bis Sonntag mit täglichen Aufgaben
+• Farbcodierung:
+  - Grau: Keine Karten fällig
+  - Gelb: 1-10 Karten fällig
+  - Orange: 11-30 Karten fällig
+  - Rot: Mehr als 30 Karten fällig
+
+• Tagesdetails beim Klick: Klicken Sie auf einen Tag, um Details zu sehen
+• Workload-Verteilung: Sehen Sie auf einen Blick, wo Belastungsspitzen liegen
+
+Methoden:
+• calendar_ui_modern.py → update_week_view()
+  Erstellt die Wochenübersicht mit allen 7 Tagen
+
+• calendar_ui_modern.py → get_cards_due_on_date(date)
+  Ermittelt alle Karten, die an einem bestimmten Datum fällig sind
+
+• calendar_ui_modern.py → show_day_details(date)
+  Zeigt detaillierte Informationen für einen ausgewählten Tag""",
+            use_monospace=True
+        )
+
+        # === SEKTION 4: Praktische Tipps ===
+        self._create_help_section(
+            scroll_frame,
+            "💡 Tipps & Best Practices",
+            """1. Tägliche Routine etablieren:
+   Schauen Sie jeden Morgen in die Tagesansicht, um Ihren Tag zu planen
+
+2. Vorausplanen:
+   Nutzen Sie die Wochenübersicht, um Lernzeiten für kommende Tage einzuplanen
+
+3. Gleichmäßige Verteilung:
+   Achten Sie darauf, neue Karten gleichmäßig über die Woche zu verteilen
+
+4. Prioritäten setzen:
+   Überfällige Karten (rot) sollten immer zuerst bearbeitet werden
+
+5. Workload beachten:
+   Vermeiden Sie es, zu viele neue Karten an einem Tag zu starten"""
+        )
+
+        # Zurück-Button
+        self._create_back_button(scroll_frame, self.show_help)
+
+    def help_leitner_session(self):
+        """Zeigt detaillierte Hilfe zur Leitner Session."""
+        self._clear_content_frame()
+
+        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
+        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Header
+        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#e24a4a", "#bd3535"))
+        header_frame.pack(fill='x', pady=(0, 25))
 
         ctk.CTkLabel(
-            overview_frame,
-            text="📚 Übersicht",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w"
-        ).pack(pady=(15, 10), padx=20, anchor="w")
+            header_frame,
+            text="🎯 Leitner Session",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="white"
+        ).pack(pady=20)
 
-        overview_text = """Das Leitner-System ist eine wissenschaftlich fundierte Lernmethode, die auf dem Prinzip
-der verteilten Wiederholung basiert. Karten, die Sie gut beherrschen, werden seltener
-wiederholt, während schwierige Karten häufiger erscheinen."""
+        # === SEKTION 1: Das Leitner-System ===
+        self._create_help_section(
+            scroll_frame,
+            "📚 Was ist das Leitner-System?",
+            """Das Leitner-System ist eine wissenschaftlich fundierte Lernmethode, die auf dem Prinzip
+der verteilten Wiederholung (Spaced Repetition) basiert.
 
-        ctk.CTkLabel(
-            overview_frame,
-            text=overview_text,
-            font=ctk.CTkFont(size=14),
-            wraplength=800,
-            justify="left",
-            anchor="w"
-        ).pack(pady=(0, 15), padx=20, anchor="w")
+Kernprinzip:
+Karten, die Sie gut beherrschen, werden seltener wiederholt.
+Karten, die Sie noch lernen, erscheinen häufiger.
 
-        # Level-System
-        level_frame = ctk.CTkFrame(scroll_frame)
-        level_frame.pack(fill='x', pady=10, padx=10)
+Dies optimiert Ihren Lernerfolg und spart Zeit!"""
+        )
 
-        ctk.CTkLabel(
-            level_frame,
-            text="📊 10-Level System",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w"
-        ).pack(pady=(15, 10), padx=20, anchor="w")
+        # === SEKTION 2: 10-Level System ===
+        self._create_help_section(
+            scroll_frame,
+            "📊 Das 10-Level System",
+            """Jede Karte durchläuft 10 Level basierend auf Ihrem Punktestand:
 
-        level_text = """Karten durchlaufen 10 Level basierend auf Ihrem Punktestand:
+Level  | Punkte      | Wiederholungsintervall
+-------|-------------|----------------------
+  1    | 0-10        | 1 Tag (täglich)
+  2    | 11-25       | 2 Tage
+  3    | 26-50       | 4 Tage
+  4    | 51-85       | 7 Tage (wöchentlich)
+  5    | 86-120      | 10 Tage
+  6    | 121-175     | 12 Tage
+  7    | 176-220     | 14 Tage (zweiwöchentlich)
+  8    | 221-285     | 20 Tage
+  9    | 286-350     | 25 Tage
+  10   | 350+        | 30 Tage (monatlich)
 
-Level 1 (0-10 Punkte):       Täglich wiederholen (1 Tag Intervall)
-Level 2 (11-25 Punkte):      Alle 2 Tage
-Level 3 (26-50 Punkte):      Alle 4 Tage
-Level 4 (51-85 Punkte):      Wöchentlich (7 Tage)
-Level 5 (86-120 Punkte):     Alle 10 Tage
-Level 6 (121-175 Punkte):    Alle 12 Tage
-Level 7 (176-220 Punkte):    Zweiwöchentlich (14 Tage)
-Level 8 (221-285 Punkte):    Alle 20 Tage
-Level 9 (286-350 Punkte):    Alle 25 Tage
-Level 10 (350+ Punkte):      Alle 30 Tage
+Je höher das Level, desto besser beherrschen Sie die Karte!
 
-Je höher das Level, desto besser beherrschen Sie die Karte!"""
+Methoden:
+• leitner_system.py → get_card_level(points)
+  Berechnet das Level einer Karte basierend auf den Punkten
 
-        ctk.CTkLabel(
-            level_frame,
-            text=level_text,
-            font=ctk.CTkFont(size=13, family="Courier"),
-            justify="left",
-            anchor="w"
-        ).pack(pady=(0, 15), padx=20, anchor="w")
+• leitner_system.py → get_next_review_interval(level)
+  Gibt das Wiederholungsintervall für ein bestimmtes Level zurück""",
+            use_monospace=True
+        )
 
-        # Punktesystem
-        points_frame = ctk.CTkFrame(scroll_frame)
-        points_frame.pack(fill='x', pady=10, padx=10)
+        # === SEKTION 3: Punktesystem ===
+        self._create_help_section(
+            scroll_frame,
+            "🎯 Das intelligente Punktesystem",
+            """Bei RICHTIGEN Antworten:
+━━━━━━━━━━━━━━━━━━━━━━━━
+Basis-Punkte = Ihre aktuelle Streak (Anzahl richtiger Antworten in Folge)
 
-        ctk.CTkLabel(
-            points_frame,
-            text="🎯 Punktesystem",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w"
-        ).pack(pady=(15, 10), padx=20, anchor="w")
+Diese werden verstärkt durch zwei Multiplikatoren:
 
-        points_text = """Bei richtigen Antworten:
-━━━━━━━━━━━━━━━━━━━━━
-Basis-Punkte = Ihre aktuelle Streak (Anzahl aufeinanderfolgender richtiger Antworten)
-
-Dann werden diese Basis-Punkte mit zwei Multiplikatoren verstärkt:
-
-1. Erfolgsquoten-Multiplikator (basierend auf Ihren letzten 10 Antworten):
-   • 0% Erfolgsquote   → 0× Multiplikator
-   • 50% Erfolgsquote  → 1× Multiplikator (normal)
-   • 85% Erfolgsquote  → 2× Multiplikator
-   • 100% Erfolgsquote → 3× Multiplikator (maximum!)
+1. Erfolgsquoten-Multiplikator (basiert auf letzten 10 Antworten):
+   • 0-49% Erfolgsquote   → 0.0× - 1.0× Multiplikator
+   • 50% Erfolgsquote     → 1.0× Multiplikator (normal)
+   • 70% Erfolgsquote     → 1.5× Multiplikator
+   • 85% Erfolgsquote     → 2.0× Multiplikator
+   • 100% Erfolgsquote    → 3.0× Multiplikator (maximum!)
 
 2. Streak-Bonus (belohnt lange Erfolgsserien):
-   • Streak 1-4:   × 1.0 (kein Bonus)
-   • Streak 5-9:   × 1.5
-   • Streak 10-14: × 2.0
-   • Streak 15-19: × 2.5
-   • Streak 20+:   × 3.0 (maximum!)
+   • Streak 1-4           → ×1.0 (kein Bonus)
+   • Streak 5-9           → ×1.5
+   • Streak 10-14         → ×2.0
+   • Streak 15-19         → ×2.5
+   • Streak 20+           → ×3.0 (maximum!)
 
 Gesamtpunkte = Basis-Punkte × Erfolgsquoten-Multiplikator × Streak-Bonus
 
-Beispiel: Bei Streak 10 und 80% Erfolgsquote:
-→ 10 Basis-Punkte × 1.8 (Erfolgsquote) × 2.0 (Streak) = 36 Punkte!
+Beispiel: Streak 12, Erfolgsquote 80%
+→ 12 × 1.8 × 2.0 = 43 Punkte!
 
 
-Bei falschen Antworten:
-━━━━━━━━━━━━━━━━━━━━━
+Bei FALSCHEN Antworten:
+━━━━━━━━━━━━━━━━━━━━━━━━
 Punktabzug = Fehler-Faktor × Level-Faktor × Streak-Verlust-Faktor
 
-• Fehler-Faktor (basierend auf Gesamtfehleranzahl):
-   1-5 Fehler:   ×1    16-20 Fehler: ×4
-   6-10 Fehler:  ×2    21+ Fehler:   ×5
-   11-15 Fehler: ×3
+• Fehler-Faktor (basiert auf Gesamtfehleranzahl dieser Karte):
+   1-5 Fehler    → ×1.0       16-20 Fehler → ×4.0
+   6-10 Fehler   → ×2.0       21+ Fehler   → ×5.0
+   11-15 Fehler  → ×3.0
 
-• Level-Faktor (je höher das Level, desto größer der Verlust):
-   Level 1-2:   ×1.0 - ×1.25    Level 7-8:  ×2.5 - ×2.75
-   Level 3-4:   ×1.5 - ×1.75    Level 9:    ×3.0
-   Level 5-6:   ×2.0 - ×2.25    Level 10:   ×4.0
+• Level-Faktor (höhere Level = größerer Verlust):
+   Level 1-2   → ×1.0 - ×1.25    Level 7-8  → ×2.5 - ×2.75
+   Level 3-4   → ×1.5 - ×1.75    Level 9    → ×3.0
+   Level 5-6   → ×2.0 - ×2.25    Level 10   → ×4.0
 
-• Streak-Verlust-Faktor (Strafe für unterbrochene Erfolgsserien):
-   Streak < 5:   ×1.0 (keine Extra-Strafe)
-   Streak 5-9:   ×1.5
-   Streak 10-14: ×2.0
-   Streak 15-19: ×3.0
-   Streak 20+:   ×4.0
+• Streak-Verlust-Faktor (Strafe für unterbrochene Serie):
+   Streak < 5    → ×1.0 (keine Extra-Strafe)
+   Streak 5-9    → ×1.5
+   Streak 10-14  → ×2.0
+   Streak 15-19  → ×3.0
+   Streak 20+    → ×4.0
 
-Beispiel: Level 5, Streak 12 verloren, 8 Fehler insgesamt:
-→ 2 × 2.0 × 2.0 = 8 Punkte Abzug"""
+Beispiel: Level 5, Streak 12 verloren, 8 Fehler gesamt
+→ 2.0 × 2.0 × 2.0 = 8 Punkte Abzug
 
-        ctk.CTkLabel(
-            points_frame,
-            text=points_text,
-            font=ctk.CTkFont(size=13, family="Courier"),
-            justify="left",
-            anchor="w"
-        ).pack(pady=(0, 15), padx=20, anchor="w")
+Methoden:
+• leitner_system.py → calculate_points_on_correct(card)
+  Berechnet Punkte für richtige Antworten
 
-        # Wiederholungslogik
-        repeat_frame = ctk.CTkFrame(scroll_frame)
-        repeat_frame.pack(fill='x', pady=10, padx=10)
+• leitner_system.py → calculate_points_on_incorrect(card)
+  Berechnet Punktabzug für falsche Antworten
 
-        ctk.CTkLabel(
-            repeat_frame,
-            text="🔄 Wiederholungslogik",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w"
-        ).pack(pady=(15, 10), padx=20, anchor="w")
+• leitner_system.py → update_card_stats(card, is_correct)
+  Aktualisiert alle Statistiken einer Karte""",
+            use_monospace=True
+        )
 
-        repeat_text = """Wann erscheint eine Karte wieder?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # === SEKTION 4: Wiederholungslogik ===
+        self._create_help_section(
+            scroll_frame,
+            "🔄 Wiederholungslogik & Session-Verhalten",
+            """Wann erscheint eine Karte wieder?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Bei richtiger Antwort (erste Antwort in der Session):
-• Die Karte wird aus der aktuellen Session entfernt
-• Nächstes Review-Datum wird basierend auf dem Level gesetzt
-• Karte erscheint erst wieder am nächsten Review-Datum
+Bei RICHTIGER Antwort (erste Antwort in Session):
+• Karte wird aus der aktuellen Session entfernt
+• Nächstes Review-Datum wird basierend auf Level gesetzt
+• Karte erscheint erst wieder am Review-Datum
+• Punkte werden addiert, Level steigt möglicherweise
 
-Bei falscher Antwort:
+Bei FALSCHER Antwort:
 • Karte wird SOFORT wieder verfügbar (noch am selben Tag!)
-• Karte erscheint 3-5 Positionen später in der aktuellen Session nochmal
+• Karte erscheint 3-5 Positionen später in der Session nochmal
 • Recovery-Modus wird aktiviert
-• Sie können die Karte in der gleichen oder nächsten Session nochmal üben
+• Punkte werden abgezogen, Level sinkt möglicherweise
+• Streak wird auf 0 zurückgesetzt
 
-Spezialfall - Karte nochmal richtig nach vorherigem Fehler:
-• Wenn Sie eine Karte in der Session falsch beantwortet haben und sie
-  später in der gleichen Session richtig beantworten:
-  → +0 Punkte (keine Punktänderung)
+Spezialfall - Nochmal RICHTIG nach vorherigem Fehler:
+• Wenn Sie eine Karte in der Session falsch beantwortet haben
+  und später in derselben Session richtig beantworten:
+  → ±0 Punkte (keine Änderung)
   → Karte wird für diese Session als abgeschlossen markiert
   → Sie können sie in der nächsten Session erneut üben
+  → Verhindert Punkt-Farming durch wiederholtes Üben
 
-Wie werden Karten einsortiert?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Gruppierung nach Fälligkeitsdatum
+Wie werden Karten sortiert?
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Gruppierung nach Fälligkeitsdatum:
    • Überfällige Karten haben höchste Priorität
-   • Innerhalb jedes Datums: zufällige Reihenfolge
+   • Je älter die Überfälligkeit, desto höher die Priorität
+   • Innerhalb eines Datums: zufällige Reihenfolge
 
 2. Innerhalb einer Session:
-   • Falsch beantwortete Karten erscheinen 3-5 Positionen später
-   • So üben Sie schwierige Karten mehrfach, aber nicht sofort hintereinander
+   • Falsch beantwortete Karten werden wieder eingefügt
+   • Position: 3-5 Karten später (verhindert sofortige Wiederholung)
+   • Sorgt für verteilte Übung schwieriger Karten
 
 3. Recovery-Modus nach Fehler:
    • Karte startet mit 1-Tag Intervall
-   • Bei jeder richtigen Antwort verdoppelt sich das Intervall
-   • Bis das normale Level-Intervall wieder erreicht ist"""
+   • Bei jeder richtigen Antwort verdoppelt sich das Intervall:
+     1 Tag → 2 Tage → 4 Tage → usw.
+   • Bis das normale Level-Intervall wieder erreicht ist
+   • Graduelle Rehabilitation statt abrupter Levelsprünge
+
+Methoden:
+• leitner_system.py → get_due_cards(date, category_filter)
+  Ermittelt alle fälligen Karten für ein Datum
+
+• leitner_system.py → sort_cards_by_priority(cards)
+  Sortiert Karten nach Priorität (Überfälligkeit, Level)
+
+• leitner_system.py → reinsert_card_to_session(card, position_offset)
+  Fügt falsch beantwortete Karte wieder in Session ein
+
+• leitner_system.py → activate_recovery_mode(card)
+  Aktiviert Recovery-Modus für eine Karte nach Fehler""",
+            use_monospace=True
+        )
+
+        # === SEKTION 5: Session starten ===
+        self._create_help_section(
+            scroll_frame,
+            "▶️ Session starten & durchführen",
+            """So führen Sie eine effektive Lern-Session durch:
+
+1. Session vorbereiten:
+   • Wählen Sie eine oder mehrere Kategorien aus
+   • Legen Sie die Anzahl der Karten fest (empfohlen: 10-20)
+   • System wählt automatisch die fälligsten Karten aus
+
+2. Während der Session:
+   • Lesen Sie die Frage aufmerksam
+   • Denken Sie über die Antwort nach
+   • Klicken Sie auf "Antwort zeigen"
+   • Bewerten Sie ehrlich: Richtig oder Falsch
+   • System aktualisiert automatisch Punkte und Level
+
+3. Session-Statistiken:
+   • Live-Fortschritt: X von Y Karten abgeschlossen
+   • Aktuelle Streak anzeigen
+   • Erfolgsquote in dieser Session
+   • Geschätzte verbleibende Zeit
+
+4. Session beenden:
+   • Automatisch nach allen Karten
+   • Oder manuell mit "Session beenden"
+   • Zusammenfassung mit Statistiken wird angezeigt
+   • Alle Fortschritte werden gespeichert
+
+Methoden:
+• main.py → start_learning_session(category, num_cards)
+  Initialisiert und startet eine neue Lernsession
+
+• main.py → show_card(card)
+  Zeigt die aktuelle Karte (Frage/Antwort)
+
+• main.py → handle_card_response(is_correct)
+  Verarbeitet die Antwort des Benutzers
+
+• main.py → show_session_summary(stats)
+  Zeigt die Session-Zusammenfassung am Ende""",
+            use_monospace=True
+        )
+
+        # === SEKTION 6: Tipps ===
+        self._create_help_section(
+            scroll_frame,
+            "💡 Tipps für effektives Lernen",
+            """1. Ehrlich bleiben:
+   Bewerten Sie Ihre Antworten ehrlich. Nur so funktioniert das System optimal.
+   Selbstbetrug schadet nur Ihrem Lernerfolg!
+
+2. Regelmäßigkeit über Intensität:
+   Lieber täglich 15 Minuten als einmal pro Woche 2 Stunden.
+   Konstanz ist der Schlüssel zum Langzeiterfolg.
+
+3. Nicht aufgeben bei schwierigen Karten:
+   Wenn eine Karte oft falsch ist, ist das normal!
+   Das System sorgt automatisch dafür, dass Sie sie häufiger üben.
+
+4. Optimale Session-Größe:
+   Anfänger: 10-15 Karten
+   Fortgeschrittene: 20-30 Karten
+   Profis: 30-50 Karten
+   (Passen Sie an Ihre verfügbare Zeit an)
+
+5. Bilder optimal nutzen:
+   Nutzen Sie Bilder für komplexe Konzepte, Diagramme und Grafiken.
+   Visuelle Anker verbessern die Merkfähigkeit um bis zu 60%!
+
+6. Kategorien strategisch nutzen:
+   Organisieren Sie Karten nach Themen oder Schwierigkeit.
+   Lernen Sie verwandte Themen in derselben Session.
+
+7. Pausen einplanen:
+   Nach 45-60 Minuten: 10-15 Minuten Pause
+   Hält die Konzentration hoch und verbessert Retention.
+
+8. Nicht zu viele neue Karten auf einmal:
+   Maximum 10-20 neue Karten pro Tag empfohlen.
+   Zu viele neue Karten führen zu Überforderung."""
+        )
+
+        self._create_back_button(scroll_frame, self.show_help)
+
+    def help_categories(self):
+        """Zeigt detaillierte Hilfe zu Kategorien."""
+        self._clear_content_frame()
+
+        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
+        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Header
+        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#4ae290", "#35bd6f"))
+        header_frame.pack(fill='x', pady=(0, 25))
 
         ctk.CTkLabel(
-            repeat_frame,
-            text=repeat_text,
-            font=ctk.CTkFont(size=13, family="Courier"),
-            justify="left",
+            header_frame,
+            text="📁 Kategorien verwalten",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="white"
+        ).pack(pady=20)
+
+        # === SEKTION 1: Übersicht ===
+        self._create_help_section(
+            scroll_frame,
+            "📋 Was sind Kategorien?",
+            """Kategorien helfen Ihnen, Ihre Karteikarten thematisch zu organisieren.
+Sie können Karten nach Fächern, Themen oder Schwierigkeitsgraden sortieren.
+
+Vorteile:
+• Gezielte Lern-Sessions für spezifische Themen
+• Bessere Übersicht bei vielen Karten
+• Flexible Filterung beim Lernen
+• Statistiken pro Kategorie"""
+        )
+
+        # === SEKTION 2: Kategorie erstellen ===
+        self._create_help_section(
+            scroll_frame,
+            "➕ Neue Kategorie erstellen",
+            """So erstellen Sie eine neue Kategorie:
+
+1. Navigieren Sie zum Kategorien-Bereich
+   Menü → Kategorien verwalten
+
+2. Klicken Sie auf "Neue Kategorie"
+
+3. Geben Sie die Kategorieinformationen ein:
+   • Name: Eindeutiger Name (z.B. "Mathematik", "Geschichte")
+   • Beschreibung (optional): Kurze Beschreibung des Inhalts
+   • Farbe (optional): Visuelle Kennzeichnung
+
+4. Klicken Sie auf "Erstellen"
+
+Die neue Kategorie ist sofort verfügbar!
+
+Methoden:
+• data_manager.py → create_category(name, description, color)
+  Erstellt eine neue Kategorie in der Datenbank
+
+• data_manager.py → validate_category_name(name)
+  Prüft, ob der Kategoriename gültig und einzigartig ist
+
+• main.py → show_create_category_dialog()
+  Zeigt den Dialog zur Kategorieerstellung""",
+            use_monospace=True
+        )
+
+        # === SEKTION 3: Kategorie bearbeiten ===
+        self._create_help_section(
+            scroll_frame,
+            "✏️ Kategorie bearbeiten",
+            """So bearbeiten Sie eine bestehende Kategorie:
+
+1. Öffnen Sie die Kategorieübersicht
+   Menü → Kategorien verwalten
+
+2. Wählen Sie die zu bearbeitende Kategorie aus
+
+3. Klicken Sie auf das Bearbeiten-Symbol (✏️)
+
+4. Ändern Sie die gewünschten Informationen:
+   • Name umbenennen
+   • Beschreibung aktualisieren
+   • Farbe ändern
+
+5. Klicken Sie auf "Speichern"
+
+Wichtig:
+• Alle Karten in dieser Kategorie behalten ihre Zuordnung
+• Die Änderungen werden sofort übernommen
+• Statistiken bleiben erhalten
+
+Methoden:
+• data_manager.py → update_category(category_id, updates)
+  Aktualisiert Kategorieinformationen
+
+• data_manager.py → get_category_stats(category_id)
+  Ruft Statistiken einer Kategorie ab
+
+• main.py → show_edit_category_dialog(category)
+  Zeigt den Bearbeitungsdialog""",
+            use_monospace=True
+        )
+
+        # === SEKTION 4: Kategorie löschen ===
+        self._create_help_section(
+            scroll_frame,
+            "🗑️ Kategorie löschen",
+            """So löschen Sie eine Kategorie:
+
+1. Öffnen Sie die Kategorieübersicht
+   Menü → Kategorien verwalten
+
+2. Wählen Sie die zu löschende Kategorie
+
+3. Klicken Sie auf das Löschen-Symbol (🗑️)
+
+4. Bestätigen Sie den Löschvorgang
+
+Wichtig - Was passiert mit den Karten?
+Sie haben zwei Optionen:
+
+Option A: Kategorie-Zuordnung entfernen
+• Karten bleiben erhalten
+• Karten werden als "Nicht kategorisiert" markiert
+• Alle Lernfortschritte bleiben erhalten
+• Empfohlen, wenn Sie die Karten behalten möchten
+
+Option B: Karten mit löschen
+• Kategorie UND alle enthaltenen Karten werden gelöscht
+• Lernfortschritte gehen verloren
+• Nicht rückgängig zu machen!
+• Nur wählen, wenn Sie die Karten wirklich nicht mehr brauchen
+
+Sicherheitsabfrage:
+• Bei mehr als 10 Karten: Zusätzliche Bestätigung erforderlich
+• Kategoriename muss zur Bestätigung eingegeben werden
+• Verhindert versehentliches Löschen
+
+Methoden:
+• data_manager.py → delete_category(category_id, delete_cards)
+  Löscht Kategorie (und optional die Karten)
+
+• data_manager.py → unassign_cards_from_category(category_id)
+  Entfernt Kategorie-Zuordnung von allen Karten
+
+• data_manager.py → get_category_card_count(category_id)
+  Ermittelt Anzahl der Karten in einer Kategorie
+
+• main.py → show_delete_category_confirmation(category)
+  Zeigt Bestätigungsdialog vor dem Löschen""",
+            use_monospace=True
+        )
+
+        # === SEKTION 5: Kategorien organisieren ===
+        self._create_help_section(
+            scroll_frame,
+            "🗂️ Kategorien organisieren & Tipps",
+            """Best Practices für Kategorien:
+
+1. Klare Namensgebung:
+   ✓ Gut: "Französisch - Vokabeln A1"
+   ✗ Schlecht: "FR Vok"
+
+   ✓ Gut: "Mathematik - Analysis"
+   ✗ Schlecht: "Mathe"
+
+2. Hierarchische Struktur (via Namenskonvention):
+   • Hauptthema - Unterthema - Details
+   • Beispiel: "Biologie - Zellbiologie - Mitose"
+   • Ermöglicht spätere Filterung und Sortierung
+
+3. Farbcodierung nutzen:
+   • Fächer: Unterschiedliche Farben pro Fach
+   • Schwierigkeit: Grün (leicht), Gelb (mittel), Rot (schwer)
+   • Status: Blau (in Bearbeitung), Grün (abgeschlossen)
+
+4. Nicht zu viele Kategorien:
+   • Ideal: 5-15 Hauptkategorien
+   • Zu viele Kategorien → Unübersichtlich
+   • Zu wenige Kategorien → Verlust der Struktur
+
+5. Regelmäßig aufräumen:
+   • Leere Kategorien löschen
+   • Ähnliche Kategorien zusammenführen
+   • Veraltete Kategorien archivieren
+
+6. Kategoriestatistiken nutzen:
+   • Sehen Sie, welche Kategorien Sie vernachlässigen
+   • Identifizieren Sie Ihre Stärken und Schwächen
+   • Planen Sie Sessions basierend auf Kategorien
+
+Methoden:
+• data_manager.py → get_all_categories(sort_by)
+  Ruft alle Kategorien sortiert ab
+
+• data_manager.py → merge_categories(source_id, target_id)
+  Führt zwei Kategorien zusammen
+
+• data_manager.py → get_category_statistics()
+  Erstellt Übersicht über alle Kategorien mit Statistiken""",
+            use_monospace=True
+        )
+
+        self._create_back_button(scroll_frame, self.show_help)
+
+    def help_cards(self):
+        """Zeigt detaillierte Hilfe zu Karteikarten."""
+        self._clear_content_frame()
+
+        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
+        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Header
+        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#e2a04a", "#bd8235"))
+        header_frame.pack(fill='x', pady=(0, 25))
+
+        ctk.CTkLabel(
+            header_frame,
+            text="🗂️ Karteikarten verwalten",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="white"
+        ).pack(pady=20)
+
+        # === SEKTION 1: Übersicht ===
+        self._create_help_section(
+            scroll_frame,
+            "📋 Was sind Karteikarten?",
+            """Karteikarten sind das Herzstück Ihres Lernsystems.
+Jede Karte besteht aus einer Frage (Vorderseite) und einer Antwort (Rückseite).
+
+Komponenten einer Karte:
+• Frage: Was Sie lernen möchten
+• Antwort: Die richtige Lösung
+• Kategorie: Thematische Zuordnung
+• Bild (optional): Visuelle Unterstützung
+• Statistiken: Punkte, Level, Erfolgsquote
+• Metadaten: Erstelldatum, letzte Wiederholung, nächste Fälligkeit"""
+        )
+
+        # === SEKTION 2: Karte erstellen ===
+        self._create_help_section(
+            scroll_frame,
+            "➕ Neue Karte erstellen",
+            """So erstellen Sie eine neue Karteikarte:
+
+1. Navigieren Sie zum Karten-Bereich
+   Menü → Karten verwalten → Neue Karte
+
+2. Füllen Sie die Pflichtfelder aus:
+   • Frage: Formulieren Sie eine klare, präzise Frage
+   • Antwort: Geben Sie die vollständige Antwort an
+   • Kategorie: Wählen Sie eine passende Kategorie
+
+3. Optional - Erweiterte Optionen:
+   • Bild hinzufügen: Klicken Sie auf "Bild auswählen"
+     - Unterstützte Formate: JPG, PNG, GIF
+     - Empfohlene Größe: max. 800x600 Pixel
+   • Tags hinzufügen: Für zusätzliche Filterung
+   • Schwierigkeitsgrad: Legen Sie initiale Schwierigkeit fest
+
+4. Klicken Sie auf "Karte erstellen"
+
+Die neue Karte ist sofort lernbereit und startet auf Level 1!
+
+Tipps für gute Karten:
+• Fragen kurz und präzise formulieren
+• Antworten vollständig, aber kompakt halten
+• Eine Karte = Ein Konzept (nicht mehrere Fragen mischen)
+• Bei komplexen Themen: Mehrere Karten erstellen
+
+Methoden:
+• data_manager.py → create_flashcard(question, answer, category_id, image_path)
+  Erstellt eine neue Karteikarte in der Datenbank
+
+• data_manager.py → validate_flashcard_data(question, answer)
+  Prüft, ob Frage und Antwort gültig sind
+
+• data_manager.py → process_and_store_image(image_path)
+  Verarbeitet und speichert das Kartenbild
+
+• main.py → show_create_card_dialog()
+  Zeigt den Dialog zur Kartenerstellung""",
+            use_monospace=True
+        )
+
+        # === SEKTION 3: Karte bearbeiten ===
+        self._create_help_section(
+            scroll_frame,
+            "✏️ Karte bearbeiten",
+            """So bearbeiten Sie eine bestehende Karte:
+
+1. Öffnen Sie die Kartenübersicht
+   Menü → Karten verwalten
+
+2. Finden Sie die zu bearbeitende Karte:
+   • Über Suchfunktion
+   • Über Kategoriefilter
+   • Über Sortierung (nach Datum, Level, etc.)
+
+3. Klicken Sie auf das Bearbeiten-Symbol (✏️)
+
+4. Ändern Sie die gewünschten Felder:
+   • Frage korrigieren/verbessern
+   • Antwort aktualisieren
+   • Kategorie wechseln
+   • Bild hinzufügen/ändern/entfernen
+   • Tags anpassen
+
+5. Optional - Statistiken zurücksetzen:
+   ⚠️ Vorsicht: Löscht Lernfortschritt dieser Karte!
+   Nur verwenden, wenn Sie die Karte komplett neu lernen möchten
+
+6. Klicken Sie auf "Speichern"
+
+Wichtig:
+• Änderungen an Frage/Antwort beeinflussen nicht den Lernfortschritt
+• Kategorie-Wechsel behält alle Statistiken
+• Bild-Änderungen sind jederzeit möglich
+
+Methoden:
+• data_manager.py → update_flashcard(card_id, updates)
+  Aktualisiert Karteninformationen
+
+• data_manager.py → reset_card_statistics(card_id)
+  Setzt Lernfortschritt einer Karte zurück
+
+• data_manager.py → update_card_image(card_id, image_path)
+  Aktualisiert das Kartenbild
+
+• main.py → show_edit_card_dialog(card)
+  Zeigt den Bearbeitungsdialog
+
+• main.py → show_card_statistics(card)
+  Zeigt detaillierte Statistiken einer Karte""",
+            use_monospace=True
+        )
+
+        # === SEKTION 4: Karte löschen ===
+        self._create_help_section(
+            scroll_frame,
+            "🗑️ Karte löschen",
+            """So löschen Sie eine Karteikarte:
+
+1. Öffnen Sie die Kartenübersicht
+   Menü → Karten verwalten
+
+2. Finden Sie die zu löschende Karte
+
+3. Klicken Sie auf das Löschen-Symbol (🗑️)
+
+4. Bestätigen Sie den Löschvorgang
+
+⚠️ Wichtige Hinweise:
+• Gelöschte Karten können NICHT wiederhergestellt werden!
+• Alle Lernstatistiken gehen verloren
+• Bilder werden ebenfalls gelöscht
+
+Alternativen zum Löschen:
+• Karte deaktivieren: Vorübergehend aus dem Lernsystem entfernen
+• Karte archivieren: Für zukünftige Referenz behalten
+• Statistiken zurücksetzen: Karte neu lernen
+
+Massen-Löschung:
+• Mehrere Karten gleichzeitig auswählen
+• "Ausgewählte löschen" klicken
+• Zusätzliche Bestätigung bei mehr als 5 Karten
+
+Methoden:
+• data_manager.py → delete_flashcard(card_id)
+  Löscht eine Karte permanent
+
+• data_manager.py → delete_multiple_cards(card_ids)
+  Löscht mehrere Karten auf einmal
+
+• data_manager.py → archive_flashcard(card_id)
+  Archiviert eine Karte (Alternative zum Löschen)
+
+• data_manager.py → deactivate_flashcard(card_id)
+  Deaktiviert eine Karte temporär
+
+• main.py → show_delete_card_confirmation(card)
+  Zeigt Bestätigungsdialog vor dem Löschen""",
+            use_monospace=True
+        )
+
+        # === SEKTION 5: Karten suchen & filtern ===
+        self._create_help_section(
+            scroll_frame,
+            "🔍 Karten suchen & filtern",
+            """Effiziente Kartenverwaltung bei vielen Karten:
+
+1. Suchfunktion:
+   • Volltext-Suche in Fragen und Antworten
+   • Suchfeld: Geben Sie Suchbegriff ein
+   • Ergebnisse werden live gefiltert
+   • Groß-/Kleinschreibung wird ignoriert
+
+2. Filter-Optionen:
+   • Nach Kategorie filtern
+   • Nach Level filtern (1-10)
+   • Nach Fälligkeit filtern:
+     - Überfällig
+     - Heute fällig
+     - Bald fällig
+     - Zukünftig fällig
+   • Nach Erfolgsquote filtern
+
+3. Sortier-Optionen:
+   • Nach Erstelldatum (neueste/älteste zuerst)
+   • Nach Level (niedrigste/höchste zuerst)
+   • Nach Punkten
+   • Nach nächster Fälligkeit
+   • Alphabetisch nach Frage
+
+4. Erweiterte Suche:
+   • Kombination mehrerer Filter
+   • Gespeicherte Filterprofile
+   • Export der Suchergebnisse
+
+Tastenkombinationen:
+• Strg+F: Suchfeld fokussieren
+• Strg+K: Filter-Optionen öffnen
+• Strg+R: Filter zurücksetzen
+
+Methoden:
+• data_manager.py → search_flashcards(query, filters)
+  Durchsucht Karten nach Suchkriterien
+
+• data_manager.py → filter_cards_by_category(category_id)
+  Filtert Karten nach Kategorie
+
+• data_manager.py → filter_cards_by_level(min_level, max_level)
+  Filtert Karten nach Level-Bereich
+
+• data_manager.py → filter_cards_by_due_date(date_range)
+  Filtert nach Fälligkeitsdatum
+
+• data_manager.py → sort_cards(cards, sort_by, order)
+  Sortiert Kartenliste nach Kriterium
+
+• main.py → apply_card_filters(filters)
+  Wendet ausgewählte Filter an""",
+            use_monospace=True
+        )
+
+        # === SEKTION 6: Karten importieren/exportieren ===
+        self._create_help_section(
+            scroll_frame,
+            "📤 Import & Export",
+            """Karten zwischen Systemen übertragen:
+
+EXPORT:
+━━━━━━
+1. Wählen Sie zu exportierende Karten:
+   • Alle Karten
+   • Nur bestimmte Kategorie
+   • Nur ausgewählte Karten
+
+2. Wählen Sie Export-Format:
+   • CSV: Für Excel, Google Sheets
+   • JSON: Für Backup und Übertragung
+   • Anki: Kompatibel mit Anki-Software
+   • TXT: Einfaches Textformat
+
+3. Wählen Sie Export-Optionen:
+   • Mit Bildern (erhöht Dateigröße)
+   • Mit Statistiken (für Backup)
+   • Nur Frage/Antwort (für Austausch)
+
+4. Klicken Sie auf "Exportieren"
+   Datei wird im Download-Ordner gespeichert
+
+
+IMPORT:
+━━━━━━
+1. Klicken Sie auf "Karten importieren"
+
+2. Wählen Sie Datei aus:
+   • Unterstützte Formate: CSV, JSON, Anki, TXT
+   • Max. Dateigröße: 50 MB
+
+3. Ordnen Sie Spalten zu:
+   • Welche Spalte enthält Fragen?
+   • Welche Spalte enthält Antworten?
+   • Optionale Spalten: Kategorie, Tags, Bilder
+
+4. Wählen Sie Import-Optionen:
+   • Duplikate überspringen
+   • Duplikate aktualisieren
+   • Alle importieren (auch Duplikate)
+
+5. Vorschau prüfen:
+   • Zeigt erste 10 Karten zur Kontrolle
+   • Prüfen Sie Zuordnung und Formatierung
+
+6. Klicken Sie auf "Import starten"
+
+Tipps:
+• Erstellen Sie regelmäßig Backups (JSON-Export)
+• Testen Sie Import erst mit wenigen Karten
+• Prüfen Sie importierte Karten auf Formatierungsfehler
+
+Methoden:
+• export_import.py → export_flashcards(cards, format, options)
+  Exportiert Karten in gewähltes Format
+
+• export_import.py → import_flashcards(file_path, mapping, options)
+  Importiert Karten aus Datei
+
+• export_import.py → detect_file_format(file_path)
+  Erkennt automatisch Dateiformat
+
+• export_import.py → validate_import_data(data)
+  Prüft Import-Daten auf Gültigkeit
+
+• export_import.py → create_backup(include_images, include_stats)
+  Erstellt vollständiges System-Backup""",
+            use_monospace=True
+        )
+
+        # === SEKTION 7: Tipps ===
+        self._create_help_section(
+            scroll_frame,
+            "💡 Best Practices für Karteikarten",
+            """1. Atomic Principle (Eine Karte = Ein Konzept):
+   ✓ Gut: "Was ist die Hauptstadt von Frankreich?" → "Paris"
+   ✗ Schlecht: "Nenne 3 Hauptstädte europäischer Länder" → "Paris, Berlin, Rom"
+
+2. Klare, eindeutige Fragen:
+   ✓ Gut: "In welchem Jahr fand die Französische Revolution statt?"
+   ✗ Schlecht: "Revolution?" (zu vague)
+
+3. Vollständige, aber kompakte Antworten:
+   ✓ Gut: "1789 - Beginn der Französischen Revolution"
+   ✗ Schlecht: "1789" (zu kurz, ohne Kontext)
+   ✗ Schlecht: 3 Absätze Text (zu lang)
+
+4. Bilder strategisch einsetzen:
+   • Für Diagramme und Grafiken
+   • Für geografische Karten
+   • Für visuelle Konzepte (Anatomie, Architektur)
+   • NICHT für reinen Text (schlechte Lesbarkeit)
+
+5. Kontextinformationen nutzen:
+   • Fügen Sie Hinweise in Klammern hinzu
+   • Beispiel: "Wer schrieb 'Faust'? (deutscher Dichter)" → "Goethe"
+
+6. Regelmäßig aktualisieren:
+   • Korrigieren Sie Fehler sofort
+   • Verbessern Sie unklare Formulierungen
+   • Aktualisieren Sie veraltete Informationen
+
+7. Qualität über Quantität:
+   • 50 gut formulierte Karten > 200 schlecht formulierte
+   • Nehmen Sie sich Zeit für jede Karte
+   • Überprüfen Sie Karten nach dem Erstellen
+
+8. Mnemonics und Eselsbrücken:
+   • Fügen Sie Gedächtnisstützen in Antworten hinzu
+   • Beispiel: "Nie Ohne Seife Waschen" für Himmelsrichtungen"""
+        )
+
+        self._create_back_button(scroll_frame, self.show_help)
+
+    def _create_help_section(self, parent, title, content, use_monospace=False):
+        """Hilfsmethode zum Erstellen einer formatierten Hilfe-Sektion."""
+        section_frame = ctk.CTkFrame(parent, corner_radius=12)
+        section_frame.pack(fill='x', pady=(0, 20), padx=10)
+
+        # Titel
+        ctk.CTkLabel(
+            section_frame,
+            text=title,
+            font=ctk.CTkFont(size=18, weight="bold"),
             anchor="w"
-        ).pack(pady=(0, 15), padx=20, anchor="w")
+        ).pack(pady=(20, 12), padx=25, anchor="w")
 
-        # Tipps
-        tips_frame = ctk.CTkFrame(scroll_frame)
-        tips_frame.pack(fill='x', pady=10, padx=10)
-
+        # Inhalt
+        font_family = "Courier" if use_monospace else None
         ctk.CTkLabel(
-            tips_frame,
-            text="💡 Tipps für effektives Lernen",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w"
-        ).pack(pady=(15, 10), padx=20, anchor="w")
-
-        tips_text = """1. Ehrlich bleiben: Bewerten Sie Ihre Antworten ehrlich. Nur so funktioniert
-   das System optimal.
-
-2. Regelmäßigkeit: Lernen Sie täglich, auch wenn es nur 10-15 Minuten sind.
-   Konstanz schlägt Intensität!
-
-3. Nicht aufgeben: Wenn eine Karte oft falsch ist, ist das normal! Das System
-   sorgt dafür, dass Sie sie häufiger üben.
-
-4. Session-Größe: Starten Sie mit 10-20 Karten pro Session. Sie können die
-   Anzahl später anpassen.
-
-5. Bilder nutzen: Nutzen Sie die Bildfunktion für komplexe Inhalte. Visuelle
-   Anker verbessern die Merkfähigkeit erheblich!
-
-6. Kategorien: Organisieren Sie Ihre Karten in sinnvolle Kategorien für
-   gezieltes Lernen."""
-
-        ctk.CTkLabel(
-            tips_frame,
-            text=tips_text,
-            font=ctk.CTkFont(size=13),
+            section_frame,
+            text=content,
+            font=ctk.CTkFont(size=13, family=font_family),
             justify="left",
             anchor="w",
-            wraplength=800
-        ).pack(pady=(0, 15), padx=20, anchor="w")
+            wraplength=900
+        ).pack(pady=(0, 20), padx=25, anchor="w")
 
-        # Zurück-Button
+        return section_frame
+
+    def _create_back_button(self, parent, command):
+        """Hilfsmethode zum Erstellen eines Zurück-Buttons."""
         ctk.CTkButton(
-            scroll_frame,
-            text="← Zurück zum Hauptmenü",
-            command=self.create_main_menu,
-            width=200,
-            height=40,
-            font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(pady=30)
+            parent,
+            text="← Zurück zur Hilfe-Übersicht",
+            command=command,
+            width=240,
+            height=42,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            corner_radius=10,
+            fg_color=("gray70", "gray30"),
+            hover_color=("gray60", "gray40")
+        ).pack(pady=(30, 20))
 
     # -----------------------------------------------------------------------------------
     # KATEGORIEN & KARTENVERWALTUNG
