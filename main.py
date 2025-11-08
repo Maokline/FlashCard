@@ -7452,56 +7452,93 @@ class FlashcardApp:
             ctk.CTkLabel(level_row, text=multiplier, font=ctk.CTkFont(size=12)).grid(row=0, column=4)
 
         # --- Reihe 2: Filter für die Kartenauswahl ---
-        filter_container = ctk.CTkFrame(main_container)
+        filter_container = ctk.CTkFrame(main_container, fg_color="#f8fafc", corner_radius=12)
         filter_container.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
-        
-        ctk.CTkLabel(filter_container, text="Kartenauswahl:", 
-                    font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
 
-        cat_frame = ctk.CTkFrame(filter_container)
-        cat_frame.pack(fill='x', pady=5)
-        ctk.CTkLabel(cat_frame, text="Kategorie:", font=ctk.CTkFont(size=12)).pack(side='left', padx=5)
+        # Moderne Header-Sektion
+        header_frame = ctk.CTkFrame(filter_container, fg_color="transparent")
+        header_frame.pack(fill='x', pady=(15, 10), padx=15)
+        ctk.CTkLabel(header_frame, text="🎯 Kartenauswahl",
+                    font=ctk.CTkFont(size=18, weight="bold"),
+                    text_color="#1e293b").pack(side='left')
+        ctk.CTkLabel(header_frame, text="Wähle deine Lernkarten aus",
+                    font=ctk.CTkFont(size=12),
+                    text_color="#64748b").pack(side='left', padx=(10, 0))
+
+        # Moderne Filter-Sektion mit Cards
+        filters_grid = ctk.CTkFrame(filter_container, fg_color="transparent")
+        filters_grid.pack(fill='x', pady=5, padx=15)
+
+        # Kategorie & Unterkategorie Row
+        cat_frame = ctk.CTkFrame(filters_grid, fg_color="#ffffff", corner_radius=8)
+        cat_frame.pack(fill='x', pady=5, ipady=8)
+
+        ctk.CTkLabel(cat_frame, text="📁 Kategorie:",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#475569").pack(side='left', padx=(15, 5))
         self.category_var = tk.StringVar(value="Alle")
         categories = ["Alle"] + sorted(self.data_manager.categories.keys())
-        category_menu = ctk.CTkOptionMenu(cat_frame, variable=self.category_var, 
-                                        values=categories, width=150, 
+        category_menu = ctk.CTkOptionMenu(cat_frame, variable=self.category_var,
+                                        values=categories, width=180, height=32,
+                                        fg_color="#3b82f6", button_color="#2563eb",
+                                        button_hover_color="#1d4ed8",
                                         command=self.update_leitner_subcategories)
         category_menu.pack(side='left', padx=5)
-        
-        ctk.CTkLabel(cat_frame, text="Unterkategorie:", font=ctk.CTkFont(size=12)).pack(side='left', padx=5)
+
+        ctk.CTkLabel(cat_frame, text="📂 Unterkategorie:",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#475569").pack(side='left', padx=(20, 5))
         self.subcategory_var = tk.StringVar(value="Alle")
-        self.subcategory_menu = ctk.CTkOptionMenu(cat_frame, variable=self.subcategory_var, 
-                                                values=["Alle"], width=150, 
+        self.subcategory_menu = ctk.CTkOptionMenu(cat_frame, variable=self.subcategory_var,
+                                                values=["Alle"], width=180, height=32,
+                                                fg_color="#3b82f6", button_color="#2563eb",
+                                                button_hover_color="#1d4ed8",
                                                 command=lambda x: self.preview_leitner_cards())
         self.subcategory_menu.pack(side='left', padx=5)
 
-        level_filter_frame = ctk.CTkFrame(filter_container)
-        level_filter_frame.pack(fill='x', pady=5)
-        ctk.CTkLabel(level_filter_frame, text="Level:", font=ctk.CTkFont(size=12)).pack(side='left', padx=5)
+        # Level & Fälligkeit Row
+        level_filter_frame = ctk.CTkFrame(filters_grid, fg_color="#ffffff", corner_radius=8)
+        level_filter_frame.pack(fill='x', pady=5, ipady=8)
+
+        ctk.CTkLabel(level_filter_frame, text="📊 Level:",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#475569").pack(side='left', padx=(15, 5))
         self.level_var = tk.StringVar(value="Alle")
         # AKTUALISIERT: 10 Level statt 7
         level_options = ["Alle"] + [f"{i}. {name}" for i, (name, _, _, _, _) in enumerate(rules_info[:10], 1) if name]
-        level_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.level_var, 
-                                    values=level_options, width=150, 
+        level_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.level_var,
+                                    values=level_options, width=180, height=32,
+                                    fg_color="#8b5cf6", button_color="#7c3aed",
+                                    button_hover_color="#6d28d9",
                                     command=lambda x: self.preview_leitner_cards())
         level_menu.pack(side='left', padx=5)
-        
-        ctk.CTkLabel(level_filter_frame, text="Fälligkeit:", font=ctk.CTkFont(size=12)).pack(side='left', padx=20)
+
+        ctk.CTkLabel(level_filter_frame, text="📅 Fälligkeit:",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#475569").pack(side='left', padx=(20, 5))
         self.due_var = tk.StringVar(value="Nur fällige Karten")
         due_options = ["Nur fällige Karten", "Alle Karten", "In 7 Tagen fällig",
                     "In 14 Tagen fällig", "In 30 Tagen fällig"]
-        due_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.due_var, 
-                                    values=due_options, width=180, 
+        due_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.due_var,
+                                    values=due_options, width=200, height=32,
+                                    fg_color="#10b981", button_color="#059669",
+                                    button_hover_color="#047857",
                                     command=lambda x: self.preview_leitner_cards())
         due_menu.pack(side='left', padx=5)
 
-        cards_frame = ctk.CTkFrame(filter_container)
-        cards_frame.pack(fill='x', pady=5)
-        ctk.CTkLabel(cards_frame, text="Karten pro Session:", 
-                    font=ctk.CTkFont(size=12)).pack(side='left', padx=5)
+        # Karten pro Session Row
+        cards_frame = ctk.CTkFrame(filters_grid, fg_color="#ffffff", corner_radius=8)
+        cards_frame.pack(fill='x', pady=5, ipady=8)
+
+        ctk.CTkLabel(cards_frame, text="🎴 Karten pro Session:",
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#475569").pack(side='left', padx=(15, 5))
         self.cards_per_session_var = tk.StringVar(value="20")
-        cards_menu = ctk.CTkOptionMenu(cards_frame, variable=self.cards_per_session_var, 
-                                    values=["10", "20", "30", "40", "50", "100"], width=80)
+        cards_menu = ctk.CTkOptionMenu(cards_frame, variable=self.cards_per_session_var,
+                                    values=["10", "20", "30", "40", "50", "100"],
+                                    width=100, height=32,
+                                    fg_color="#f59e0b", button_color="#d97706",
+                                    button_hover_color="#b45309")
         cards_menu.pack(side='left', padx=5)
 
         # --- Reihe 3: Container für die Kartenvorschau (expandiert) ---
@@ -7509,27 +7546,46 @@ class FlashcardApp:
         self.cards_container.grid(row=3, column=0, sticky="nsew", padx=10, pady=5)
         
         # --- Reihe 4: Container für die unteren Buttons ---
-        bottom_container = ctk.CTkFrame(main_container)
+        bottom_container = ctk.CTkFrame(main_container, fg_color="transparent")
         bottom_container.grid(row=4, column=0, sticky="ew", padx=10, pady=10)
 
-        self.card_count_label = ctk.CTkLabel(bottom_container, 
-                                            text="Filter anwenden, um Karten anzuzeigen.", 
-                                            font=ctk.CTkFont(size=12))
-        self.card_count_label.pack(side='left', padx=10)
+        self.card_count_label = ctk.CTkLabel(bottom_container,
+                                            text="Filter anwenden, um Karten anzuzeigen.",
+                                            font=ctk.CTkFont(size=13, weight="bold"),
+                                            text_color="#475569")
+        self.card_count_label.pack(side='left', padx=15)
 
-        button_frame = ctk.CTkFrame(bottom_container)
-        button_frame.pack(side='right')
+        button_frame = ctk.CTkFrame(bottom_container, fg_color="transparent")
+        button_frame.pack(side='right', padx=15)
 
-        preview_btn = ctk.CTkButton(button_frame, text="Vorschau", 
-                                command=self.preview_leitner_cards, height=35)
-        preview_btn.pack(side='left', padx=10)
+        preview_btn = ctk.CTkButton(button_frame, text="🔍 Vorschau aktualisieren",
+                                command=self.preview_leitner_cards,
+                                height=40, width=180, corner_radius=8,
+                                font=ctk.CTkFont(size=13, weight="bold"),
+                                fg_color="#6366f1", hover_color="#4f46e5")
+        preview_btn.pack(side='left', padx=5)
 
-        start_btn = ctk.CTkButton(button_frame, text="Lernsession starten", 
-                                command=self.start_leitner_session, height=35)
-        start_btn.pack(side='left', padx=10)
+        start_btn = ctk.CTkButton(button_frame, text="🚀 Lernsession starten",
+                                command=self.start_leitner_session,
+                                height=40, width=200, corner_radius=8,
+                                font=ctk.CTkFont(size=14, weight="bold"),
+                                fg_color="#10b981", hover_color="#059669")
+        start_btn.pack(side='left', padx=5)
         
         self.preview_leitner_cards()
         self.highlight_active_button('Lernsession')
+
+    def _create_info_badge(self, parent, icon, text, color, column):
+        """Erstellt ein modernes Info-Badge für die Kartenvorschau."""
+        badge_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        badge_frame.pack(side='left', padx=4)
+
+        ctk.CTkLabel(badge_frame, text=icon,
+                    font=ctk.CTkFont(size=12)).pack(side='left', padx=(0, 4))
+        ctk.CTkLabel(badge_frame, text=text,
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color=color).pack(side='left')
+
     def _toggle_leitner_rules(self):
         """Schaltet die Sichtbarkeit des Rahmens mit den Leitner-System-Regeln um."""
         if not hasattr(self, 'leitner_rules_frame') or not self.leitner_rules_frame.winfo_exists():
@@ -7634,28 +7690,63 @@ class FlashcardApp:
             ctk.CTkLabel(header_info_frame, text="Kategorie", font=ctk.CTkFont(size=10, weight="bold")).grid(row=0, column=4)
 
             for idx, card in enumerate(display_cards):
-                card_frame = ctk.CTkFrame(self.cards_container)
-                card_frame.pack(fill='x', pady=5, padx=5)
-            
-                status = self.leitner_system.get_card_status(card)
-                
-                header_frame = ctk.CTkFrame(card_frame)
-                header_frame.pack(fill="x", padx=5, pady=5)
-                
-                priority_color, priority_text = "#28a745", "Normal"
-                if status['days_overdue'] > 0:
-                    priority_color, priority_text = ("#dc3545", f"Hohe Priorität (+{status['days_overdue']} T.)") if status['days_overdue'] >= 7 else (("#fd7e14", f"Mittel (+{status['days_overdue']} T.)") if status['days_overdue'] >= 3 else ("#ffc107", f"Niedrig (+{status['days_overdue']} T.)"))
-                elif status['days_until_review'] > 0:
-                    priority_color, priority_text = "#007bff", f"In {status['days_until_review']} Tagen fällig"
-                
-                ctk.CTkLabel(header_frame, text=f"{idx+1}. {card.question}", font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(side='left', padx=5, fill='x', expand=True)
-                ctk.CTkLabel(header_frame, text=priority_text, font=ctk.CTkFont(size=10), text_color=priority_color).pack(side='right', padx=5)
-                if hasattr(card, 'in_recovery_mode') and card.in_recovery_mode:
-                    ctk.CTkLabel(header_frame, text=f"Wiederaufbau: {card.recovery_interval}d", font=ctk.CTkFont(size=10), text_color="#FF9800").pack(side='right', padx=5)
+                # Moderne Card mit hellem Design
+                card_frame = ctk.CTkFrame(self.cards_container, fg_color="#ffffff",
+                                         corner_radius=10, border_width=2, border_color="#e2e8f0")
+                card_frame.pack(fill='x', pady=6, padx=5)
 
-                info_frame = ctk.CTkFrame(card_frame)
-                info_frame.pack(fill='x', padx=5, pady=(0, 5))
-                info_frame.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+                status = self.leitner_system.get_card_status(card)
+
+                # Header mit Priorität
+                header_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+                header_frame.pack(fill="x", padx=12, pady=(10, 5))
+
+                # Prioritäts-Badge
+                priority_color, priority_text, priority_bg = "#10b981", "✓ Normal", "#d1fae5"
+                if status['days_overdue'] > 0:
+                    if status['days_overdue'] >= 7:
+                        priority_color, priority_text, priority_bg = "#ef4444", f"⚠️ Hohe Priorität (+{status['days_overdue']} T.)", "#fee2e2"
+                    elif status['days_overdue'] >= 3:
+                        priority_color, priority_text, priority_bg = "#f97316", f"⚡ Mittel (+{status['days_overdue']} T.)", "#ffedd5"
+                    else:
+                        priority_color, priority_text, priority_bg = "#eab308", f"● Niedrig (+{status['days_overdue']} T.)", "#fef3c7"
+                elif status['days_until_review'] > 0:
+                    priority_color, priority_text, priority_bg = "#3b82f6", f"📅 In {status['days_until_review']} Tagen", "#dbeafe"
+
+                # Karten-Nummer und Frage
+                question_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
+                question_frame.pack(side='left', fill='x', expand=True)
+
+                ctk.CTkLabel(question_frame, text=f"#{idx+1}",
+                           font=ctk.CTkFont(size=11, weight="bold"),
+                           text_color="#94a3b8",
+                           width=40).pack(side='left', padx=(0, 8))
+
+                ctk.CTkLabel(question_frame, text=card.question,
+                           font=ctk.CTkFont(size=13, weight="bold"),
+                           text_color="#1e293b", anchor="w").pack(side='left', fill='x', expand=True)
+
+                # Prioritäts-Badge rechts
+                badge_frame = ctk.CTkFrame(header_frame, fg_color=priority_bg, corner_radius=6)
+                badge_frame.pack(side='right', padx=5)
+                ctk.CTkLabel(badge_frame, text=priority_text,
+                           font=ctk.CTkFont(size=11, weight="bold"),
+                           text_color=priority_color).pack(padx=10, pady=4)
+
+                # Recovery-Mode Badge
+                if hasattr(card, 'in_recovery_mode') and card.in_recovery_mode:
+                    recovery_badge = ctk.CTkFrame(header_frame, fg_color="#fff7ed", corner_radius=6)
+                    recovery_badge.pack(side='right', padx=5)
+                    ctk.CTkLabel(recovery_badge, text=f"🔄 Wiederaufbau: {card.recovery_interval}d",
+                               font=ctk.CTkFont(size=11, weight="bold"),
+                               text_color="#f97316").pack(padx=10, pady=4)
+
+                # Info-Grid mit modernen Badges
+                info_container = ctk.CTkFrame(card_frame, fg_color="#f8fafc", corner_radius=6)
+                info_container.pack(fill='x', padx=12, pady=(5, 10))
+
+                info_grid = ctk.CTkFrame(info_container, fg_color="transparent")
+                info_grid.pack(fill='x', padx=8, pady=8)
 
                 level_name = self.leitner_system.get_level(status['points'])
                 leitner_card_obj = self.leitner_system.cards.get(card.card_id)
@@ -7664,19 +7755,37 @@ class FlashcardApp:
                 streak_bonus = leitner_card_obj._get_streak_bonus() if leitner_card_obj else 1.0
                 pos_streak = leitner_card_obj.positive_streak if leitner_card_obj else 0
 
-                ctk.CTkLabel(info_frame, text=f"{level_name}", font=ctk.CTkFont(size=10)).grid(row=0, column=0)
-                ctk.CTkLabel(info_frame, text=f"{status['points']} Pkt", font=ctk.CTkFont(size=10)).grid(row=0, column=1)
-                ctk.CTkLabel(info_frame, text=f"{success_rate:.0%}", font=ctk.CTkFont(size=10)).grid(row=0, column=2)
-                ctk.CTkLabel(info_frame, text=f"×{exp_mult:.2f}", font=ctk.CTkFont(size=10)).grid(row=0, column=3)
-                ctk.CTkLabel(info_frame, text=f"Streak: {pos_streak} (×{streak_bonus:.1f})", font=ctk.CTkFont(size=10)).grid(row=0, column=4)
-                
-                date_frame = ctk.CTkFrame(card_frame)
-                date_frame.pack(fill='x', padx=5, pady=(0, 5))
+                # Level Badge
+                self._create_info_badge(info_grid, "📊", level_name, "#8b5cf6", 0)
+                # Punkte Badge
+                self._create_info_badge(info_grid, "⭐", f"{status['points']} Pkt", "#3b82f6", 1)
+                # Erfolgsquote Badge
+                success_color = "#10b981" if success_rate >= 0.7 else ("#f59e0b" if success_rate >= 0.4 else "#ef4444")
+                self._create_info_badge(info_grid, "📈", f"{success_rate:.0%}", success_color, 2)
+                # Multiplikator Badge
+                self._create_info_badge(info_grid, "✨", f"×{exp_mult:.2f}", "#f59e0b", 3)
+                # Streak Badge
+                self._create_info_badge(info_grid, "🔥", f"{pos_streak} (×{streak_bonus:.1f})", "#ef4444", 4)
+
+                # Datum-Info
+                date_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+                date_frame.pack(fill='x', padx=12, pady=(0, 10))
                 next_review_date = status['next_review_date']
                 date_str = next_review_date.strftime("%d.%m.%Y") if isinstance(next_review_date, (datetime.date, datetime.datetime)) else str(next_review_date)
-                date_text = f"Fällig: {date_str} (Überfällig)" if status['days_overdue'] > 0 else (f"Fällig: {date_str} (Heute)" if status['days_overdue'] == 0 else f"Nächste Wiederholung: {date_str} (in {status['days_until_review']} Tagen)")
-                date_color = "#dc3545" if status['days_overdue'] > 0 else ("#fd7e14" if status['days_overdue'] == 0 else "#28a745")
-                ctk.CTkLabel(date_frame, text=date_text, font=ctk.CTkFont(size=10), text_color=date_color).pack(side='left', padx=5)
+
+                if status['days_overdue'] > 0:
+                    date_text = f"📌 Fällig: {date_str} (Überfällig)"
+                    date_color = "#ef4444"
+                elif status['days_overdue'] == 0:
+                    date_text = f"📌 Fällig: {date_str} (Heute)"
+                    date_color = "#f97316"
+                else:
+                    date_text = f"📅 Nächste Wiederholung: {date_str} (in {status['days_until_review']} Tagen)"
+                    date_color = "#10b981"
+
+                ctk.CTkLabel(date_frame, text=date_text,
+                           font=ctk.CTkFont(size=11),
+                           text_color=date_color).pack(side='left', padx=5)
 
         except Exception as e:
             logging.error(f"Fehler bei der Leitner-Kartenvorschau: {e}", exc_info=True)
@@ -8980,31 +9089,36 @@ class FlashcardApp:
         # Aktuelle Karte laden (NICHT pop, da das in handle_leitner_correct/incorrect gemacht wird)
         self.current_card = self.cards_to_learn[0]
 
-        # Session beenden Button (fixiert unten links)
+        # Session beenden Button (fixiert unten links) - Modernisiert
         fixed_bottom_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         fixed_bottom_frame.pack(side='bottom', fill='x', padx=20, pady=10)
 
         ctk.CTkButton(
             fixed_bottom_frame,
-            text="Session beenden",
+            text="🚪 Session beenden",
             command=self.end_leitner_session,
-            width=150,
-            height=30,
-            fg_color="#95a5a6",
-            hover_color="#7f8c8d",
-            font=ctk.CTkFont(size=12)
+            width=180,
+            height=38,
+            corner_radius=8,
+            fg_color="#64748b",
+            hover_color="#475569",
+            font=ctk.CTkFont(size=13, weight="bold")
         ).pack(side='left')
 
-        # Hauptcontainer mit Scrollbar
+        # Hauptcontainer mit hellerem Hintergrund
         scroll_container = ctk.CTkScrollableFrame(
             self.content_frame,
-            fg_color=self.appearance_settings.text_bg_color  # FIXED: bg_color → text_bg_color
+            fg_color="#f8fafc"  # Heller, moderner Hintergrund
         )
         scroll_container.pack(fill='both', expand=True, padx=20, pady=(20, 10))
-        
-        # Session-Statistik oben
-        stats_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
-        stats_frame.pack(fill='x', pady=(0, 20))
+
+        # Moderne Session-Statistik mit Cards
+        stats_container = ctk.CTkFrame(scroll_container, fg_color="#ffffff",
+                                      corner_radius=12, border_width=2, border_color="#e2e8f0")
+        stats_container.pack(fill='x', pady=(0, 20))
+
+        stats_inner = ctk.CTkFrame(stats_container, fg_color="transparent")
+        stats_inner.pack(fill='x', padx=15, pady=12)
 
         # Berechne Statistiken
         total = self.total_cards_in_session
@@ -9014,56 +9128,67 @@ class FlashcardApp:
         # Erfolgsquote berechnen
         if hasattr(self, 'total_answers') and self.total_answers > 0:
             success_rate = (self.correct_answers / self.total_answers) * 100
-            success_text = f"Erfolgsquote: {success_rate:.0f}%"
+            success_text = f"{success_rate:.0f}%"
+            success_color = "#10b981" if success_rate >= 70 else ("#f59e0b" if success_rate >= 40 else "#ef4444")
         else:
-            success_text = "Erfolgsquote: -"
+            success_text = "-"
+            success_color = "#64748b"
 
-        # Links: Karten-Fortschritt
-        progress_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"Karte {current_card_num} von {total}",
-            font=ctk.CTkFont(size=13, weight="bold")
-        )
-        progress_label.pack(side='left', padx=10)
+        # Fortschritts-Card
+        progress_card = ctk.CTkFrame(stats_inner, fg_color="#dbeafe", corner_radius=8)
+        progress_card.pack(side='left', padx=5, ipadx=12, ipady=8)
+        ctk.CTkLabel(progress_card, text="📚 Fortschritt",
+                    font=ctk.CTkFont(size=10),
+                    text_color="#1e40af").pack()
+        ctk.CTkLabel(progress_card, text=f"{current_card_num}/{total}",
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color="#1e3a8a").pack()
 
-        # Mitte: Wiederholungen
-        retry_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"Wdh: {retry_count}",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color="#1e3a8a"
-        )
-        retry_label.pack(side='left', padx=10)
+        # Wiederholungen-Card
+        retry_card = ctk.CTkFrame(stats_inner, fg_color="#fef3c7", corner_radius=8)
+        retry_card.pack(side='left', padx=5, ipadx=12, ipady=8)
+        ctk.CTkLabel(retry_card, text="🔄 Wiederholungen",
+                    font=ctk.CTkFont(size=10),
+                    text_color="#92400e").pack()
+        ctk.CTkLabel(retry_card, text=str(retry_count),
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color="#78350f").pack()
 
-        # Rechts: Erfolgsquote
-        success_label = ctk.CTkLabel(
-            stats_frame,
-            text=success_text,
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color="#1e3a8a"
-        )
-        success_label.pack(side='right', padx=10)
+        # Erfolgsquote-Card
+        success_card = ctk.CTkFrame(stats_inner, fg_color="#d1fae5", corner_radius=8)
+        success_card.pack(side='right', padx=5, ipadx=12, ipady=8)
+        ctk.CTkLabel(success_card, text="📈 Erfolgsquote",
+                    font=ctk.CTkFont(size=10),
+                    text_color="#065f46").pack()
+        ctk.CTkLabel(success_card, text=success_text,
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color=success_color).pack()
         
-        # === FRAGE CONTAINER ===
-        question_container = ctk.CTkFrame(scroll_container)
+        # === FRAGE CONTAINER === (Modernes Design)
+        question_container = ctk.CTkFrame(scroll_container, fg_color="#ffffff",
+                                         corner_radius=12, border_width=2, border_color="#bfdbfe")
         question_container.pack(fill='both', pady=10)
-        
-        # Frage-Header
+
+        # Frage-Header mit Icon
+        header_frame = ctk.CTkFrame(question_container, fg_color="#dbeafe", corner_radius=10)
+        header_frame.pack(fill='x', padx=2, pady=2)
+
         ctk.CTkLabel(
-            question_container,
-            text="FRAGE",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#3498db"
-        ).pack(pady=(10, 5))
-        
+            header_frame,
+            text="❓ FRAGE",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#1e3a8a"
+        ).pack(pady=12)
+
         # Frage-Text
         question_label = ctk.CTkLabel(
             question_container,
             text=self.current_card.question,
-            font=ctk.CTkFont(size=18),
-            wraplength=600
+            font=ctk.CTkFont(size=20, weight="bold"),
+            wraplength=650,
+            text_color="#1e293b"
         )
-        question_label.pack(pady=10, padx=20)
+        question_label.pack(pady=20, padx=25)
         
         # Frage-Bild (NEU!)
         if hasattr(self.current_card, 'question_image_path') and self.current_card.question_image_path:
@@ -9074,43 +9199,51 @@ class FlashcardApp:
                 label_text="Bild zur Frage:"
             )
         
-        # "Antwort zeigen" Button
+        # "Antwort zeigen" Button (Modern)
         show_answer_btn = ctk.CTkButton(
             scroll_container,
-            text="Antwort anzeigen",
+            text="👁️ Antwort anzeigen",
             command=lambda: self._show_answer_and_rating(
-                answer_container, 
-                show_answer_btn, 
+                answer_container,
+                show_answer_btn,
                 rating_frame
             ),
-            width=200,
-            height=40,
-            font=ctk.CTkFont(size=14, weight="bold")
+            width=250,
+            height=50,
+            corner_radius=10,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color="#6366f1",
+            hover_color="#4f46e5"
         )
-        show_answer_btn.pack(pady=20)
+        show_answer_btn.pack(pady=25)
         
-        # === ANTWORT CONTAINER (initial versteckt) ===
-        answer_container = ctk.CTkFrame(scroll_container)
+        # === ANTWORT CONTAINER (initial versteckt) === (Modernes Design)
+        answer_container = ctk.CTkFrame(scroll_container, fg_color="#ffffff",
+                                       corner_radius=12, border_width=2, border_color="#86efac")
         answer_container.pack(fill='both', pady=10)
         answer_container.pack_forget()
-        
-        # Antwort-Header
+
+        # Antwort-Header mit Icon
+        answer_header_frame = ctk.CTkFrame(answer_container, fg_color="#d1fae5", corner_radius=10)
+        answer_header_frame.pack(fill='x', padx=2, pady=2)
+
         ctk.CTkLabel(
-            answer_container,
-            text="ANTWORT",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#2ecc71"
-        ).pack(pady=(10, 5))
-        
+            answer_header_frame,
+            text="✅ ANTWORT",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#065f46"
+        ).pack(pady=12)
+
         # Antwort-Text
         if self.current_card.answer:
             answer_label = ctk.CTkLabel(
                 answer_container,
                 text=self.current_card.answer,
-                font=ctk.CTkFont(size=18),
-                wraplength=600
+                font=ctk.CTkFont(size=20, weight="bold"),
+                wraplength=650,
+                text_color="#1e293b"
             )
-            answer_label.pack(pady=10, padx=20)
+            answer_label.pack(pady=20, padx=25)
         
         # Antwort-Bild
         if hasattr(self.current_card, 'image_path') and self.current_card.image_path:
@@ -9121,36 +9254,46 @@ class FlashcardApp:
                 label_text="Bild zur Antwort:"
             )
         
-        # === BEWERTUNGS-FRAME (initial versteckt) ===
-        rating_frame = ctk.CTkFrame(scroll_container)
-        rating_frame.pack(pady=20)
+        # === BEWERTUNGS-FRAME (initial versteckt) === (Modernes Design)
+        rating_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        rating_frame.pack(pady=25)
         rating_frame.pack_forget()
-        
-        # Bewertungs-Buttons
+
+        # Bewertungs-Buttons mit modernem Design
         button_container = ctk.CTkFrame(rating_frame, fg_color="transparent")
         button_container.pack(pady=10)
-        
-        ctk.CTkButton(
+
+        # Richtig Button
+        correct_btn = ctk.CTkButton(
             button_container,
             text="✓ Richtig",
             command=lambda: self._handle_correct_answer(),
-            width=150,
-            height=50,
-            fg_color="#2ecc71",
-            hover_color="#27ae60",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(side='left', padx=10)
+            width=180,
+            height=60,
+            corner_radius=12,
+            fg_color="#10b981",
+            hover_color="#059669",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            border_width=2,
+            border_color="#6ee7b7"
+        )
+        correct_btn.pack(side='left', padx=15)
 
-        ctk.CTkButton(
+        # Falsch Button
+        incorrect_btn = ctk.CTkButton(
             button_container,
             text="✗ Falsch",
             command=lambda: self._handle_incorrect_answer(),
-            width=150,
-            height=50,
-            fg_color="#e74c3c",
-            hover_color="#c0392b",
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).pack(side='left', padx=10)
+            width=180,
+            height=60,
+            corner_radius=12,
+            fg_color="#ef4444",
+            hover_color="#dc2626",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            border_width=2,
+            border_color="#fca5a5"
+        )
+        incorrect_btn.pack(side='left', padx=15)
 
 
     def _display_image(self, parent_frame, image_path, max_size=(500, 300), label_text=None):
