@@ -33,6 +33,7 @@ class LeitnerCard:
         self.positive_streak = 0
         self.negative_streak = 0
         self.total_incorrect_count = 0  # NEU: Zählt alle falschen Antworten gesamt
+        self.consecutive_incorrect_sessions = 0  # NEU: Zählt aufeinanderfolgende Sessions mit falschen Antworten
         self.last_reviewed = datetime.datetime.now()
         self.next_review_date = datetime.datetime.now()
         self.review_history = []
@@ -204,15 +205,18 @@ class LeitnerCard:
     def answer_correct(self, was_wrong_in_session=False):
         """
         Verarbeitet eine richtige Antwort mit exponentiellen Multiplikatoren und Streak-Bonus.
-        
+
         ✓ OPTIMIERT: Session-basierte Punktevergabe
         - Wenn Karte in dieser Session bereits falsch war: +0 Punkte
         - Karte wird für Session abgeschlossen, taucht aber in nächster Session wieder auf
-        
+
+        ✓ NEU: Reset des Session-Counters
+        - Nur bei ERSTER richtiger Antwort (was_wrong_in_session=False) wird consecutive_incorrect_sessions zurückgesetzt
+
         Args:
             was_wrong_in_session (bool): True wenn die Karte bereits in dieser Session falsch war
-        
-        Returns: 
+
+        Returns:
             tuple: (points_added, base_points, success_multiplier, streak_bonus)
         """
         # ✓ NEU: Session-basierte Logik
@@ -221,19 +225,21 @@ class LeitnerCard:
             self._update_success_rate(True)
             self.repetitions += 1
             self.success_count += 1
-            
+
             # Setze nächstes Review-Datum auf HEUTE für erneutes Üben in nächster Session
             self.next_review_date = datetime.datetime.now()
-            
+
             logging.info(f"Card {self.card_id} RICHTIG (nach Fehler in Session). "
-                        f"+0 Punkte | Session abgeschlossen | Verfügbar für nächste Session")
-            
+                        f"+0 Punkte | Session abgeschlossen | Verfügbar für nächste Session | "
+                        f"Consecutive Sessions Counter bleibt bei {self.consecutive_incorrect_sessions}")
+
             return (0, 0, 0.0, 0.0)  # Keine Punkte, Karte für Session abgeschlossen
-        
+
         # ⚡ NORMALE VERARBEITUNG (wie bisher)
         self.positive_streak += 1
         self.negative_streak = 0
         self.consecutive_correct += 1
+        self.consecutive_incorrect_sessions = 0  # ✓ NEU: Reset bei erster richtiger Antwort
         self._update_success_rate(True)
 
         # Basis-Punkte
@@ -288,31 +294,37 @@ class LeitnerCard:
     def answer_incorrect(self):
         """
         Verarbeitet eine falsche Antwort mit optimiertem Punktabzug-System.
-        
+
         ✓ OPTIMIERT: Datum-Reset auf HEUTE
         - Ermöglicht mehrfaches Üben am selben Tag
         - Karte taucht in weiteren Sessions am gleichen Tag wieder auf
-        
-        Returns: 
-            tuple: (points_subtracted, error_factor, level_factor, streak_loss_factor)
+
+        ✓ NEU: Eskalierendes Strafsystem über Sessions
+        - Session 1 falsch: -1 × Faktoren
+        - Session 2 falsch: -2 × Faktoren
+        - Session 3 falsch: -3 × Faktoren, etc.
+
+        Returns:
+            tuple: (points_subtracted, consecutive_sessions_factor, level_factor, streak_loss_factor)
         """
         # Speichere den alten Streak für Strafberechnung
         broken_streak = self.positive_streak
-        
+
         # Update Streaks und Zähler
         self.negative_streak += 1
         self.positive_streak = 0
         self.consecutive_correct = 0
         self.total_incorrect_count += 1  # Gesamtzähler erhöhen
+        self.consecutive_incorrect_sessions += 1  # ✓ NEU: Session-Counter erhöhen
         self._update_success_rate(False)
 
-        # Berechne die drei Faktoren
-        error_factor = self._get_total_errors_factor()
+        # Berechne die Faktoren
+        consecutive_sessions_factor = self.consecutive_incorrect_sessions  # ✓ NEU: Verwende Session-Counter statt error_factor
         level_factor = self._get_level_penalty_factor()
         streak_loss_factor = self._get_streak_loss_penalty(broken_streak)
-        
-        # Punktabzug = -(Fehler-Faktor × Level-Faktor × Streak-Verlust-Faktor)
-        points_to_subtract = int(error_factor * level_factor * streak_loss_factor)
+
+        # Punktabzug = -(Consecutive-Sessions × Level-Faktor × Streak-Verlust-Faktor)
+        points_to_subtract = int(consecutive_sessions_factor * level_factor * streak_loss_factor)
         self.points = max(0, self.points - points_to_subtract)
         
         self._update_level()
@@ -332,21 +344,23 @@ class LeitnerCard:
             'success_rate_after': self.success_rate,
             'broken_streak': broken_streak,
             'total_incorrect': self.total_incorrect_count,
-            'error_factor': error_factor,
+            'consecutive_incorrect_sessions': self.consecutive_incorrect_sessions,  # ✓ NEU
+            'consecutive_sessions_factor': consecutive_sessions_factor,  # ✓ NEU
             'level_factor': level_factor,
             'streak_loss_factor': streak_loss_factor,
             'in_recovery_mode': True
         })
-        
+
         logging.info(f"Card {self.card_id} INCORRECT. "
                     f"Success Rate: {self.success_rate:.2%}, "
                     f"Total Errors: {self.total_incorrect_count}, "
+                    f"Consecutive Incorrect Sessions: {self.consecutive_incorrect_sessions}, "
                     f"Broken Streak: {broken_streak}, "
-                    f"Factors: {error_factor} × {level_factor} × {streak_loss_factor}, "
+                    f"Factors: {consecutive_sessions_factor} × {level_factor} × {streak_loss_factor}, "
                     f"Points: -{points_to_subtract} -> {self.points} (Level {self.level}) | "
                     f"✓ Verfügbar für nächste Session HEUTE")
 
-        return points_to_subtract, error_factor, level_factor, streak_loss_factor
+        return points_to_subtract, consecutive_sessions_factor, level_factor, streak_loss_factor
 
     def _update_level(self):
         """
@@ -464,6 +478,7 @@ class LeitnerSystem:
             'positive_streak': card.positive_streak,
             'negative_streak': card.negative_streak,
             'total_incorrect_count': card.total_incorrect_count,  # NEU
+            'consecutive_incorrect_sessions': card.consecutive_incorrect_sessions,  # ✓ NEU
             'success_rate': card.success_rate,
             'in_recovery_mode': card.in_recovery_mode,
             'recovery_interval': card.recovery_interval,
@@ -578,6 +593,7 @@ class LeitnerSystem:
             leitner_card.positive_streak = getattr(card_data, 'leitner_positive_streak', 0)
             leitner_card.negative_streak = getattr(card_data, 'leitner_negative_streak', 0)
             leitner_card.total_incorrect_count = getattr(card_data, 'leitner_total_incorrect_count', 0)  # NEU
+            leitner_card.consecutive_incorrect_sessions = getattr(card_data, 'leitner_consecutive_incorrect_sessions', 0)  # ✓ NEU
             leitner_card.in_recovery_mode = getattr(card_data, 'leitner_in_recovery_mode', False)
             leitner_card.recovery_interval = getattr(card_data, 'leitner_recovery_interval', 1)
             leitner_card.last_reviewed = self._parse_datetime(
@@ -617,6 +633,7 @@ class LeitnerSystem:
             card_data.leitner_positive_streak = leitner_card.positive_streak
             card_data.leitner_negative_streak = leitner_card.negative_streak
             card_data.leitner_total_incorrect_count = leitner_card.total_incorrect_count  # NEU
+            card_data.leitner_consecutive_incorrect_sessions = leitner_card.consecutive_incorrect_sessions  # ✓ NEU
             card_data.leitner_in_recovery_mode = leitner_card.in_recovery_mode
             card_data.leitner_recovery_interval = leitner_card.recovery_interval
             card_data.leitner_last_reviewed = leitner_card.last_reviewed.isoformat()
