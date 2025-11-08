@@ -11978,37 +11978,27 @@ class FlashcardApp:
         ).pack(pady=(25, 10))
 
     def help_weekly_calendar(self):
-        """Zeigt detaillierte Hilfe zum Wochenkalender."""
-        self._clear_content_frame()
+        """Zeigt detaillierte Hilfe zum Wochenkalender mit moderner interaktiver Navigation."""
+        sections = [
+            {
+                'id': 'overview',
+                'icon': '📋',
+                'title': 'Übersicht',
+                'content': """Der Wochenkalender hilft Ihnen, Ihre Lernziele zu planen und Ihren Fortschritt zu verfolgen.
+Er zeigt Ihnen auf einen Blick, welche Aufgaben heute anstehen und wie Ihre Woche aussieht.
 
-        # Scrollable Frame
-        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
-        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
-
-        # Header
-        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#4a90e2", "#357abd"))
-        header_frame.pack(fill='x', pady=(0, 25))
-
-        ctk.CTkLabel(
-            header_frame,
-            text="📅 Wochenkalender",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="white"
-        ).pack(pady=20)
-
-        # === SEKTION 1: Übersicht ===
-        self._create_help_section(
-            scroll_frame,
-            "📋 Übersicht",
-            """Der Wochenkalender hilft Ihnen, Ihre Lernziele zu planen und Ihren Fortschritt zu verfolgen.
-Er zeigt Ihnen auf einen Blick, welche Aufgaben heute anstehen und wie Ihre Woche aussieht."""
-        )
-
-        # === SEKTION 2: Tagesansicht ===
-        self._create_help_section(
-            scroll_frame,
-            "☀️ Tagesansicht",
-            """Funktionen der Tagesansicht:
+Hauptfunktionen:
+• Tagesansicht für den aktuellen Tag
+• Wochenübersicht für die kommenden 7 Tage
+• Fälligkeitsstatistiken und Workload-Verteilung
+• Direkter Zugriff auf Lernsessions""",
+                'use_monospace': False
+            },
+            {
+                'id': 'today',
+                'icon': '☀️',
+                'title': 'Tagesansicht',
+                'content': """Funktionen der Tagesansicht:
 
 • Aktuelle Aufgaben: Zeigt alle für heute fälligen Karteikarten
 • Fälligkeitsstatistik: Übersicht über Karten nach Priorität
@@ -12021,14 +12011,13 @@ Er zeigt Ihnen auf einen Blick, welche Aufgaben heute anstehen und wie Ihre Woch
 
 Methode: calendar_ui_modern.py → update_today_view()
 Diese Methode lädt die aktuellen Daten und aktualisiert die Tagesansicht.""",
-            use_monospace=True
-        )
-
-        # === SEKTION 3: Wochenübersicht ===
-        self._create_help_section(
-            scroll_frame,
-            "📊 Wochenübersicht",
-            """Die Wochenübersicht zeigt:
+                'use_monospace': True
+            },
+            {
+                'id': 'week',
+                'icon': '📊',
+                'title': 'Wochenübersicht',
+                'content': """Die Wochenübersicht zeigt:
 
 • 7-Tage-Kalender: Montag bis Sonntag mit täglichen Aufgaben
 • Farbcodierung:
@@ -12049,14 +12038,13 @@ Methoden:
 
 • calendar_ui_modern.py → show_day_details(date)
   Zeigt detaillierte Informationen für einen ausgewählten Tag""",
-            use_monospace=True
-        )
-
-        # === SEKTION 4: Praktische Tipps ===
-        self._create_help_section(
-            scroll_frame,
-            "💡 Tipps & Best Practices",
-            """1. Tägliche Routine etablieren:
+                'use_monospace': True
+            },
+            {
+                'id': 'tips',
+                'icon': '💡',
+                'title': 'Tipps & Best Practices',
+                'content': """1. Tägliche Routine etablieren:
    Schauen Sie jeden Morgen in die Tagesansicht, um Ihren Tag zu planen
 
 2. Vorausplanen:
@@ -12069,49 +12057,49 @@ Methoden:
    Überfällige Karten (rot) sollten immer zuerst bearbeitet werden
 
 5. Workload beachten:
-   Vermeiden Sie es, zu viele neue Karten an einem Tag zu starten"""
+   Vermeiden Sie es, zu viele neue Karten an einem Tag zu starten
+
+6. Tagesdetails nutzen:
+   Klicken Sie auf einzelne Tage, um detaillierte Informationen zu sehen""",
+                'use_monospace': False
+            }
+        ]
+
+        self._create_modern_help_page(
+            title="Wochenkalender",
+            icon="📅",
+            color=("#4a90e2", "#357abd"),
+            sections=sections
         )
 
-        # Zurück-Button
-        self._create_back_button(scroll_frame, self.show_help)
-
     def help_leitner_session(self):
-        """Zeigt detaillierte Hilfe zur Leitner Session."""
-        self._clear_content_frame()
-
-        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
-        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
-
-        # Header
-        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#e24a4a", "#bd3535"))
-        header_frame.pack(fill='x', pady=(0, 25))
-
-        ctk.CTkLabel(
-            header_frame,
-            text="🎯 Leitner Session",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="white"
-        ).pack(pady=20)
-
-        # === SEKTION 1: Das Leitner-System ===
-        self._create_help_section(
-            scroll_frame,
-            "📚 Was ist das Leitner-System?",
-            """Das Leitner-System ist eine wissenschaftlich fundierte Lernmethode, die auf dem Prinzip
+        """Zeigt detaillierte Hilfe zur Leitner Session mit moderner interaktiver Navigation."""
+        sections = [
+            {
+                'id': 'about',
+                'icon': '📚',
+                'title': 'Was ist das Leitner-System?',
+                'content': """Das Leitner-System ist eine wissenschaftlich fundierte Lernmethode, die auf dem Prinzip
 der verteilten Wiederholung (Spaced Repetition) basiert.
 
 Kernprinzip:
 Karten, die Sie gut beherrschen, werden seltener wiederholt.
 Karten, die Sie noch lernen, erscheinen häufiger.
 
-Dies optimiert Ihren Lernerfolg und spart Zeit!"""
-        )
+Dies optimiert Ihren Lernerfolg und spart Zeit!
 
-        # === SEKTION 2: 10-Level System ===
-        self._create_help_section(
-            scroll_frame,
-            "📊 Das 10-Level System",
-            """Jede Karte durchläuft 10 Level basierend auf Ihrem Punktestand:
+Vorteile:
+• Wissenschaftlich belegt: Bis zu 80% bessere Langzeit-Retention
+• Zeiteffizient: Konzentration auf schwierige Karten
+• Automatische Anpassung: System passt sich Ihrem Fortschritt an
+• Motivierend: Sichtbarer Fortschritt durch Level-System""",
+                'use_monospace': False
+            },
+            {
+                'id': 'levels',
+                'icon': '📊',
+                'title': 'Das 10-Level System',
+                'content': """Jede Karte durchläuft 10 Level basierend auf Ihrem Punktestand:
 
 Level  | Punkte      | Wiederholungsintervall
 -------|-------------|----------------------
@@ -12134,14 +12122,13 @@ Methoden:
 
 • leitner_system.py → get_next_review_interval(level)
   Gibt das Wiederholungsintervall für ein bestimmtes Level zurück""",
-            use_monospace=True
-        )
-
-        # === SEKTION 3: Punktesystem ===
-        self._create_help_section(
-            scroll_frame,
-            "🎯 Das intelligente Punktesystem",
-            """Bei RICHTIGEN Antworten:
+                'use_monospace': True
+            },
+            {
+                'id': 'points',
+                'icon': '🎯',
+                'title': 'Das intelligente Punktesystem',
+                'content': """Bei RICHTIGEN Antworten:
 ━━━━━━━━━━━━━━━━━━━━━━━━
 Basis-Punkte = Ihre aktuelle Streak (Anzahl richtiger Antworten in Folge)
 
@@ -12200,14 +12187,13 @@ Methoden:
 
 • leitner_system.py → update_card_stats(card, is_correct)
   Aktualisiert alle Statistiken einer Karte""",
-            use_monospace=True
-        )
-
-        # === SEKTION 4: Wiederholungslogik ===
-        self._create_help_section(
-            scroll_frame,
-            "🔄 Wiederholungslogik & Session-Verhalten",
-            """Wann erscheint eine Karte wieder?
+                'use_monospace': True
+            },
+            {
+                'id': 'logic',
+                'icon': '🔄',
+                'title': 'Wiederholungslogik & Session-Verhalten',
+                'content': """Wann erscheint eine Karte wieder?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Bei RICHTIGER Antwort (erste Antwort in Session):
@@ -12264,14 +12250,13 @@ Methoden:
 
 • leitner_system.py → activate_recovery_mode(card)
   Aktiviert Recovery-Modus für eine Karte nach Fehler""",
-            use_monospace=True
-        )
-
-        # === SEKTION 5: Session starten ===
-        self._create_help_section(
-            scroll_frame,
-            "▶️ Session starten & durchführen",
-            """So führen Sie eine effektive Lern-Session durch:
+                'use_monospace': True
+            },
+            {
+                'id': 'session',
+                'icon': '▶️',
+                'title': 'Session starten & durchführen',
+                'content': """So führen Sie eine effektive Lern-Session durch:
 
 1. Session vorbereiten:
    • Wählen Sie eine oder mehrere Kategorien aus
@@ -12309,14 +12294,13 @@ Methoden:
 
 • main.py → show_session_summary(stats)
   Zeigt die Session-Zusammenfassung am Ende""",
-            use_monospace=True
-        )
-
-        # === SEKTION 6: Tipps ===
-        self._create_help_section(
-            scroll_frame,
-            "💡 Tipps für effektives Lernen",
-            """1. Ehrlich bleiben:
+                'use_monospace': True
+            },
+            {
+                'id': 'tips',
+                'icon': '💡',
+                'title': 'Tipps für effektives Lernen',
+                'content': """1. Ehrlich bleiben:
    Bewerten Sie Ihre Antworten ehrlich. Nur so funktioniert das System optimal.
    Selbstbetrug schadet nur Ihrem Lernerfolg!
 
@@ -12348,48 +12332,42 @@ Methoden:
 
 8. Nicht zu viele neue Karten auf einmal:
    Maximum 10-20 neue Karten pro Tag empfohlen.
-   Zu viele neue Karten führen zu Überforderung."""
+   Zu viele neue Karten führen zu Überforderung.""",
+                'use_monospace': False
+            }
+        ]
+
+        self._create_modern_help_page(
+            title="Leitner Session",
+            icon="🎯",
+            color=("#e24a4a", "#bd3535"),
+            sections=sections
         )
 
-        self._create_back_button(scroll_frame, self.show_help)
-
     def help_categories(self):
-        """Zeigt detaillierte Hilfe zu Kategorien."""
-        self._clear_content_frame()
-
-        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
-        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
-
-        # Header
-        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#4ae290", "#35bd6f"))
-        header_frame.pack(fill='x', pady=(0, 25))
-
-        ctk.CTkLabel(
-            header_frame,
-            text="📁 Kategorien verwalten",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="white"
-        ).pack(pady=20)
-
-        # === SEKTION 1: Übersicht ===
-        self._create_help_section(
-            scroll_frame,
-            "📋 Was sind Kategorien?",
-            """Kategorien helfen Ihnen, Ihre Karteikarten thematisch zu organisieren.
+        """Zeigt detaillierte Hilfe zu Kategorien mit moderner interaktiver Navigation."""
+        sections = [
+            {
+                'id': 'overview',
+                'icon': '📋',
+                'title': 'Was sind Kategorien?',
+                'content': """Kategorien helfen Ihnen, Ihre Karteikarten thematisch zu organisieren.
 Sie können Karten nach Fächern, Themen oder Schwierigkeitsgraden sortieren.
 
 Vorteile:
 • Gezielte Lern-Sessions für spezifische Themen
 • Bessere Übersicht bei vielen Karten
 • Flexible Filterung beim Lernen
-• Statistiken pro Kategorie"""
-        )
-
-        # === SEKTION 2: Kategorie erstellen ===
-        self._create_help_section(
-            scroll_frame,
-            "➕ Neue Kategorie erstellen",
-            """So erstellen Sie eine neue Kategorie:
+• Statistiken pro Kategorie
+• Farbcodierung für schnelle Orientierung
+• Hierarchische Organisation möglich""",
+                'use_monospace': False
+            },
+            {
+                'id': 'create',
+                'icon': '➕',
+                'title': 'Neue Kategorie erstellen',
+                'content': """So erstellen Sie eine neue Kategorie:
 
 1. Navigieren Sie zum Kategorien-Bereich
    Menü → Kategorien verwalten
@@ -12414,14 +12392,13 @@ Methoden:
 
 • main.py → show_create_category_dialog()
   Zeigt den Dialog zur Kategorieerstellung""",
-            use_monospace=True
-        )
-
-        # === SEKTION 3: Kategorie bearbeiten ===
-        self._create_help_section(
-            scroll_frame,
-            "✏️ Kategorie bearbeiten",
-            """So bearbeiten Sie eine bestehende Kategorie:
+                'use_monospace': True
+            },
+            {
+                'id': 'edit',
+                'icon': '✏️',
+                'title': 'Kategorie bearbeiten',
+                'content': """So bearbeiten Sie eine bestehende Kategorie:
 
 1. Öffnen Sie die Kategorieübersicht
    Menü → Kategorien verwalten
@@ -12451,14 +12428,13 @@ Methoden:
 
 • main.py → show_edit_category_dialog(category)
   Zeigt den Bearbeitungsdialog""",
-            use_monospace=True
-        )
-
-        # === SEKTION 4: Kategorie löschen ===
-        self._create_help_section(
-            scroll_frame,
-            "🗑️ Kategorie löschen",
-            """So löschen Sie eine Kategorie:
+                'use_monospace': True
+            },
+            {
+                'id': 'delete',
+                'icon': '🗑️',
+                'title': 'Kategorie löschen',
+                'content': """So löschen Sie eine Kategorie:
 
 1. Öffnen Sie die Kategorieübersicht
    Menü → Kategorien verwalten
@@ -12501,14 +12477,13 @@ Methoden:
 
 • main.py → show_delete_category_confirmation(category)
   Zeigt Bestätigungsdialog vor dem Löschen""",
-            use_monospace=True
-        )
-
-        # === SEKTION 5: Kategorien organisieren ===
-        self._create_help_section(
-            scroll_frame,
-            "🗂️ Kategorien organisieren & Tipps",
-            """Best Practices für Kategorien:
+                'use_monospace': True
+            },
+            {
+                'id': 'organize',
+                'icon': '🗂️',
+                'title': 'Kategorien organisieren & Tipps',
+                'content': """Best Practices für Kategorien:
 
 1. Klare Namensgebung:
    ✓ Gut: "Französisch - Vokabeln A1"
@@ -12551,34 +12526,25 @@ Methoden:
 
 • data_manager.py → get_category_statistics()
   Erstellt Übersicht über alle Kategorien mit Statistiken""",
-            use_monospace=True
+                'use_monospace': True
+            }
+        ]
+
+        self._create_modern_help_page(
+            title="Kategorien verwalten",
+            icon="📁",
+            color=("#4ae290", "#35bd6f"),
+            sections=sections
         )
 
-        self._create_back_button(scroll_frame, self.show_help)
-
     def help_cards(self):
-        """Zeigt detaillierte Hilfe zu Karteikarten."""
-        self._clear_content_frame()
-
-        scroll_frame = ctk.CTkScrollableFrame(self.content_frame)
-        scroll_frame.pack(fill='both', expand=True, padx=20, pady=20)
-
-        # Header
-        header_frame = ctk.CTkFrame(scroll_frame, corner_radius=12, fg_color=("#e2a04a", "#bd8235"))
-        header_frame.pack(fill='x', pady=(0, 25))
-
-        ctk.CTkLabel(
-            header_frame,
-            text="🗂️ Karteikarten verwalten",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="white"
-        ).pack(pady=20)
-
-        # === SEKTION 1: Übersicht ===
-        self._create_help_section(
-            scroll_frame,
-            "📋 Was sind Karteikarten?",
-            """Karteikarten sind das Herzstück Ihres Lernsystems.
+        """Zeigt detaillierte Hilfe zu Karteikarten mit moderner interaktiver Navigation."""
+        sections = [
+            {
+                'id': 'overview',
+                'icon': '📋',
+                'title': 'Was sind Karteikarten?',
+                'content': """Karteikarten sind das Herzstück Ihres Lernsystems.
 Jede Karte besteht aus einer Frage (Vorderseite) und einer Antwort (Rückseite).
 
 Komponenten einer Karte:
@@ -12587,14 +12553,16 @@ Komponenten einer Karte:
 • Kategorie: Thematische Zuordnung
 • Bild (optional): Visuelle Unterstützung
 • Statistiken: Punkte, Level, Erfolgsquote
-• Metadaten: Erstelldatum, letzte Wiederholung, nächste Fälligkeit"""
-        )
+• Metadaten: Erstelldatum, letzte Wiederholung, nächste Fälligkeit
 
-        # === SEKTION 2: Karte erstellen ===
-        self._create_help_section(
-            scroll_frame,
-            "➕ Neue Karte erstellen",
-            """So erstellen Sie eine neue Karteikarte:
+Die Karten arbeiten nahtlos mit dem Leitner-System zusammen, um Ihren Lernerfolg zu maximieren.""",
+                'use_monospace': False
+            },
+            {
+                'id': 'create',
+                'icon': '➕',
+                'title': 'Neue Karte erstellen',
+                'content': """So erstellen Sie eine neue Karteikarte:
 
 1. Navigieren Sie zum Karten-Bereich
    Menü → Karten verwalten → Neue Karte
@@ -12633,14 +12601,13 @@ Methoden:
 
 • main.py → show_create_card_dialog()
   Zeigt den Dialog zur Kartenerstellung""",
-            use_monospace=True
-        )
-
-        # === SEKTION 3: Karte bearbeiten ===
-        self._create_help_section(
-            scroll_frame,
-            "✏️ Karte bearbeiten",
-            """So bearbeiten Sie eine bestehende Karte:
+                'use_monospace': True
+            },
+            {
+                'id': 'edit',
+                'icon': '✏️',
+                'title': 'Karte bearbeiten',
+                'content': """So bearbeiten Sie eine bestehende Karte:
 
 1. Öffnen Sie die Kartenübersicht
    Menü → Karten verwalten
@@ -12685,14 +12652,13 @@ Methoden:
 
 • main.py → show_card_statistics(card)
   Zeigt detaillierte Statistiken einer Karte""",
-            use_monospace=True
-        )
-
-        # === SEKTION 4: Karte löschen ===
-        self._create_help_section(
-            scroll_frame,
-            "🗑️ Karte löschen",
-            """So löschen Sie eine Karteikarte:
+                'use_monospace': True
+            },
+            {
+                'id': 'delete',
+                'icon': '🗑️',
+                'title': 'Karte löschen',
+                'content': """So löschen Sie eine Karteikarte:
 
 1. Öffnen Sie die Kartenübersicht
    Menü → Karten verwalten
@@ -12733,14 +12699,13 @@ Methoden:
 
 • main.py → show_delete_card_confirmation(card)
   Zeigt Bestätigungsdialog vor dem Löschen""",
-            use_monospace=True
-        )
-
-        # === SEKTION 5: Karten suchen & filtern ===
-        self._create_help_section(
-            scroll_frame,
-            "🔍 Karten suchen & filtern",
-            """Effiziente Kartenverwaltung bei vielen Karten:
+                'use_monospace': True
+            },
+            {
+                'id': 'search',
+                'icon': '🔍',
+                'title': 'Karten suchen & filtern',
+                'content': """Effiziente Kartenverwaltung bei vielen Karten:
 
 1. Suchfunktion:
    • Volltext-Suche in Fragen und Antworten
@@ -12793,14 +12758,13 @@ Methoden:
 
 • main.py → apply_card_filters(filters)
   Wendet ausgewählte Filter an""",
-            use_monospace=True
-        )
-
-        # === SEKTION 6: Karten importieren/exportieren ===
-        self._create_help_section(
-            scroll_frame,
-            "📤 Import & Export",
-            """Karten zwischen Systemen übertragen:
+                'use_monospace': True
+            },
+            {
+                'id': 'import',
+                'icon': '📤',
+                'title': 'Import & Export',
+                'content': """Karten zwischen Systemen übertragen:
 
 EXPORT:
 ━━━━━━
@@ -12868,14 +12832,13 @@ Methoden:
 
 • export_import.py → create_backup(include_images, include_stats)
   Erstellt vollständiges System-Backup""",
-            use_monospace=True
-        )
-
-        # === SEKTION 7: Tipps ===
-        self._create_help_section(
-            scroll_frame,
-            "💡 Best Practices für Karteikarten",
-            """1. Atomic Principle (Eine Karte = Ein Konzept):
+                'use_monospace': True
+            },
+            {
+                'id': 'tips',
+                'icon': '💡',
+                'title': 'Best Practices für Karteikarten',
+                'content': """1. Atomic Principle (Eine Karte = Ein Konzept):
    ✓ Gut: "Was ist die Hauptstadt von Frankreich?" → "Paris"
    ✗ Schlecht: "Nenne 3 Hauptstädte europäischer Länder" → "Paris, Berlin, Rom"
 
@@ -12910,10 +12873,17 @@ Methoden:
 
 8. Mnemonics und Eselsbrücken:
    • Fügen Sie Gedächtnisstützen in Antworten hinzu
-   • Beispiel: "Nie Ohne Seife Waschen" für Himmelsrichtungen"""
-        )
+   • Beispiel: "Nie Ohne Seife Waschen" für Himmelsrichtungen""",
+                'use_monospace': False
+            }
+        ]
 
-        self._create_back_button(scroll_frame, self.show_help)
+        self._create_modern_help_page(
+            title="Karteikarten verwalten",
+            icon="🗂️",
+            color=("#e2a04a", "#bd8235"),
+            sections=sections
+        )
 
     def _create_help_section(self, parent, title, content, use_monospace=False):
         """Hilfsmethode zum Erstellen einer formatierten Hilfe-Sektion."""
@@ -12954,6 +12924,176 @@ Methoden:
             fg_color=("gray70", "gray30"),
             hover_color=("gray60", "gray40")
         ).pack(pady=(30, 20))
+
+    def _create_modern_help_page(self, title, icon, color, sections):
+        """
+        Erstellt eine moderne Hilfe-Seite mit interaktiver Navigation.
+
+        Args:
+            title: Titel der Hilfe-Seite
+            icon: Emoji-Icon für den Header
+            color: Tuple mit (light_color, dark_color) für den Header
+            sections: Liste von Dictionaries mit 'id', 'icon', 'title', 'content', 'use_monospace'
+
+        Returns:
+            Tuple von (main_container, content_scroll_frame, nav_buttons_dict)
+        """
+        self._clear_content_frame()
+
+        # Hauptcontainer
+        main_container = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        main_container.pack(fill='both', expand=True, padx=20, pady=20)
+
+        # Zwei-Spalten-Layout
+        main_container.grid_columnconfigure(0, weight=0, minsize=250)  # Navigation
+        main_container.grid_columnconfigure(1, weight=1)  # Content
+        main_container.grid_rowconfigure(0, weight=1)
+
+        # === LINKE SPALTE: NAVIGATION ===
+        nav_container = ctk.CTkFrame(main_container, corner_radius=15, fg_color=("gray85", "gray20"))
+        nav_container.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
+
+        # Navigation Header
+        nav_header = ctk.CTkFrame(nav_container, corner_radius=12, fg_color=color)
+        nav_header.pack(fill='x', padx=10, pady=10)
+
+        ctk.CTkLabel(
+            nav_header,
+            text=f"{icon}\n{title}",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="white",
+            justify="center"
+        ).pack(pady=15)
+
+        # Inhaltsverzeichnis Label
+        ctk.CTkLabel(
+            nav_container,
+            text="📑 Inhalt",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            anchor="w"
+        ).pack(pady=(15, 10), padx=15, anchor="w")
+
+        # Scrollable Navigation
+        nav_scroll = ctk.CTkScrollableFrame(
+            nav_container,
+            fg_color="transparent",
+            scrollbar_button_color=("gray70", "gray30")
+        )
+        nav_scroll.pack(fill='both', expand=True, padx=10, pady=(0, 10))
+
+        # Zurück-Button in Navigation
+        ctk.CTkButton(
+            nav_container,
+            text="← Zurück",
+            command=self.show_help,
+            width=200,
+            height=38,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            corner_radius=10,
+            fg_color=("gray70", "gray30"),
+            hover_color=("gray60", "gray40")
+        ).pack(pady=10, padx=10)
+
+        # === RECHTE SPALTE: CONTENT ===
+        content_container = ctk.CTkFrame(main_container, fg_color="transparent")
+        content_container.grid(row=0, column=1, sticky="nsew")
+
+        # Content Header
+        content_header = ctk.CTkFrame(content_container, corner_radius=15, fg_color=color)
+        content_header.pack(fill='x', pady=(0, 20))
+
+        ctk.CTkLabel(
+            content_header,
+            text=f"{icon} {title}",
+            font=ctk.CTkFont(size=32, weight="bold"),
+            text_color="white"
+        ).pack(pady=25)
+
+        # Scrollable Content
+        content_scroll = ctk.CTkScrollableFrame(
+            content_container,
+            fg_color="transparent",
+            scrollbar_button_color=("gray70", "gray30")
+        )
+        content_scroll.pack(fill='both', expand=True)
+
+        # Dictionary zum Speichern der Navigation-Buttons und Section-Frames
+        nav_buttons = {}
+        section_frames = {}
+
+        # Erstelle Sektionen und Navigation-Buttons
+        for idx, section in enumerate(sections):
+            section_id = section['id']
+
+            # Section Frame im Content-Bereich
+            section_frame = ctk.CTkFrame(content_scroll, corner_radius=12)
+            section_frame.pack(fill='x', pady=(0, 20), padx=10)
+            section_frames[section_id] = section_frame
+
+            # Section Titel
+            ctk.CTkLabel(
+                section_frame,
+                text=f"{section['icon']} {section['title']}",
+                font=ctk.CTkFont(size=20, weight="bold"),
+                anchor="w"
+            ).pack(pady=(20, 12), padx=25, anchor="w")
+
+            # Section Content
+            font_family = "Courier" if section.get('use_monospace', False) else None
+            ctk.CTkLabel(
+                section_frame,
+                text=section['content'],
+                font=ctk.CTkFont(size=13, family=font_family),
+                justify="left",
+                anchor="w",
+                wraplength=800
+            ).pack(pady=(0, 20), padx=25, anchor="w")
+
+            # Navigation Button
+            def create_scroll_command(frame):
+                """Closure für scroll-to-section Command"""
+                return lambda: self._scroll_to_widget(content_scroll, frame)
+
+            nav_btn = ctk.CTkButton(
+                nav_scroll,
+                text=f"{section['icon']} {section['title']}",
+                command=create_scroll_command(section_frame),
+                width=200,
+                height=40,
+                font=ctk.CTkFont(size=13),
+                corner_radius=8,
+                anchor="w",
+                fg_color=("gray75", "gray25"),
+                hover_color=color,
+                text_color=("gray10", "gray90")
+            )
+            nav_btn.pack(pady=5, padx=5, fill='x')
+            nav_buttons[section_id] = nav_btn
+
+        return main_container, content_scroll, nav_buttons
+
+    def _scroll_to_widget(self, scrollable_frame, target_widget):
+        """Scrollt ein ScrollableFrame zu einem bestimmten Widget."""
+        try:
+            # Warte kurz, damit das Layout aktualisiert wird
+            self.root.update_idletasks()
+
+            # Berechne die Position des Widgets
+            target_y = target_widget.winfo_y()
+
+            # Scrolle zum Widget (normalisierte Position zwischen 0 und 1)
+            # CustomTkinter ScrollableFrame nutzt einen Canvas
+            canvas = scrollable_frame._parent_canvas
+
+            # Hole die scrollbare Region
+            bbox = canvas.bbox("all")
+            if bbox:
+                total_height = bbox[3] - bbox[1]
+                if total_height > 0:
+                    scroll_position = target_y / total_height
+                    canvas.yview_moveto(max(0, scroll_position - 0.05))  # Kleiner Offset für bessere Sicht
+        except Exception as e:
+            print(f"Scroll-Fehler: {e}")
 
     # -----------------------------------------------------------------------------------
     # KATEGORIEN & KARTENVERWALTUNG
