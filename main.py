@@ -13080,7 +13080,7 @@ Methoden:
         """Scrollt ein ScrollableFrame zu einem bestimmten Widget."""
         try:
             # Warte kurz, damit das Layout aktualisiert wird
-            self.root.update_idletasks()
+            self.master.update_idletasks()
 
             # Hole den internen Frame des ScrollableFrame
             inner_frame = scrollable_frame._parent_frame
