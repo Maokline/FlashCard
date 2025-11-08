@@ -6891,7 +6891,7 @@ class FlashcardApp:
 
         header_label = ctk.CTkLabel(
             header_frame,
-            text="🎓 Hauptkategorien",
+            text="🎓 Hauptmenü",
             font=ctk.CTkFont(size=32, weight="bold"),
             text_color='#2C3E50'
         )
@@ -6899,60 +6899,81 @@ class FlashcardApp:
 
         subtitle = ctk.CTkLabel(
             header_frame,
-            text="Wähle eine Kategorie zum Lernen",
+            text="Wähle eine Option",
             font=ctk.CTkFont(size=14),
             text_color='#7F8C8D'
         )
         subtitle.pack(pady=(5, 0))
 
-        # Kategorien laden und sortieren
-        categories = sorted(self.data_manager.categories.keys()) if hasattr(self.data_manager, 'categories') else []
+        # Grid Frame für 2x2 Layout
+        grid_frame = ctk.CTkFrame(container, fg_color='transparent')
+        grid_frame.pack(pady=30, fill=tk.BOTH, expand=True, padx=50)
 
-        if not categories:
-            add_category_btn = ctk.CTkButton(
-                container,
-                text="Kategorie hinzufügen",
-                command=self.manage_categories,
-                width=200,
-                height=45,
-                font=ctk.CTkFont(size=14, weight="bold"),
-                fg_color='#4A90E2',
-                hover_color='#357ABD',
-                corner_radius=10
-            )
-            add_category_btn.pack(pady=20)
-        else:
-            # Scrollbarer Frame für Kategorien
-            scroll_frame = ctk.CTkScrollableFrame(
-                container,
-                fg_color='transparent'
-            )
-            scroll_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=30)
+        # Configure grid rows and columns to expand
+        grid_frame.grid_rowconfigure(0, weight=1)
+        grid_frame.grid_rowconfigure(1, weight=1)
+        grid_frame.grid_columnconfigure(0, weight=1)
+        grid_frame.grid_columnconfigure(1, weight=1)
 
-            # Grid für Kategorien
-            columns = 3
-            for idx, category in enumerate(categories):
-                row = idx // columns
-                col = idx % columns
+        # Oben Links: Wochenkalender
+        btn_calendar = ctk.CTkButton(
+            grid_frame,
+            text="📅 Wochenkalender",
+            command=self.show_weekly_calendar,
+            font=ctk.CTkFont(size=20, weight="bold"),
+            fg_color='#4A90E2',
+            hover_color='#357ABD',
+            corner_radius=15,
+            border_width=2,
+            border_color='#2980B9',
+            height=120
+        )
+        btn_calendar.grid(row=0, column=0, padx=15, pady=15, sticky="nsew")
 
-                # Moderne Kategorie-Karte
-                button = ctk.CTkButton(
-                    scroll_frame,
-                    text=category,
-                    command=lambda c=category: self.select_cards_with_category(c),
-                    width=200,
-                    height=80,
-                    font=ctk.CTkFont(size=16, weight="bold"),
-                    fg_color='#4A90E2',
-                    hover_color='#357ABD',
-                    corner_radius=15,
-                    border_width=2,
-                    border_color='#2980B9'
-                )
-                button.grid(row=row, column=col, padx=15, pady=15, sticky="ew")
+        # Oben Rechts: Leitner-Lernsession
+        btn_leitner = ctk.CTkButton(
+            grid_frame,
+            text="🎯 Leitner-Lernsession",
+            command=self.show_learning_options,
+            font=ctk.CTkFont(size=20, weight="bold"),
+            fg_color='#27AE60',
+            hover_color='#229954',
+            corner_radius=15,
+            border_width=2,
+            border_color='#1E8449',
+            height=120
+        )
+        btn_leitner.grid(row=0, column=1, padx=15, pady=15, sticky="nsew")
 
-            for col in range(columns):
-                scroll_frame.grid_columnconfigure(col, weight=1)
+        # Unten Links: Kategorien hinzufügen
+        btn_categories = ctk.CTkButton(
+            grid_frame,
+            text="📚 Kategorien hinzufügen",
+            command=self.manage_categories,
+            font=ctk.CTkFont(size=20, weight="bold"),
+            fg_color='#E67E22',
+            hover_color='#D35400',
+            corner_radius=15,
+            border_width=2,
+            border_color='#BA4A00',
+            height=120
+        )
+        btn_categories.grid(row=1, column=0, padx=15, pady=15, sticky="nsew")
+
+        # Unten Rechts: Karten verwalten
+        btn_cards = ctk.CTkButton(
+            grid_frame,
+            text="🗂️ Karten verwalten",
+            command=self.show_card_management,
+            font=ctk.CTkFont(size=20, weight="bold"),
+            fg_color='#8E44AD',
+            hover_color='#7D3C98',
+            corner_radius=15,
+            border_width=2,
+            border_color='#6C3483',
+            height=120
+        )
+        btn_cards.grid(row=1, column=1, padx=15, pady=15, sticky="nsew")
 
         # Setze den aktiven Button auf 'Home'
         self.highlight_active_button('Home')
