@@ -12950,7 +12950,7 @@ Methoden:
         main_container.grid_rowconfigure(0, weight=1)
 
         # === LINKE SPALTE: NAVIGATION ===
-        nav_container = ctk.CTkFrame(main_container, corner_radius=15, fg_color=("gray85", "gray20"))
+        nav_container = ctk.CTkFrame(main_container, corner_radius=15, fg_color=("white", "gray17"))
         nav_container.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
 
         # Navigation Header
@@ -12970,14 +12970,15 @@ Methoden:
             nav_container,
             text="📑 Inhalt",
             font=ctk.CTkFont(size=16, weight="bold"),
-            anchor="w"
+            anchor="w",
+            text_color=("gray10", "gray90")
         ).pack(pady=(15, 10), padx=15, anchor="w")
 
         # Scrollable Navigation
         nav_scroll = ctk.CTkScrollableFrame(
             nav_container,
             fg_color="transparent",
-            scrollbar_button_color=("gray70", "gray30")
+            scrollbar_button_color=("gray60", "gray40")
         )
         nav_scroll.pack(fill='both', expand=True, padx=10, pady=(0, 10))
 
@@ -12990,8 +12991,9 @@ Methoden:
             height=38,
             font=ctk.CTkFont(size=13, weight="bold"),
             corner_radius=10,
-            fg_color=("gray70", "gray30"),
-            hover_color=("gray60", "gray40")
+            fg_color=("gray85", "gray25"),
+            hover_color=color,
+            text_color=("gray10", "white")
         ).pack(pady=10, padx=10)
 
         # === RECHTE SPALTE: CONTENT ===
@@ -13063,9 +13065,11 @@ Methoden:
                 font=ctk.CTkFont(size=13),
                 corner_radius=8,
                 anchor="w",
-                fg_color=("gray75", "gray25"),
+                fg_color=("gray90", "gray22"),
                 hover_color=color,
-                text_color=("gray10", "gray90")
+                text_color=("gray10", "gray95"),
+                border_width=1,
+                border_color=("gray80", "gray30")
             )
             nav_btn.pack(pady=5, padx=5, fill='x')
             nav_buttons[section_id] = nav_btn
@@ -13078,22 +13082,44 @@ Methoden:
             # Warte kurz, damit das Layout aktualisiert wird
             self.root.update_idletasks()
 
-            # Berechne die Position des Widgets
-            target_y = target_widget.winfo_y()
+            # Hole den internen Frame des ScrollableFrame
+            inner_frame = scrollable_frame._parent_frame
 
-            # Scrolle zum Widget (normalisierte Position zwischen 0 und 1)
-            # CustomTkinter ScrollableFrame nutzt einen Canvas
-            canvas = scrollable_frame._parent_canvas
+            # Berechne die absolute Position des Ziel-Widgets relativ zum inner_frame
+            target_y = 0
+            widget = target_widget
+            while widget != inner_frame and widget is not None:
+                target_y += widget.winfo_y()
+                widget = widget.master
 
-            # Hole die scrollbare Region
-            bbox = canvas.bbox("all")
-            if bbox:
-                total_height = bbox[3] - bbox[1]
-                if total_height > 0:
-                    scroll_position = target_y / total_height
-                    canvas.yview_moveto(max(0, scroll_position - 0.05))  # Kleiner Offset für bessere Sicht
+            # Hole den Canvas aus dem ScrollableFrame
+            if hasattr(scrollable_frame, '_parent_canvas'):
+                canvas = scrollable_frame._parent_canvas
+
+                # Hole die Höhe des sichtbaren Bereichs
+                canvas_height = canvas.winfo_height()
+
+                # Hole die gesamte scrollbare Höhe
+                canvas.update_idletasks()
+                bbox = canvas.bbox("all")
+
+                if bbox and canvas_height > 0:
+                    total_height = bbox[3] - bbox[1]
+
+                    if total_height > canvas_height:
+                        # Berechne die Scroll-Position (normalisiert zwischen 0 und 1)
+                        # Scrolle so, dass das Widget oben im sichtbaren Bereich ist
+                        scroll_position = target_y / total_height
+
+                        # Begrenze die Position auf 0-1 und füge einen kleinen Offset hinzu
+                        scroll_position = max(0, min(1, scroll_position - 0.05))
+
+                        # Scrolle zur berechneten Position
+                        canvas.yview_moveto(scroll_position)
         except Exception as e:
             print(f"Scroll-Fehler: {e}")
+            import traceback
+            traceback.print_exc()
 
     # -----------------------------------------------------------------------------------
     # KATEGORIEN & KARTENVERWALTUNG
