@@ -7400,56 +7400,98 @@ class FlashcardApp:
         self.toggle_rules_btn.grid(row=0, column=1, sticky="e", padx=10)
 
         # --- Reihe 1: Der einklappbare Frame für die Regeln ---
-        self.leitner_rules_frame = ctk.CTkFrame(main_container)
+        self.leitner_rules_frame = ctk.CTkFrame(main_container, fg_color="#f8fafc", corner_radius=12)
 
-        info_frame = ctk.CTkFrame(self.leitner_rules_frame)
-        info_frame.pack(fill='x', pady=5, padx=10)
+        # Moderne Überschrift
+        rules_header_frame = ctk.CTkFrame(self.leitner_rules_frame, fg_color="transparent")
+        rules_header_frame.pack(fill='x', pady=(15, 10), padx=15)
         ctk.CTkLabel(
-            info_frame, 
-            text="Das optimierte 10-Level Leitner-System mit exponentiellen Multiplikatoren und Streak-Boni.\n"
-                "• Exponentielle Erfolgsquoten-Kurve: 0%→0x, 50%→1x, 85%→2x, 100%→3x\n"
-                "• Streak-Boni belohnen Konsistenz: 5er (×1.5), 10er (×2), 15er (×2.5), 20er (×3)\n"
-                "• Intelligenter Punktabzug: Gesamtfehler × Level-Faktor × Streak-Verlust-Faktor\n"
-                "• Level 10 ist schwer zu erreichen und zu halten - nur für wahre Meister!",
-            font=ctk.CTkFont(size=13), 
-            justify="left"
-        ).pack(pady=10, padx=10)
-        
-        level_frame = ctk.CTkFrame(self.leitner_rules_frame)
-        level_frame.pack(fill='x', pady=5, padx=10)
-        level_header = ctk.CTkFrame(level_frame)
-        level_header.pack(fill='x', pady=5)
-        level_header.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+            rules_header_frame,
+            text="📖 Leitner-System Regeln",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#1e293b"
+        ).pack(side='left')
 
-        ctk.CTkLabel(level_header, text="Level", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0)
-        ctk.CTkLabel(level_header, text="Punkte", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=1)
-        ctk.CTkLabel(level_header, text="Wiederholung", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=2)
-        ctk.CTkLabel(level_header, text="Exp. Multiplikator", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=3)
-        ctk.CTkLabel(level_header, text="Streak-System", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=4)
+        # Beschreibung mit modernen Info-Cards
+        info_container = ctk.CTkFrame(self.leitner_rules_frame, fg_color="transparent")
+        info_container.pack(fill='x', pady=10, padx=15)
 
-        # NEUE 10-LEVEL REGELN MIT OPTIMIERTEN MULTIPLIKATOREN
-        rules_info = [
-            ("1. Grundlagen", "0-10", "Täglich", "Exp. Kurve", "×1-3"),
-            ("2. Basis", "11-25", "Alle 2 Tage", "0%→0x", "Streak-Bonus:"),
-            ("3. Aufbau", "26-50", "Alle 4 Tage", "50%→1x", "5er: ×1.5"),
-            ("4. Kompetent", "51-85", "Wöchentlich", "85%→2x", "10er: ×2.0"),
-            ("5. Fortgeschritten", "86-120", "Alle 10 Tage", "100%→3x", "15er: ×2.5"),
-            ("6. Proficient", "121-175", "Alle 12 Tage", "", "20er: ×3.0"),
-            ("7. Spezialist", "176-220", "Zweiwöchentlich", "Punktabzug:", ""),
-            ("8. Experte", "221-285", "Alle 20 Tage", "Fehler × Level", ""),
-            ("9. Meister", "286-350", "Alle 25 Tage", "× Streak-Verl.", ""),
-            ("10. Master", "350+", "Alle 30 Tage", "Hart aber fair!", ""),
+        # Info-Karten für die Hauptkonzepte
+        info_cards = [
+            ("📈", "Exponentielle Erfolgsquote", "0%→0x | 50%→1x | 85%→2x | 100%→3x", "#3b82f6"),
+            ("🔥", "Streak-Bonus System", "5er: ×1.5 | 10er: ×2.0 | 15er: ×2.5 | 20er: ×3.0", "#ef4444"),
+            ("⚡", "Intelligenter Punktabzug", "Gesamtfehler × Level-Faktor × Streak-Verlust", "#f59e0b"),
+            ("🏆", "Meisterschaft Level 10", "Schwer zu erreichen und zu halten!", "#8b5cf6")
         ]
-        
-        for level, points, interval, quote, multiplier in rules_info:
-            level_row = ctk.CTkFrame(level_frame)
-            level_row.pack(fill='x', pady=2)
-            level_row.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
-            ctk.CTkLabel(level_row, text=level, font=ctk.CTkFont(size=12)).grid(row=0, column=0)
-            ctk.CTkLabel(level_row, text=points, font=ctk.CTkFont(size=12)).grid(row=0, column=1)
-            ctk.CTkLabel(level_row, text=interval, font=ctk.CTkFont(size=12)).grid(row=0, column=2)
-            ctk.CTkLabel(level_row, text=quote, font=ctk.CTkFont(size=12)).grid(row=0, column=3)
-            ctk.CTkLabel(level_row, text=multiplier, font=ctk.CTkFont(size=12)).grid(row=0, column=4)
+
+        for icon, title, desc, color in info_cards:
+            card = ctk.CTkFrame(info_container, fg_color="#ffffff", corner_radius=8, border_width=1, border_color=color)
+            card.pack(fill='x', pady=4)
+
+            card_content = ctk.CTkFrame(card, fg_color="transparent")
+            card_content.pack(fill='x', padx=12, pady=10)
+
+            # Icon und Title
+            title_frame = ctk.CTkFrame(card_content, fg_color="transparent")
+            title_frame.pack(fill='x')
+
+            ctk.CTkLabel(title_frame, text=icon, font=ctk.CTkFont(size=16)).pack(side='left', padx=(0, 8))
+            ctk.CTkLabel(title_frame, text=title, font=ctk.CTkFont(size=13, weight="bold"),
+                        text_color=color).pack(side='left')
+
+            # Beschreibung
+            ctk.CTkLabel(card_content, text=desc, font=ctk.CTkFont(size=11),
+                        text_color="#64748b", justify="left").pack(anchor='w', padx=(24, 0))
+
+        # Moderner Level-Bereich
+        level_section = ctk.CTkFrame(self.leitner_rules_frame, fg_color="transparent")
+        level_section.pack(fill='x', pady=(10, 0), padx=15)
+
+        ctk.CTkLabel(level_section, text="📊 Level-Übersicht",
+                    font=ctk.CTkFont(size=16, weight="bold"),
+                    text_color="#1e293b").pack(anchor='w', pady=(0, 10))
+
+        # Scrollable Level Container
+        level_scroll = ctk.CTkScrollableFrame(level_section, height=280, fg_color="#ffffff", corner_radius=8)
+        level_scroll.pack(fill='both', expand=True)
+
+        # NEUE 10-LEVEL REGELN MIT MODERNEN CARDS
+        rules_info = [
+            ("1. Grundlagen", "0-10", "Täglich", "1 Tag", "🌱", "#10b981"),
+            ("2. Basis", "11-25", "2 Tage", "2 Tage", "🌿", "#22c55e"),
+            ("3. Aufbau", "26-50", "4 Tage", "4 Tage", "🌳", "#84cc16"),
+            ("4. Kompetent", "51-85", "Wöchentlich", "7 Tage", "💪", "#eab308"),
+            ("5. Fortgeschritten", "86-120", "10 Tage", "10 Tage", "🎯", "#f59e0b"),
+            ("6. Proficient", "121-175", "12 Tage", "12 Tage", "⭐", "#f97316"),
+            ("7. Spezialist", "176-220", "2 Wochen", "14 Tage", "🔥", "#ef4444"),
+            ("8. Experte", "221-285", "20 Tage", "20 Tage", "💎", "#ec4899"),
+            ("9. Meister", "286-350", "25 Tage", "25 Tage", "👑", "#a855f7"),
+            ("10. Master", "350+", "Monatlich", "30 Tage", "🏆", "#8b5cf6"),
+        ]
+
+        for level, points, interval_short, interval_long, icon, color in rules_info:
+            level_card = ctk.CTkFrame(level_scroll, fg_color="#f8fafc", corner_radius=6,
+                                     border_width=1, border_color=color)
+            level_card.pack(fill='x', pady=3, padx=5)
+
+            level_content = ctk.CTkFrame(level_card, fg_color="transparent")
+            level_content.pack(fill='x', padx=10, pady=8)
+            level_content.grid_columnconfigure(1, weight=1)
+
+            # Icon
+            ctk.CTkLabel(level_content, text=icon, font=ctk.CTkFont(size=18)).grid(row=0, column=0, rowspan=2, padx=(0, 10))
+
+            # Level Name
+            name_frame = ctk.CTkFrame(level_content, fg_color="transparent")
+            name_frame.grid(row=0, column=1, sticky="w")
+            ctk.CTkLabel(name_frame, text=level, font=ctk.CTkFont(size=13, weight="bold"),
+                        text_color=color).pack(side='left')
+            ctk.CTkLabel(name_frame, text=f"  •  {points} Punkte",
+                        font=ctk.CTkFont(size=11), text_color="#64748b").pack(side='left')
+
+            # Intervall Info
+            ctk.CTkLabel(level_content, text=f"📅 Wiederholung: {interval_long}",
+                        font=ctk.CTkFont(size=10), text_color="#475569").grid(row=1, column=1, sticky="w")
 
         # --- Reihe 2: Filter für die Kartenauswahl ---
         filter_container = ctk.CTkFrame(main_container, fg_color="#f8fafc", corner_radius=12)
@@ -7505,7 +7547,9 @@ class FlashcardApp:
                     text_color="#475569").pack(side='left', padx=(15, 5))
         self.level_var = tk.StringVar(value="Alle")
         # AKTUALISIERT: 10 Level statt 7
-        level_options = ["Alle"] + [f"{i}. {name}" for i, (name, _, _, _, _) in enumerate(rules_info[:10], 1) if name]
+        level_names = ["Grundlagen", "Basis", "Aufbau", "Kompetent", "Fortgeschritten",
+                      "Proficient", "Spezialist", "Experte", "Meister", "Master"]
+        level_options = ["Alle"] + [f"{i}. {name}" for i, name in enumerate(level_names, 1)]
         level_menu = ctk.CTkOptionMenu(level_filter_frame, variable=self.level_var,
                                     values=level_options, width=180, height=32,
                                     fg_color="#8b5cf6", button_color="#7c3aed",
@@ -8209,63 +8253,110 @@ class FlashcardApp:
         # Erfolgsquote
         success_rate = (correct_count / total_cards * 100) if total_cards > 0 else 0
 
-        # Header
-        header_text = "Session vorzeitig beendet!" if force_ended else "Session abgeschlossen!"
-        header = ctk.CTkLabel(
-            self.content_frame,
+        # Haupt-Container mit modernem Design
+        main_container = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        main_container.pack(fill='both', expand=True, padx=20, pady=10)
+
+        # Hero-Sektion mit Erfolgs-Feedback
+        hero_frame = ctk.CTkFrame(main_container, fg_color="#f8fafc", corner_radius=16)
+        hero_frame.pack(fill='x', pady=(0, 20))
+
+        hero_content = ctk.CTkFrame(hero_frame, fg_color="transparent")
+        hero_content.pack(fill='x', padx=30, pady=25)
+
+        # Status Icon und Text
+        status_icon = "🎉" if success_rate >= 70 else ("💪" if success_rate >= 50 else "📚")
+        header_text = "Großartige Leistung!" if success_rate >= 70 else ("Gute Arbeit!" if success_rate >= 50 else "Weiter so!")
+
+        if force_ended:
+            status_icon = "⏸️"
+            header_text = "Session pausiert"
+
+        ctk.CTkLabel(
+            hero_content,
+            text=status_icon,
+            font=ctk.CTkFont(size=48)
+        ).pack()
+
+        ctk.CTkLabel(
+            hero_content,
             text=header_text,
-            font=ctk.CTkFont(size=24, weight="bold")
-        )
-        header.pack(pady=20)
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="#1e293b"
+        ).pack(pady=(5, 0))
 
-        # Zusammenfassung in Grid
-        summary_frame = ctk.CTkFrame(self.content_frame)
-        summary_frame.pack(padx=20, pady=10)
-        summary_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        subtitle_text = "Session vorzeitig beendet" if force_ended else "Lernsession abgeschlossen"
+        ctk.CTkLabel(
+            hero_content,
+            text=subtitle_text,
+            font=ctk.CTkFont(size=14),
+            text_color="#64748b"
+        ).pack()
 
-        # Statistik-Karten
+        # Moderne Statistik-Karten
+        stats_container = ctk.CTkFrame(main_container, fg_color="transparent")
+        stats_container.pack(fill='x', pady=(0, 20))
+        stats_container.grid_columnconfigure((0, 1, 2, 3), weight=1)
+
+        # Statistik-Karten mit Icons
         stats = [
-            ("Karten", f"{correct_count}/{total_cards}", "#28a745" if success_rate >= 70 else "#ffa500"),
-            ("Erfolgsquote", f"{success_rate:.0f}%", "#28a745" if success_rate >= 70 else ("#ffa500" if success_rate >= 50 else "#dc3545")),
-            ("Netto-Punkte", f"{net_points:+d}", "#28a745" if net_points > 0 else ("#ffa500" if net_points == 0 else "#dc3545")),
-            ("Lernzeit", f"{total_time_minutes:.1f} min", "#4a90e2")
+            ("🎴", "Karten", f"{correct_count}/{total_cards}",
+             "#10b981" if success_rate >= 70 else "#f59e0b"),
+            ("📊", "Erfolgsquote", f"{success_rate:.0f}%",
+             "#10b981" if success_rate >= 70 else ("#f59e0b" if success_rate >= 50 else "#ef4444")),
+            ("⭐", "Netto-Punkte", f"{net_points:+d}",
+             "#10b981" if net_points > 0 else ("#f59e0b" if net_points == 0 else "#ef4444")),
+            ("⏱️", "Lernzeit", f"{total_time_minutes:.1f} min", "#3b82f6")
         ]
 
-        for col, (label, value, color) in enumerate(stats):
-            stat_frame = ctk.CTkFrame(summary_frame)
-            stat_frame.grid(row=0, column=col, padx=10, pady=10, sticky="nsew")
+        for col, (icon, label, value, color) in enumerate(stats):
+            stat_card = ctk.CTkFrame(stats_container, fg_color="#ffffff", corner_radius=12,
+                                    border_width=2, border_color=color)
+            stat_card.grid(row=0, column=col, padx=8, pady=5, sticky="nsew")
 
+            # Icon
             ctk.CTkLabel(
-                stat_frame,
+                stat_card,
+                text=icon,
+                font=ctk.CTkFont(size=32)
+            ).pack(pady=(15, 5))
+
+            # Label
+            ctk.CTkLabel(
+                stat_card,
                 text=label,
-                font=ctk.CTkFont(size=12)
-            ).pack(pady=(10, 0))
+                font=ctk.CTkFont(size=12),
+                text_color="#64748b"
+            ).pack()
 
+            # Wert
             ctk.CTkLabel(
-                stat_frame,
+                stat_card,
                 text=value,
-                font=ctk.CTkFont(size=20, weight="bold"),
+                font=ctk.CTkFont(size=24, weight="bold"),
                 text_color=color
-            ).pack(pady=(0, 10))
+            ).pack(pady=(5, 15))
 
-        # Detaillierte Kartenübersicht
-        details_header_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
-        details_header_frame.pack(fill='x', padx=25, pady=(15, 5))
+        # Detaillierte Kartenübersicht mit modernem Design
+        details_section = ctk.CTkFrame(main_container, fg_color="#f8fafc", corner_radius=12)
+        details_section.pack(fill='both', expand=True)
+
+        # Header für Details
+        details_header = ctk.CTkFrame(details_section, fg_color="transparent")
+        details_header.pack(fill='x', padx=20, pady=(15, 10))
+
         ctk.CTkLabel(
-            details_header_frame,
-            text="Detaillierter Verlauf:",
-            font=ctk.CTkFont(size=16, weight="bold")
+            details_header,
+            text="📋 Detaillierter Verlauf",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#1e293b"
         ).pack(side='left')
 
-        details_frame = ctk.CTkScrollableFrame(self.content_frame)
-        details_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        # Scrollbarer Bereich für Karten
+        details_scroll = ctk.CTkScrollableFrame(details_section, fg_color="transparent", height=300)
+        details_scroll.pack(fill='both', expand=True, padx=15, pady=(0, 15))
 
         for idx, result in enumerate(self.session_results, 1):
-            card_frame = ctk.CTkFrame(details_frame, border_width=1, border_color=("gray80", "gray30"))
-            card_frame.pack(fill='x', pady=4, padx=5)
-            card_frame.grid_columnconfigure(0, weight=3)
-            card_frame.grid_columnconfigure(1, weight=2)
-
             # Extrahiere Werte
             card = result[0]
             is_correct = result[1] if len(result) > 1 else False
@@ -8275,107 +8366,133 @@ class FlashcardApp:
             level_after = result[7] if len(result) > 7 else getattr(card, 'level', 1)
             level_change = level_after - level_before
 
-            # Info Frame
-            info_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-            info_frame.grid(row=0, column=0, sticky="w", padx=10, pady=8)
+            # Moderne Karten-Card
+            card_color = "#10b981" if is_correct else "#ef4444"
+            card_bg = "#f0fdf4" if is_correct else "#fef2f2"
 
-            status_symbol = "✓" if is_correct else "✗"
-            color = "#28a745" if is_correct else "#dc3545"
-            card_text = card.question[:55] + "..." if len(card.question) > 55 else card.question
+            card_frame = ctk.CTkFrame(details_scroll, fg_color=card_bg, corner_radius=8,
+                                     border_width=2, border_color=card_color)
+            card_frame.pack(fill='x', pady=4, padx=5)
 
-            # Status und Frage
-            status_question_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
-            status_question_frame.pack(anchor='w')
+            # Hauptinhalt
+            content_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+            content_frame.pack(fill='x', padx=12, pady=10)
+            content_frame.grid_columnconfigure(1, weight=1)
+
+            # Status Icon
+            status_icon = "✓" if is_correct else "✗"
+            icon_frame = ctk.CTkFrame(content_frame, fg_color=card_color, corner_radius=20, width=36, height=36)
+            icon_frame.grid(row=0, column=0, rowspan=2, padx=(0, 12), sticky="n")
+            icon_frame.grid_propagate(False)
 
             ctk.CTkLabel(
-                status_question_frame,
-                text=f"{idx}. {status_symbol}",
-                font=ctk.CTkFont(size=14, weight="bold"),
-                text_color=color
-            ).pack(side='left')
+                icon_frame,
+                text=status_icon,
+                font=ctk.CTkFont(size=18, weight="bold"),
+                text_color="#ffffff"
+            ).place(relx=0.5, rely=0.5, anchor="center")
 
-            ctk.CTkLabel(
-                status_question_frame,
-                text=card_text,
-                font=ctk.CTkFont(size=13)
-            ).pack(side='left', padx=(5, 0))
+            # Kartennummer und Frage
+            card_text = card.question[:70] + "..." if len(card.question) > 70 else card.question
+            question_label = ctk.CTkLabel(
+                content_frame,
+                text=f"#{idx}  {card_text}",
+                font=ctk.CTkFont(size=13, weight="bold"),
+                text_color="#1e293b",
+                anchor="w"
+            )
+            question_label.grid(row=0, column=1, sticky="w")
 
-            # Punkte und Level
-            detail_text = f"Punkte: {points_change:+d} | Level: {level_before} → {level_after}"
+            # Details-Info-Zeile
+            details_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+            details_container.grid(row=1, column=1, sticky="w", pady=(5, 0))
+
+            # Punkte-Badge
+            points_badge = ctk.CTkFrame(details_container, fg_color="#ffffff", corner_radius=4)
+            points_badge.pack(side='left', padx=(0, 8))
+            points_text = f"{points_change:+d} Pkt"
+            ctk.CTkLabel(points_badge, text=points_text, font=ctk.CTkFont(size=10, weight="bold"),
+                        text_color=card_color).pack(padx=6, pady=2)
+
+            # Level-Badge
+            level_badge = ctk.CTkFrame(details_container, fg_color="#ffffff", corner_radius=4)
+            level_badge.pack(side='left', padx=(0, 8))
+            level_text = f"Level {level_before} → {level_after}"
             if level_change != 0:
-                detail_text += f" ({level_change:+d})"
+                level_text += f" ({level_change:+d})"
+            ctk.CTkLabel(level_badge, text=level_text, font=ctk.CTkFont(size=10),
+                        text_color="#64748b").pack(padx=6, pady=2)
 
-            ctk.CTkLabel(
-                info_frame,
-                text=detail_text,
-                font=ctk.CTkFont(size=11),
-                text_color="gray50"
-            ).pack(anchor='w')
+            # Aktuelle Stats
+            current_badge = ctk.CTkFrame(details_container, fg_color="#ffffff", corner_radius=4)
+            current_badge.pack(side='left', padx=(0, 8))
+            ctk.CTkLabel(current_badge, text=f"Gesamt: {card.points} Pkt | Level {card.level}",
+                        font=ctk.CTkFont(size=10), text_color="#475569").pack(padx=6, pady=2)
 
-            # Stats Frame rechts
-            stats_frame_right = ctk.CTkFrame(card_frame, fg_color="transparent")
-            stats_frame_right.grid(row=0, column=1, sticky="e", padx=10, pady=8)
-
-            # Aktuelle Werte
-            current_stats = f"Punkte: {card.points} | Level: {card.level}"
-            ctk.CTkLabel(
-                stats_frame_right,
-                text=current_stats,
-                font=ctk.CTkFont(size=11, weight="bold")
-            ).pack(anchor='e')
-
-            # Streak Info
+            # Streak-Badge (falls vorhanden)
             if card.positive_streak > 0:
-                streak_text = f"Streak: {card.positive_streak} ✓"
-                ctk.CTkLabel(
-                    stats_frame_right,
-                    text=streak_text,
-                    font=ctk.CTkFont(size=10),
-                    text_color="#28a745"
-                ).pack(anchor='e')
+                streak_badge = ctk.CTkFrame(details_container, fg_color="#fef3c7", corner_radius=4)
+                streak_badge.pack(side='left')
+                ctk.CTkLabel(streak_badge, text=f"🔥 Streak: {card.positive_streak}",
+                            font=ctk.CTkFont(size=10, weight="bold"),
+                            text_color="#f59e0b").pack(padx=6, pady=2)
 
-        # Button Frame
-        button_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
-        button_frame.pack(pady=20)
+        # Moderne Button-Sektion
+        button_section = ctk.CTkFrame(main_container, fg_color="transparent")
+        button_section.pack(pady=(15, 0))
+
+        button_container = ctk.CTkFrame(button_section, fg_color="#ffffff", corner_radius=12)
+        button_container.pack(padx=20, pady=10)
+
+        buttons_inner = ctk.CTkFrame(button_container, fg_color="transparent")
+        buttons_inner.pack(padx=20, pady=15)
 
         ctk.CTkButton(
-            button_frame,
-            text="Leitner-Methode",
+            buttons_inner,
+            text="🔄 Neue Lernsession",
             command=self.show_leitner_options,
-            font=ctk.CTkFont(size=14),
-            height=35,
-            fg_color="#4a90e2",
-            hover_color="#357abd"
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=180,
+            corner_radius=8,
+            fg_color="#10b981",
+            hover_color="#059669"
         ).pack(side='left', padx=5)
 
         ctk.CTkButton(
-            button_frame,
-            text="Neue Lernsession",
+            buttons_inner,
+            text="📊 Leitner-Optionen",
             command=self.show_leitner_options,
-            font=ctk.CTkFont(size=14),
-            height=35,
-            fg_color="#2ecc71",
-            hover_color="#27ae60"
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=180,
+            corner_radius=8,
+            fg_color="#3b82f6",
+            hover_color="#2563eb"
         ).pack(side='left', padx=5)
 
         ctk.CTkButton(
-            button_frame,
+            buttons_inner,
             text="📅 Zum Kalender",
             command=self.show_weekly_calendar,
-            font=ctk.CTkFont(size=14),
-            height=35,
-            fg_color="#9b59b6",
-            hover_color="#8e44ad"
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=180,
+            corner_radius=8,
+            fg_color="#8b5cf6",
+            hover_color="#7c3aed"
         ).pack(side='left', padx=5)
 
         ctk.CTkButton(
-            button_frame,
-            text="Zurück zum Hauptmenü",
+            buttons_inner,
+            text="🏠 Hauptmenü",
             command=self.create_main_menu,
-            font=ctk.CTkFont(size=14),
-            height=35,
-            fg_color="gray",
-            hover_color="darkgray"
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=150,
+            corner_radius=8,
+            fg_color="#64748b",
+            hover_color="#475569"
         ).pack(side='left', padx=5)
 
         # Speichere Statistik
