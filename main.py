@@ -12965,14 +12965,25 @@ Methoden:
             justify="center"
         ).pack(pady=15)
 
-        # Inhaltsverzeichnis Label
+        # Inhaltsverzeichnis Label mit Untertitel
+        toc_frame = ctk.CTkFrame(nav_container, fg_color="transparent")
+        toc_frame.pack(fill='x', pady=(15, 5), padx=15)
+
         ctk.CTkLabel(
-            nav_container,
+            toc_frame,
             text="📑 Inhalt",
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(size=17, weight="bold"),
             anchor="w",
             text_color=("gray10", "gray90")
-        ).pack(pady=(15, 10), padx=15, anchor="w")
+        ).pack(anchor="w")
+
+        ctk.CTkLabel(
+            toc_frame,
+            text="Wähle ein Thema aus",
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+            text_color=("gray40", "gray70")
+        ).pack(anchor="w", pady=(2, 0))
 
         # Scrollable Navigation
         nav_scroll = ctk.CTkScrollableFrame(
@@ -12982,34 +12993,64 @@ Methoden:
         )
         nav_scroll.pack(fill='both', expand=True, padx=10, pady=(0, 10))
 
-        # Zurück-Button in Navigation
-        ctk.CTkButton(
+        # Zurück-Button in Navigation - moderneres Design
+        back_btn = ctk.CTkButton(
             nav_container,
-            text="← Zurück",
+            text="← Zurück zur Übersicht",
             command=self.show_help,
             width=200,
-            height=38,
+            height=42,
             font=ctk.CTkFont(size=13, weight="bold"),
-            corner_radius=10,
-            fg_color=("gray85", "gray25"),
-            hover_color=color,
-            text_color=("gray10", "white")
-        ).pack(pady=10, padx=10)
+            corner_radius=12,
+            fg_color=color,
+            hover_color=(self._darken_color(color[0], 0.85), self._lighten_color(color[1], 1.15)),
+            text_color="white"
+        )
+        back_btn.pack(pady=12, padx=10)
 
         # === RECHTE SPALTE: CONTENT ===
         content_container = ctk.CTkFrame(main_container, fg_color="transparent")
         content_container.grid(row=0, column=1, sticky="nsew")
 
-        # Content Header
-        content_header = ctk.CTkFrame(content_container, corner_radius=15, fg_color=color)
-        content_header.pack(fill='x', pady=(0, 20))
+        # Content Header - Moderner Gradient-Look
+        content_header = ctk.CTkFrame(
+            content_container,
+            corner_radius=18,
+            fg_color=color,
+            height=100
+        )
+        content_header.pack(fill='x', pady=(0, 25))
+
+        # Header Content Container
+        header_content = ctk.CTkFrame(content_header, fg_color="transparent")
+        header_content.pack(fill='both', expand=True, padx=35, pady=20)
+
+        # Icon im Header
+        ctk.CTkLabel(
+            header_content,
+            text=icon,
+            font=ctk.CTkFont(size=42)
+        ).pack(side='left', padx=(0, 15))
+
+        # Titel und Untertitel
+        title_container = ctk.CTkFrame(header_content, fg_color="transparent")
+        title_container.pack(side='left', fill='both', expand=True)
 
         ctk.CTkLabel(
-            content_header,
-            text=f"{icon} {title}",
-            font=ctk.CTkFont(size=32, weight="bold"),
-            text_color="white"
-        ).pack(pady=25)
+            title_container,
+            text=title,
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="white",
+            anchor="w"
+        ).pack(anchor='w')
+
+        ctk.CTkLabel(
+            title_container,
+            text="Detaillierte Informationen und Anleitungen",
+            font=ctk.CTkFont(size=13),
+            text_color=("white", "gray90"),
+            anchor="w"
+        ).pack(anchor='w', pady=(3, 0))
 
         # Scrollable Content
         content_scroll = ctk.CTkScrollableFrame(
@@ -13027,29 +13068,64 @@ Methoden:
         for idx, section in enumerate(sections):
             section_id = section['id']
 
-            # Section Frame im Content-Bereich
-            section_frame = ctk.CTkFrame(content_scroll, corner_radius=12)
-            section_frame.pack(fill='x', pady=(0, 20), padx=10)
+            # Section Frame im Content-Bereich - Modernes helles Design
+            section_frame = ctk.CTkFrame(
+                content_scroll,
+                corner_radius=16,
+                fg_color=("gray98", "gray14"),
+                border_width=1,
+                border_color=("gray88", "gray25")
+            )
+            section_frame.pack(fill='x', pady=(0, 18), padx=15)
             section_frames[section_id] = section_frame
 
-            # Section Titel
-            ctk.CTkLabel(
-                section_frame,
-                text=f"{section['icon']} {section['title']}",
-                font=ctk.CTkFont(size=20, weight="bold"),
-                anchor="w"
-            ).pack(pady=(20, 12), padx=25, anchor="w")
+            # Icon und Titel Container
+            title_frame = ctk.CTkFrame(section_frame, fg_color="transparent")
+            title_frame.pack(fill='x', pady=(25, 15), padx=30)
 
-            # Section Content
-            font_family = "Courier" if section.get('use_monospace', False) else None
+            # Icon mit farbigem Hintergrund
+            light_bg = self._lighten_color(color[0], 0.85)
+            dark_bg = self._darken_color(color[1], 0.7)
+            icon_label = ctk.CTkLabel(
+                title_frame,
+                text=section['icon'],
+                font=ctk.CTkFont(size=32),
+                width=50,
+                height=50,
+                corner_radius=10,
+                fg_color=(light_bg, dark_bg)
+            )
+            icon_label.pack(side='left', padx=(0, 15))
+
+            # Titel
             ctk.CTkLabel(
+                title_frame,
+                text=section['title'],
+                font=ctk.CTkFont(size=24, weight="bold"),
+                anchor="w",
+                text_color=color
+            ).pack(side='left', fill='x', expand=True)
+
+            # Trennlinie
+            separator = ctk.CTkFrame(
+                section_frame,
+                height=2,
+                fg_color=("gray90", "gray20")
+            )
+            separator.pack(fill='x', padx=30, pady=(0, 20))
+
+            # Section Content - Bessere Lesbarkeit
+            font_family = "Consolas" if section.get('use_monospace', False) else "Segoe UI"
+            content_label = ctk.CTkLabel(
                 section_frame,
                 text=section['content'],
-                font=ctk.CTkFont(size=13, family=font_family),
+                font=ctk.CTkFont(size=14, family=font_family),
                 justify="left",
                 anchor="w",
-                wraplength=800
-            ).pack(pady=(0, 20), padx=25, anchor="w")
+                wraplength=750,
+                text_color=("gray15", "gray90")
+            )
+            content_label.pack(pady=(0, 25), padx=30, anchor="w")
 
             # Navigation Button
             def create_scroll_command(frame):
@@ -13058,23 +13134,72 @@ Methoden:
 
             nav_btn = ctk.CTkButton(
                 nav_scroll,
-                text=f"{section['icon']} {section['title']}",
+                text=f"{section['icon']}  {section['title']}",
                 command=create_scroll_command(section_frame),
                 width=200,
-                height=40,
-                font=ctk.CTkFont(size=13),
-                corner_radius=8,
+                height=44,
+                font=ctk.CTkFont(size=13, weight="normal"),
+                corner_radius=10,
                 anchor="w",
-                fg_color=("gray90", "gray22"),
-                hover_color=color,
-                text_color=("gray10", "gray95"),
-                border_width=1,
-                border_color=("gray80", "gray30")
+                fg_color=("gray95", "gray20"),
+                hover_color=(self._lighten_color(color[0], 0.85), self._darken_color(color[1], 0.8)),
+                text_color=("gray20", "gray90"),
+                border_width=0
             )
-            nav_btn.pack(pady=5, padx=5, fill='x')
+            nav_btn.pack(pady=4, padx=8, fill='x')
             nav_buttons[section_id] = nav_btn
 
         return main_container, content_scroll, nav_buttons
+
+    def _lighten_color(self, hex_color, factor=0.9):
+        """Hellt eine Hex-Farbe auf."""
+        try:
+            # Entferne '#' falls vorhanden
+            hex_color = hex_color.lstrip('#')
+
+            # Konvertiere zu RGB
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+
+            # Erhöhe jeden Wert Richtung 255
+            r = int(r + (255 - r) * factor)
+            g = int(g + (255 - g) * factor)
+            b = int(b + (255 - b) * factor)
+
+            # Begrenze auf 0-255
+            r = max(0, min(255, r))
+            g = max(0, min(255, g))
+            b = max(0, min(255, b))
+
+            return f"#{r:02x}{g:02x}{b:02x}"
+        except:
+            return hex_color
+
+    def _darken_color(self, hex_color, factor=0.7):
+        """Dunkelt eine Hex-Farbe ab."""
+        try:
+            # Entferne '#' falls vorhanden
+            hex_color = hex_color.lstrip('#')
+
+            # Konvertiere zu RGB
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+
+            # Reduziere jeden Wert
+            r = int(r * factor)
+            g = int(g * factor)
+            b = int(b * factor)
+
+            # Begrenze auf 0-255
+            r = max(0, min(255, r))
+            g = max(0, min(255, g))
+            b = max(0, min(255, b))
+
+            return f"#{r:02x}{g:02x}{b:02x}"
+        except:
+            return hex_color
 
     def _scroll_to_widget(self, scrollable_frame, target_widget):
         """Scrollt ein ScrollableFrame zu einem bestimmten Widget."""
